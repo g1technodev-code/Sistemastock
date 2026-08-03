@@ -178,8 +178,8 @@ export default function Products() {
                         {product.currentStock <= product.minStock && <Badge tone="danger">Bajo</Badge>}
                       </div>
                     </TD>
-                    <TD>{formatCurrency(product.costPrice, "PEN")}</TD>
-                    <TD>{formatCurrency(product.sellPrice, "PEN")}</TD>
+                    <TD>{formatCurrency(product.costPrice)}</TD>
+                    <TD>{formatCurrency(product.sellPrice)}</TD>
                     {canManage && (
                       <TD onClick={(e) => e.stopPropagation()}>
                         <div className="flex justify-end gap-1">

@@ -78,11 +78,11 @@ export function ProductDetailDrawer({ productId, onClose }: { productId: string 
             </div>
             <div>
               <p className="text-neutral-500 dark:text-neutral-400">Costo</p>
-              <p className="font-medium text-neutral-900 dark:text-neutral-100">{formatCurrency(product.costPrice, "PEN")}</p>
+              <p className="font-medium text-neutral-900 dark:text-neutral-100">{formatCurrency(product.costPrice)}</p>
             </div>
             <div>
               <p className="text-neutral-500 dark:text-neutral-400">Precio venta</p>
-              <p className="font-medium text-neutral-900 dark:text-neutral-100">{formatCurrency(product.sellPrice, "PEN")}</p>
+              <p className="font-medium text-neutral-900 dark:text-neutral-100">{formatCurrency(product.sellPrice)}</p>
             </div>
             {product.supplier && (
               <div className="col-span-2">

@@ -144,7 +144,7 @@ export default function Reports() {
                       return (
                         <ChartTooltip active={active}>
                           <span style={{ color: chrome.primaryInk }}>
-                            {entry.name}: {formatCurrency(Number(entry.value), "PEN")}
+                            {entry.name}: {formatCurrency(Number(entry.value))}
                           </span>
                         </ChartTooltip>
                       );
@@ -192,19 +192,19 @@ export default function Reports() {
                     </TD>
                     <TD>{row.category}</TD>
                     <TD>{formatNumber(row.currentStock)}</TD>
-                    <TD>{formatCurrency(row.costPrice, "PEN")}</TD>
-                    <TD className="font-medium">{formatCurrency(row.stockValue, "PEN")}</TD>
-                    <TD>{formatCurrency(row.potentialRevenue, "PEN")}</TD>
+                    <TD>{formatCurrency(row.costPrice)}</TD>
+                    <TD className="font-medium">{formatCurrency(row.stockValue)}</TD>
+                    <TD>{formatCurrency(row.potentialRevenue)}</TD>
                   </TR>
                 ))}
               </TBody>
             </Table>
             <div className="flex justify-end gap-6 border-t border-neutral-200 px-5 py-3 text-sm dark:border-neutral-800">
               <span className="text-neutral-500 dark:text-neutral-400">
-                Total en stock: <span className="font-semibold text-neutral-900 dark:text-neutral-100">{formatCurrency(valuation.totals.stockValue, "PEN")}</span>
+                Total en stock: <span className="font-semibold text-neutral-900 dark:text-neutral-100">{formatCurrency(valuation.totals.stockValue)}</span>
               </span>
               <span className="text-neutral-500 dark:text-neutral-400">
-                Ingreso potencial: <span className="font-semibold text-neutral-900 dark:text-neutral-100">{formatCurrency(valuation.totals.potentialRevenue, "PEN")}</span>
+                Ingreso potencial: <span className="font-semibold text-neutral-900 dark:text-neutral-100">{formatCurrency(valuation.totals.potentialRevenue)}</span>
               </span>
             </div>
           </>

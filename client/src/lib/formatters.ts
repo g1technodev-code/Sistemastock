@@ -1,23 +1,19 @@
-export function formatCurrency(value: number, currency = "USD"): string {
-  try {
-    return new Intl.NumberFormat("es-PE", { style: "currency", currency }).format(value);
-  } catch {
-    return `${currency} ${value.toFixed(2)}`;
-  }
+export function formatCurrency(value: number): string {
+  return new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS" }).format(value);
 }
 
 export function formatNumber(value: number): string {
-  return new Intl.NumberFormat("es-PE").format(value);
+  return new Intl.NumberFormat("es-AR").format(value);
 }
 
 export function formatDate(value: string | Date): string {
   const date = typeof value === "string" ? new Date(value) : value;
-  return new Intl.DateTimeFormat("es-PE", { day: "2-digit", month: "short", year: "numeric" }).format(date);
+  return new Intl.DateTimeFormat("es-AR", { day: "2-digit", month: "short", year: "numeric" }).format(date);
 }
 
 export function formatDateTime(value: string | Date): string {
   const date = typeof value === "string" ? new Date(value) : value;
-  return new Intl.DateTimeFormat("es-PE", {
+  return new Intl.DateTimeFormat("es-AR", {
     day: "2-digit",
     month: "short",
     year: "numeric",

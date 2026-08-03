@@ -6,7 +6,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Building2 } from "lucide-react";
 import * as settingsApi from "../api/settings";
 import { Card, CardBody, CardHeader } from "../components/ui/Card";
-import { Input, Select } from "../components/ui/Field";
+import { Input } from "../components/ui/Field";
 import { Button } from "../components/ui/Button";
 import { FullPageSpinner } from "../components/ui/Spinner";
 import { useToast } from "../context/ToastContext";
@@ -18,11 +18,8 @@ const schema = z.object({
   address: z.string().optional(),
   phone: z.string().optional(),
   email: z.string().email("Email inválido").optional().or(z.literal("")),
-  currency: z.string().min(1),
 });
 type FormValues = z.infer<typeof schema>;
-
-const CURRENCIES = ["PEN", "USD", "EUR", "MXN", "COP", "CLP", "ARS"];
 
 export default function Settings() {
   const { showSuccess, showError } = useToast();
@@ -44,7 +41,6 @@ export default function Settings() {
         address: settings.address ?? "",
         phone: settings.phone ?? "",
         email: settings.email ?? "",
-        currency: settings.currency,
       });
     }
   }, [settings, reset]);
@@ -80,19 +76,10 @@ export default function Settings() {
 
             <div className="grid grid-cols-2 gap-4">
               <Input label="RUC / ID fiscal" {...register("taxId")} />
-              <Select label="Moneda" {...register("currency")}>
-                {CURRENCIES.map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
-                ))}
-              </Select>
+              <Input label="Teléfono" {...register("phone")} />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <Input label="Teléfono" {...register("phone")} />
-              <Input label="Email de contacto" type="email" error={errors.email?.message} {...register("email")} />
-            </div>
+            <Input label="Email de contacto" type="email" error={errors.email?.message} {...register("email")} />
 
             <Input label="Dirección" {...register("address")} />
 

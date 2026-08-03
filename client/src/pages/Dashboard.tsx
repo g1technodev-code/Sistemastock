@@ -55,7 +55,7 @@ export default function Dashboard() {
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard label="Productos activos" value={formatNumber(data.kpis.totalProducts)} icon={Package} />
-        <StatCard label="Valor en inventario" value={formatCurrency(data.kpis.totalStockValue, "PEN")} icon={DollarSign} />
+        <StatCard label="Valor en inventario" value={formatCurrency(data.kpis.totalStockValue)} icon={DollarSign} />
         <StatCard
           label="Alertas de stock bajo"
           value={formatNumber(data.kpis.lowStockCount)}
@@ -63,8 +63,8 @@ export default function Dashboard() {
           tone={data.kpis.lowStockCount > 0 ? "warning" : "neutral"}
         />
         <StatCard label="Movimientos hoy" value={formatNumber(data.kpis.movementsToday)} icon={ArrowLeftRight} />
-        <StatCard label="Ventas hoy" value={formatCurrency(data.kpis.salesToday, "PEN")} icon={ShoppingCart} />
-        <StatCard label="Caja" value={formatCurrency(data.kpis.cashBalance, "PEN")} icon={Wallet} />
+        <StatCard label="Ventas hoy" value={formatCurrency(data.kpis.salesToday)} icon={ShoppingCart} />
+        <StatCard label="Caja" value={formatCurrency(data.kpis.cashBalance)} icon={Wallet} />
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
@@ -151,7 +151,7 @@ export default function Dashboard() {
                             <span className="h-2 w-2 rounded-full" style={{ backgroundColor: entry.color }} />
                             <span style={{ color: chrome.secondaryInk }}>{entry.name}:</span>
                             <span className="font-medium" style={{ color: chrome.primaryInk }}>
-                              {formatCurrency(Number(entry.value), "PEN")}
+                              {formatCurrency(Number(entry.value))}
                             </span>
                           </div>
                         </ChartTooltip>

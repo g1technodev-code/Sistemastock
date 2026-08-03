@@ -96,7 +96,6 @@ async function main() {
       address: "Av. Principal 123, Lima, Perú",
       phone: "+51 987 000 111",
       email: "contacto@stockflowdemo.com",
-      currency: "PEN",
     },
   });
 

@@ -150,7 +150,6 @@ export type BusinessSettings = {
   address: string | null;
   phone: string | null;
   email: string | null;
-  currency: string;
   logoUrl: string | null;
   updatedAt: string;
 };

@@ -249,7 +249,6 @@ model BusinessSettings {
   address      String?
   phone        String?
   email        String?
-  currency     String   @default("USD")
   logoUrl      String?
   updatedAt    DateTime @updatedAt
 

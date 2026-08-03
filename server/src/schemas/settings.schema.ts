@@ -6,7 +6,6 @@ export const updateSettingsSchema = z.object({
   address: z.string().optional().nullable(),
   phone: z.string().optional().nullable(),
   email: z.string().email().optional().nullable().or(z.literal("")),
-  currency: z.string().min(1),
   logoUrl: z.string().optional().nullable(),
 });
 
