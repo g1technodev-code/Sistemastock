@@ -17,16 +17,15 @@ import { Badge } from "../components/ui/Badge";
 import { Table, THead, TBody, TR, TH, TD } from "../components/ui/Table";
 import { EmptyState } from "../components/ui/EmptyState";
 import { Pagination } from "../components/ui/Pagination";
-import { StatCard } from "../components/ui/StatCard";
 import { Tabs } from "../components/ui/Tabs";
 import { TableSkeleton } from "../components/ui/Skeleton";
 import { useProducts } from "../hooks/useProducts";
 import { useCashStatus } from "../hooks/useCash";
-import { useCreateSale, useSales, useSalesSummary } from "../hooks/useSales";
+import { useCreateSale, useSales } from "../hooks/useSales";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 import { extractErrorMessage } from "../api/client";
-import { formatCurrency, formatDateTime, formatNumber } from "../lib/formatters";
+import { formatCurrency, formatDateTime } from "../lib/formatters";
 import { cn } from "../lib/utils";
 import type { PaymentMethod } from "../lib/types";
 
@@ -56,7 +55,6 @@ export default function Ventas() {
   const [search, setSearch] = useState("");
   const { data: productsPage } = useProducts({ q: search || undefined, isActive: true, limit: 20 });
   const { data: cashStatus } = useCashStatus();
-  const { data: summary } = useSalesSummary();
 
   const [cart, setCart] = useState<CartLine[]>([]);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("EFECTIVO");
@@ -126,11 +124,6 @@ export default function Ventas() {
       <div>
         <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">Ventas</h1>
         <p className="text-sm text-neutral-500 dark:text-neutral-400">Registra ventas y consulta el historial.</p>
-      </div>
-
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <StatCard label="Vendido hoy" value={formatCurrency(summary?.total ?? 0)} icon={Receipt} />
-        <StatCard label="Ventas hoy" value={formatNumber(summary?.count ?? 0)} icon={ShoppingCart} />
       </div>
 
       <Tabs
