@@ -12,11 +12,18 @@ type AuthContextValue = {
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
+// Bypass temporal: permite desplegar el frontend en Vercel antes de tener el backend online.
+// Activar con VITE_SKIP_AUTH=true en el entorno de Vercel; quitarla (o ponerla en false) cuando el backend esté disponible.
+const SKIP_AUTH = import.meta.env.VITE_SKIP_AUTH === "true";
+const MOCK_USER: AuthUser = { id: "dev-mock-user", name: "Usuario Demo", email: "demo@stockflow.local", role: "ADMIN" };
+
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<AuthUser | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [user, setUser] = useState<AuthUser | null>(SKIP_AUTH ? MOCK_USER : null);
+  const [isLoading, setIsLoading] = useState(!SKIP_AUTH);
 
   useEffect(() => {
+    if (SKIP_AUTH) return;
+
     setUnauthenticatedHandler(() => setUser(null));
 
     (async () => {
