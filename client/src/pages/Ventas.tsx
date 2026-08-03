@@ -58,10 +58,14 @@ export default function Ventas() {
 
   const [cart, setCart] = useState<CartLine[]>([]);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("EFECTIVO");
+  const [receiptNumber, setReceiptNumber] = useState("");
+  const [payerName, setPayerName] = useState("");
   const createSale = useCreateSale();
 
   const total = useMemo(() => cart.reduce((sum, line) => sum + line.unitPrice * line.quantity, 0), [cart]);
   const hasOpenShift = !!cashStatus?.myOpenShift;
+  const requiresReceiptInfo = paymentMethod !== "EFECTIVO";
+  const missingReceiptInfo = requiresReceiptInfo && (!receiptNumber.trim() || !payerName.trim());
 
   const addToCart = (productId: string, name: string, sku: string, unitPrice: number, availableStock: number) => {
     setCart((prev) => {
@@ -90,14 +94,18 @@ export default function Ventas() {
   const removeLine = (productId: string) => setCart((prev) => prev.filter((l) => l.productId !== productId));
 
   const checkout = async () => {
-    if (cart.length === 0) return;
+    if (cart.length === 0 || missingReceiptInfo) return;
     try {
       await createSale.mutateAsync({
         paymentMethod,
         items: cart.map((l) => ({ productId: l.productId, quantity: l.quantity })),
+        receiptNumber: requiresReceiptInfo ? receiptNumber.trim() : undefined,
+        payerName: requiresReceiptInfo ? payerName.trim() : undefined,
       });
       showSuccess("Venta registrada correctamente");
       setCart([]);
+      setReceiptNumber("");
+      setPayerName("");
     } catch (error) {
       showError(extractErrorMessage(error, "No se pudo registrar la venta"));
     }
@@ -261,6 +269,23 @@ export default function Ventas() {
                   </div>
                 </div>
 
+                {requiresReceiptInfo && (
+                  <div className="flex flex-col gap-3 border-t border-neutral-200 pt-3 dark:border-neutral-800">
+                    <Input
+                      label="N.° de comprobante"
+                      required
+                      value={receiptNumber}
+                      onChange={(e) => setReceiptNumber(e.target.value)}
+                    />
+                    <Input
+                      label="Nombre de quien paga"
+                      required
+                      value={payerName}
+                      onChange={(e) => setPayerName(e.target.value)}
+                    />
+                  </div>
+                )}
+
                 <div className="flex items-center justify-between border-t border-neutral-200 pt-3 dark:border-neutral-800">
                   <span className="text-sm font-medium text-neutral-600 dark:text-neutral-300">Total</span>
                   <span className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">{formatCurrency(total)}</span>
@@ -268,7 +293,7 @@ export default function Ventas() {
 
                 <Button
                   onClick={checkout}
-                  disabled={cart.length === 0 || !hasOpenShift}
+                  disabled={cart.length === 0 || !hasOpenShift || missingReceiptInfo}
                   isLoading={createSale.isPending}
                 >
                   Confirmar venta
@@ -308,6 +333,8 @@ export default function Ventas() {
                     <TH>Fecha</TH>
                     <TH>Productos</TH>
                     <TH>Medio de pago</TH>
+                    <TH>Comprobante</TH>
+                    <TH>Pagado por</TH>
                     <TH>Usuario</TH>
                     <TH>Total</TH>
                   </tr>
@@ -320,6 +347,8 @@ export default function Ventas() {
                       <TD>
                         <Badge tone={PAYMENT_METHOD_TONE[s.paymentMethod]}>{PAYMENT_METHOD_LABEL[s.paymentMethod]}</Badge>
                       </TD>
+                      <TD className="text-xs text-neutral-500">{s.receiptNumber ?? "—"}</TD>
+                      <TD className="text-xs text-neutral-500">{s.payerName ?? "—"}</TD>
                       <TD>{s.user.name}</TD>
                       <TD className="font-medium">{formatCurrency(s.total)}</TD>
                     </TR>

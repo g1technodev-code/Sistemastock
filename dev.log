@@ -2,21 +2,46 @@
 > stockflow@1.0.0 dev
 > concurrently -n SERVER,CLIENT -c blue,green "npm run dev --prefix server" "npm run dev --prefix client"
 
-[SERVER] 
-[SERVER] > stockflow-server@1.0.0 dev
-[SERVER] > tsx watch src/server.ts
-[SERVER] 
 [CLIENT] 
 [CLIENT] > client@0.0.0 dev
 [CLIENT] > vite
 [CLIENT] 
-[CLIENT] [2m09:16:35[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m Re-optimizing dependencies because vite config has changed
+[SERVER] 
+[SERVER] > stockflow-server@1.0.0 dev
+[SERVER] > tsx watch src/server.ts
+[SERVER] 
+[SERVER] node:events:496
+[SERVER]       throw er; // Unhandled 'error' event
+[SERVER]       ^
+[SERVER] 
+[SERVER] Error: listen EADDRINUSE: address already in use :::4000
+[SERVER]     at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+[SERVER]     at listenInCluster (node:net:1997:12)
+[SERVER]     at Server.listen (node:net:2102:7)
+[SERVER]     at Function.listen (D:\Proyectos\Sistemastock\server\node_modules\express\lib\application.js:635:24)
+[SERVER]     at app (D:\Proyectos\Sistemastock\server\src\server.ts:4:5)
+[SERVER]     at Object.<anonymous> (D:\Proyectos\Sistemastock\server\src\server.ts:6:2)
+[SERVER]     at Module._compile (node:internal/modules/cjs/loader:1730:14)
+[SERVER]     at Object.transformer (D:\Proyectos\Sistemastock\server\node_modules\tsx\dist\register-BoI6-WNn.cjs:9:3252)
+[SERVER]     at Module.load (node:internal/modules/cjs/loader:1465:32)
+[SERVER]     at Function._load (node:internal/modules/cjs/loader:1282:12)
+[SERVER] Emitted 'error' event on Server instance at:
+[SERVER]     at emitErrorNT (node:net:1976:8)
+[SERVER]     at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+[SERVER]   code: 'EADDRINUSE',
+[SERVER]   errno: -4091,
+[SERVER]   syscall: 'listen',
+[SERVER]   address: '::',
+[SERVER]   port: 4000
+[SERVER] }
+[SERVER] 
+[SERVER] Node.js v22.17.1
+[CLIENT] [2m09:38:01[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m Re-optimizing dependencies because vite config has changed
 [CLIENT] 
-[CLIENT]   [32m[1mVITE[22m v8.2.0[39m  [2mready in [0m[1m12911[22m[2m[0m ms[22m
+[CLIENT]   [32m[1mVITE[22m v8.2.0[39m  [2mready in [0m[1m8718[22m[2m[0m ms[22m
 [CLIENT] 
 [CLIENT]   [32m➜[39m  [1mLocal[22m:   [36mhttp://localhost:[1m5173[22m/[39m
 [CLIENT] [2m  [32m➜[39m  [1mNetwork[22m[2m: use [22m[1m--host[22m[2m to expose[22m
-[CLIENT] [2m09:16:36[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [optimizer] scanning dependencies...
-[CLIENT] [2m09:16:39[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [optimizer] bundling dependencies...
-[SERVER] StockFlow API escuchando en http://localhost:4000
+[CLIENT] [2m09:38:02[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [optimizer] scanning dependencies...
+[CLIENT] [2m09:38:04[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [optimizer] bundling dependencies...
 [CLIENT] npm run dev --prefix client exited with code 1

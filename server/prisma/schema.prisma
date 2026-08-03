@@ -162,6 +162,8 @@ model Sale {
   total         Decimal       @db.Decimal(12, 2)
   paymentMethod PaymentMethod
   status        SaleStatus    @default(COMPLETED)
+  receiptNumber String?
+  payerName     String?
   userId        String
   user          User          @relation("SaleCreatedBy", fields: [userId], references: [id])
   voidedById    String?

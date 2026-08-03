@@ -87,6 +87,8 @@ export type Sale = {
   total: number;
   paymentMethod: PaymentMethod;
   status: SaleStatus;
+  receiptNumber: string | null;
+  payerName: string | null;
   userId: string;
   user: { id: string; name: string };
   createdAt: string;

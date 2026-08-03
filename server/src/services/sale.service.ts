@@ -82,7 +82,13 @@ export async function createSale(input: CreateSaleInput, userId: string) {
     total = Math.round(total * 100) / 100;
 
     const sale = await tx.sale.create({
-      data: { total, paymentMethod: input.paymentMethod, userId },
+      data: {
+        total,
+        paymentMethod: input.paymentMethod,
+        userId,
+        receiptNumber: input.receiptNumber?.trim() || null,
+        payerName: input.payerName?.trim() || null,
+      },
     });
 
     for (const item of saleItemsData) {
