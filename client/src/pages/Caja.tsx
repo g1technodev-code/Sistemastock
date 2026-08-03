@@ -34,13 +34,15 @@ const openShiftSchema = z.object({
   note: z.string().optional(),
 });
 const closeShiftSchema = openShiftSchema;
-type ShiftFormValues = z.infer<typeof openShiftSchema>;
+type ShiftFormInput = z.input<typeof openShiftSchema>;
+type ShiftFormValues = z.output<typeof openShiftSchema>;
 
 const withdrawalSchema = z.object({
   amount: z.coerce.number().positive("El monto debe ser mayor a 0"),
   note: z.string().min(1, "Indica el motivo del retiro"),
 });
-type WithdrawalFormValues = z.infer<typeof withdrawalSchema>;
+type WithdrawalFormInput = z.input<typeof withdrawalSchema>;
+type WithdrawalFormValues = z.output<typeof withdrawalSchema>;
 
 const MOVEMENT_TYPE_LABEL: Record<CashMovementType, string> = {
   SALE_IN: "Venta en efectivo",
@@ -76,9 +78,9 @@ export default function Caja() {
   const [lastClosed, setLastClosed] = useState<CashShift | null>(null);
   const [closing, setClosing] = useState(false);
 
-  const openForm = useForm<ShiftFormValues>({ resolver: zodResolver(openShiftSchema), defaultValues: { countedAmount: 0, note: "" } });
-  const closeForm = useForm<ShiftFormValues>({ resolver: zodResolver(closeShiftSchema), defaultValues: { countedAmount: 0, note: "" } });
-  const withdrawalForm = useForm<WithdrawalFormValues>({ resolver: zodResolver(withdrawalSchema), defaultValues: { amount: 0, note: "" } });
+  const openForm = useForm<ShiftFormInput, unknown, ShiftFormValues>({ resolver: zodResolver(openShiftSchema), defaultValues: { countedAmount: 0, note: "" } });
+  const closeForm = useForm<ShiftFormInput, unknown, ShiftFormValues>({ resolver: zodResolver(closeShiftSchema), defaultValues: { countedAmount: 0, note: "" } });
+  const withdrawalForm = useForm<WithdrawalFormInput, unknown, WithdrawalFormValues>({ resolver: zodResolver(withdrawalSchema), defaultValues: { amount: 0, note: "" } });
   const [confirmingWithdrawal, setConfirmingWithdrawal] = useState<WithdrawalFormValues | null>(null);
 
   const onOpenShift = async (values: ShiftFormValues) => {
