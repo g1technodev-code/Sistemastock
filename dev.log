@@ -1,0 +1,22 @@
+
+> stockflow@1.0.0 dev
+> concurrently -n SERVER,CLIENT -c blue,green "npm run dev --prefix server" "npm run dev --prefix client"
+
+[SERVER] 
+[SERVER] > stockflow-server@1.0.0 dev
+[SERVER] > tsx watch src/server.ts
+[SERVER] 
+[CLIENT] 
+[CLIENT] > client@0.0.0 dev
+[CLIENT] > vite
+[CLIENT] 
+[CLIENT] [2m09:16:35[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m Re-optimizing dependencies because vite config has changed
+[CLIENT] 
+[CLIENT]   [32m[1mVITE[22m v8.2.0[39m  [2mready in [0m[1m12911[22m[2m[0m ms[22m
+[CLIENT] 
+[CLIENT]   [32m➜[39m  [1mLocal[22m:   [36mhttp://localhost:[1m5173[22m/[39m
+[CLIENT] [2m  [32m➜[39m  [1mNetwork[22m[2m: use [22m[1m--host[22m[2m to expose[22m
+[CLIENT] [2m09:16:36[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [optimizer] scanning dependencies...
+[CLIENT] [2m09:16:39[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [optimizer] bundling dependencies...
+[SERVER] StockFlow API escuchando en http://localhost:4000
+[CLIENT] npm run dev --prefix client exited with code 1

@@ -1,0 +1,27 @@
+import type { Request, Response } from "express";
+import { catchAsync } from "../utils/catchAsync";
+import * as userService from "../services/user.service";
+import { createUserSchema, resetPasswordSchema, updateUserSchema } from "../schemas/user.schema";
+
+export const list = catchAsync(async (req: Request, res: Response) => {
+  const result = await userService.listUsers(req.query as Record<string, string>);
+  res.json(result);
+});
+
+export const create = catchAsync(async (req: Request, res: Response) => {
+  const input = createUserSchema.parse(req.body);
+  const user = await userService.createUser(input);
+  res.status(201).json({ user });
+});
+
+export const update = catchAsync(async (req: Request, res: Response) => {
+  const input = updateUserSchema.parse(req.body);
+  const user = await userService.updateUser(req.params.id, input, req.user!.id);
+  res.json({ user });
+});
+
+export const resetPassword = catchAsync(async (req: Request, res: Response) => {
+  const input = resetPasswordSchema.parse(req.body ?? {});
+  const result = await userService.resetUserPassword(req.params.id, input.newPassword);
+  res.json(result);
+});
