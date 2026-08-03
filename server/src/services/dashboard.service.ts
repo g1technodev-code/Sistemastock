@@ -1,6 +1,9 @@
 import { prisma } from "../config/prisma";
-import { MovementType, SaleStatus } from "@prisma/client";
+import { SaleStatus } from "@prisma/client";
 import { getOrCreateRegister } from "./cash.service";
+
+const NO_MOVEMENT_DAYS = 30;
+const ALERT_LIST_LIMIT = 6;
 
 function startOfDay(date: Date): Date {
   const d = new Date(date);
@@ -8,68 +11,78 @@ function startOfDay(date: Date): Date {
   return d;
 }
 
-function dayKey(date: Date): string {
-  return startOfDay(date).toISOString().slice(0, 10);
-}
-
 export async function getSummary() {
   const products = await prisma.product.findMany({
     where: { isActive: true },
     select: {
       id: true,
+      name: true,
+      sku: true,
       currentStock: true,
       minStock: true,
       costPrice: true,
-      categoryId: true,
-      category: { select: { name: true, color: true } },
+      supplierId: true,
     },
   });
 
   let totalStockValue = 0;
   let lowStockCount = 0;
-  const categoryValueMap = new Map<string, { name: string; color: string | null; value: number }>();
+  const lowStockAlerts: { productId: string; name: string; sku: string; currentStock: number; minStock: number }[] = [];
+  const noSupplierAlerts: { productId: string; name: string; sku: string }[] = [];
 
   for (const p of products) {
-    const value = p.currentStock * Number(p.costPrice);
-    totalStockValue += value;
-    if (p.currentStock <= p.minStock) lowStockCount++;
-
-    const key = p.categoryId ?? "sin-categoria";
-    const label = p.category?.name ?? "Sin categoría";
-    const existing = categoryValueMap.get(key);
-    if (existing) {
-      existing.value += value;
-    } else {
-      categoryValueMap.set(key, { name: label, color: p.category?.color ?? null, value });
+    totalStockValue += p.currentStock * Number(p.costPrice);
+    if (p.currentStock <= p.minStock) {
+      lowStockCount++;
+      lowStockAlerts.push({ productId: p.id, name: p.name, sku: p.sku, currentStock: p.currentStock, minStock: p.minStock });
+    }
+    if (!p.supplierId) {
+      noSupplierAlerts.push({ productId: p.id, name: p.name, sku: p.sku });
     }
   }
+  lowStockAlerts.sort((a, b) => a.currentStock - b.currentStock);
 
-  const categoryBreakdown = Array.from(categoryValueMap.values())
-    .sort((a, b) => b.value - a.value)
-    .slice(0, 6)
-    .map((c) => ({ ...c, value: Math.round(c.value * 100) / 100 }));
-
-  const fourteenDaysAgo = startOfDay(new Date(Date.now() - 13 * 24 * 60 * 60 * 1000));
-  const movements = await prisma.stockMovement.findMany({
-    where: { createdAt: { gte: fourteenDaysAgo } },
-    select: { type: true, quantity: true, createdAt: true },
+  const lastMovements = await prisma.stockMovement.groupBy({
+    by: ["productId"],
+    _max: { createdAt: true },
   });
+  const lastMovementMap = new Map(lastMovements.map((m) => [m.productId, m._max.createdAt]));
+  const noMovementThreshold = new Date(Date.now() - NO_MOVEMENT_DAYS * 24 * 60 * 60 * 1000);
 
-  const seriesMap = new Map<string, { date: string; in: number; out: number }>();
-  for (let i = 0; i < 14; i++) {
-    const d = new Date(fourteenDaysAgo.getTime() + i * 24 * 60 * 60 * 1000);
-    seriesMap.set(dayKey(d), { date: dayKey(d), in: 0, out: 0 });
+  let noMovementCount = 0;
+  const noMovementAlerts: { productId: string; name: string; sku: string; daysSinceLastMovement: number | null }[] = [];
+  for (const p of products) {
+    const last = lastMovementMap.get(p.id) ?? null;
+    if (last && last >= noMovementThreshold) continue;
+    noMovementCount++;
+    const daysSinceLastMovement = last ? Math.floor((Date.now() - last.getTime()) / (24 * 60 * 60 * 1000)) : null;
+    noMovementAlerts.push({ productId: p.id, name: p.name, sku: p.sku, daysSinceLastMovement });
   }
-  for (const m of movements) {
-    const key = dayKey(m.createdAt);
-    const bucket = seriesMap.get(key);
-    if (!bucket) continue;
-    if (m.type === MovementType.IN) bucket.in += m.quantity;
-    if (m.type === MovementType.OUT) bucket.out += m.quantity;
-  }
+  noMovementAlerts.sort((a, b) => (b.daysSinceLastMovement ?? Infinity) - (a.daysSinceLastMovement ?? Infinity));
 
-  const todayKey = dayKey(new Date());
-  const movementsToday = movements.filter((m) => dayKey(m.createdAt) === todayKey).length;
+  const todayStart = startOfDay(new Date());
+  const [movementsToday, todaySales, register] = await Promise.all([
+    prisma.stockMovement.count({ where: { createdAt: { gte: todayStart } } }),
+    prisma.sale.findMany({
+      where: { createdAt: { gte: todayStart }, status: SaleStatus.COMPLETED },
+      select: {
+        total: true,
+        items: { select: { quantity: true, subtotal: true, product: { select: { costPrice: true } } } },
+      },
+    }),
+    getOrCreateRegister(prisma),
+  ]);
+
+  let profitToday = 0;
+  let unitsSoldToday = 0;
+  for (const sale of todaySales) {
+    for (const item of sale.items) {
+      unitsSoldToday += item.quantity;
+      profitToday += Number(item.subtotal) - item.quantity * Number(item.product.costPrice);
+    }
+  }
+  const salesTotalToday = todaySales.reduce((sum, s) => sum + Number(s.total), 0);
+  const avgTicketToday = todaySales.length > 0 ? salesTotalToday / todaySales.length : 0;
 
   const recentActivity = await prisma.stockMovement.findMany({
     orderBy: { createdAt: "desc" },
@@ -80,44 +93,24 @@ export async function getSummary() {
     },
   });
 
-  const topProductsRaw = await prisma.stockMovement.groupBy({
-    by: ["productId"],
-    where: { type: MovementType.OUT, createdAt: { gte: new Date(Date.now() - 29 * 24 * 60 * 60 * 1000) } },
-    _sum: { quantity: true },
-    orderBy: { _sum: { quantity: "desc" } },
-    take: 5,
-  });
-  const topProductIds = topProductsRaw.map((t) => t.productId);
-  const topProductDetails = await prisma.product.findMany({
-    where: { id: { in: topProductIds } },
-    select: { id: true, name: true, sku: true },
-  });
-  const topProducts = topProductsRaw.map((t) => {
-    const detail = topProductDetails.find((p) => p.id === t.productId);
-    return { productId: t.productId, name: detail?.name ?? "—", sku: detail?.sku ?? "—", quantity: t._sum.quantity ?? 0 };
-  });
-
-  const todayStart = startOfDay(new Date());
-  const [salesTodayAgg, register] = await Promise.all([
-    prisma.sale.aggregate({
-      where: { createdAt: { gte: todayStart }, status: SaleStatus.COMPLETED },
-      _sum: { total: true },
-    }),
-    getOrCreateRegister(prisma),
-  ]);
-
   return {
     kpis: {
       totalProducts: products.length,
       totalStockValue: Math.round(totalStockValue * 100) / 100,
       lowStockCount,
       movementsToday,
-      salesToday: Number(salesTodayAgg._sum.total ?? 0),
+      salesToday: Math.round(salesTotalToday * 100) / 100,
       cashBalance: Number(register.currentBalance),
+      profitToday: Math.round(profitToday * 100) / 100,
+      unitsSoldToday,
+      avgTicketToday: Math.round(avgTicketToday * 100) / 100,
+      noMovementCount,
     },
-    movementSeries: Array.from(seriesMap.values()),
-    categoryBreakdown,
-    topProducts,
+    alerts: {
+      lowStock: lowStockAlerts.slice(0, ALERT_LIST_LIMIT),
+      noMovement: noMovementAlerts.slice(0, ALERT_LIST_LIMIT),
+      noSupplier: noSupplierAlerts.slice(0, ALERT_LIST_LIMIT),
+    },
     recentActivity,
   };
 }

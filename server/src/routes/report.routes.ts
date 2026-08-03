@@ -10,5 +10,7 @@ router.get("/stock-valuation", reportController.stockValuation);
 router.get("/movements", reportController.movements);
 router.get("/top-products", reportController.topProducts);
 router.get("/category-breakdown", reportController.categoryBreakdown);
+router.get("/sales-stats", reportController.salesStats);
+router.get("/profitability", reportController.profitability);
 
 export default router;

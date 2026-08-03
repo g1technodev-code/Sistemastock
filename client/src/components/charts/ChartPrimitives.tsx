@@ -1,11 +1,11 @@
 import type { ReactNode } from "react";
-import { useDarkMode } from "../../hooks/useDarkMode";
+import { useTheme } from "../../context/ThemeContext";
 import { getChrome } from "../../lib/chartColors";
 
 /** Shared legend renderer: swatch carries identity, text always stays in a neutral ink token. */
 export function ChartLegend({ items }: { items: { label: string; color: string }[] }) {
-  const isDark = useDarkMode();
-  const chrome = getChrome(isDark);
+  const { theme } = useTheme();
+  const chrome = getChrome(theme === "dark");
   return (
     <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5">
       {items.map((item) => (
@@ -19,7 +19,8 @@ export function ChartLegend({ items }: { items: { label: string; color: string }
 }
 
 export function ChartTooltip({ active, label, children }: { active?: boolean; label?: ReactNode; children: ReactNode }) {
-  const isDark = useDarkMode();
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
   if (!active) return null;
   return (
     <div

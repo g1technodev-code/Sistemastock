@@ -41,6 +41,17 @@ enum CashShiftStatus {
   CLOSED
 }
 
+enum PurchaseStatus {
+  PENDING
+  RECEIVED
+  CANCELLED
+}
+
+enum InventoryCountStatus {
+  OPEN
+  COMPLETED
+}
+
 model User {
   id           String   @id @default(cuid())
   name         String
@@ -51,13 +62,18 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  movements     StockMovement[]
-  refreshTokens RefreshToken[]
-  sales         Sale[]          @relation("SaleCreatedBy")
-  voidedSales   Sale[]          @relation("SaleVoidedBy")
-  cashMovements CashMovement[]  @relation("CashMovementBy")
-  shiftsOpened  CashShift[]     @relation("ShiftOpenedBy")
-  shiftsClosed  CashShift[]     @relation("ShiftClosedBy")
+  movements         StockMovement[]
+  refreshTokens     RefreshToken[]
+  sales             Sale[]          @relation("SaleCreatedBy")
+  voidedSales       Sale[]          @relation("SaleVoidedBy")
+  cashMovements     CashMovement[]  @relation("CashMovementBy")
+  shiftsOpened      CashShift[]     @relation("ShiftOpenedBy")
+  shiftsClosed      CashShift[]     @relation("ShiftClosedBy")
+  purchasesCreated  Purchase[]      @relation("PurchaseCreatedBy")
+  purchasesReceived Purchase[]      @relation("PurchaseReceivedBy")
+  purchasesCancelled Purchase[]     @relation("PurchaseCancelledBy")
+  inventoryCountsStarted   InventoryCount[] @relation("InventoryCountStartedBy")
+  inventoryCountsCompleted InventoryCount[] @relation("InventoryCountCompletedBy")
 
   @@map("users")
 }
@@ -102,7 +118,8 @@ model Supplier {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  products Product[]
+  products  Product[]
+  purchases Purchase[]
 
   @@map("suppliers")
 }
@@ -129,8 +146,10 @@ model Product {
   supplierId String?
   supplier   Supplier? @relation(fields: [supplierId], references: [id], onDelete: SetNull)
 
-  movements StockMovement[]
-  saleItems SaleItem[]
+  movements          StockMovement[]
+  saleItems          SaleItem[]
+  purchaseItems      PurchaseItem[]
+  inventoryCountItems InventoryCountItem[]
 
   @@index([categoryId])
   @@index([supplierId])
@@ -192,6 +211,82 @@ model SaleItem {
   @@index([saleId])
   @@index([productId])
   @@map("sale_items")
+}
+
+model Purchase {
+  id            String         @id @default(cuid())
+  supplierId    String
+  supplier      Supplier       @relation(fields: [supplierId], references: [id])
+  status        PurchaseStatus @default(PENDING)
+  total         Decimal        @db.Decimal(12, 2)
+  note          String?
+  userId        String
+  user          User           @relation("PurchaseCreatedBy", fields: [userId], references: [id])
+  receivedById  String?
+  receivedBy    User?          @relation("PurchaseReceivedBy", fields: [receivedById], references: [id])
+  receivedAt    DateTime?
+  cancelledById String?
+  cancelledBy   User?          @relation("PurchaseCancelledBy", fields: [cancelledById], references: [id])
+  cancelledAt   DateTime?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  items PurchaseItem[]
+
+  @@index([supplierId])
+  @@index([createdAt])
+  @@index([status])
+  @@map("purchases")
+}
+
+model PurchaseItem {
+  id         String   @id @default(cuid())
+  purchaseId String
+  purchase   Purchase @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
+  productId  String
+  product    Product  @relation(fields: [productId], references: [id])
+  quantity   Int
+  unitCost   Decimal  @db.Decimal(12, 2)
+  subtotal   Decimal  @db.Decimal(12, 2)
+
+  @@index([purchaseId])
+  @@index([productId])
+  @@map("purchase_items")
+}
+
+model InventoryCount {
+  id            String                @id @default(cuid())
+  status        InventoryCountStatus  @default(OPEN)
+  note          String?
+  startedById   String
+  startedBy     User                  @relation("InventoryCountStartedBy", fields: [startedById], references: [id])
+  startedAt     DateTime              @default(now())
+  completedById String?
+  completedBy   User?                 @relation("InventoryCountCompletedBy", fields: [completedById], references: [id])
+  completedAt   DateTime?
+
+  items InventoryCountItem[]
+
+  @@index([startedById])
+  @@index([status])
+  @@map("inventory_counts")
+}
+
+model InventoryCountItem {
+  id               String         @id @default(cuid())
+  inventoryCountId String
+  inventoryCount   InventoryCount @relation(fields: [inventoryCountId], references: [id], onDelete: Cascade)
+  productId        String
+  product          Product        @relation(fields: [productId], references: [id])
+  systemQuantity   Int
+  countedQuantity  Int
+  difference       Int
+  countedAt        DateTime       @default(now())
+
+  @@unique([inventoryCountId, productId])
+  @@index([inventoryCountId])
+  @@index([productId])
+  @@map("inventory_count_items")
 }
 
 model CashRegister {

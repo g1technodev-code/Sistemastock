@@ -4,6 +4,8 @@ export type PaymentMethod = "EFECTIVO" | "TRANSFERENCIA" | "TARJETA";
 export type SaleStatus = "COMPLETED" | "VOIDED";
 export type CashMovementType = "SALE_IN" | "WITHDRAWAL" | "ADJUSTMENT";
 export type CashShiftStatus = "OPEN" | "CLOSED";
+export type PurchaseStatus = "PENDING" | "RECEIVED" | "CANCELLED";
+export type InventoryCountStatus = "OPEN" | "COMPLETED";
 
 export type AuthUser = {
   id: string;
@@ -101,6 +103,58 @@ export type SalesSummary = {
   byPaymentMethod: { paymentMethod: PaymentMethod; total: number; count: number }[];
 };
 
+export type PurchaseItem = {
+  id: string;
+  productId: string;
+  quantity: number;
+  unitCost: number;
+  subtotal: number;
+  product: { id: string; sku: string; name: string; unit: string };
+};
+
+export type Purchase = {
+  id: string;
+  supplierId: string;
+  supplier: { id: string; name: string };
+  status: PurchaseStatus;
+  total: number;
+  note: string | null;
+  userId: string;
+  user: { id: string; name: string };
+  receivedById: string | null;
+  receivedBy: { id: string; name: string } | null;
+  receivedAt: string | null;
+  cancelledById: string | null;
+  cancelledBy: { id: string; name: string } | null;
+  cancelledAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+  items: PurchaseItem[];
+};
+
+export type InventoryCountItem = {
+  id: string;
+  productId: string;
+  systemQuantity: number;
+  countedQuantity: number;
+  difference: number;
+  countedAt: string;
+  product: { id: string; sku: string; name: string; unit: string };
+};
+
+export type InventoryCount = {
+  id: string;
+  status: InventoryCountStatus;
+  note: string | null;
+  startedById: string;
+  startedBy: { id: string; name: string };
+  startedAt: string;
+  completedById: string | null;
+  completedBy: { id: string; name: string } | null;
+  completedAt: string | null;
+  items: InventoryCountItem[];
+};
+
 export type CashShift = {
   id: string;
   openedById: string;
@@ -182,9 +236,15 @@ export type DashboardSummary = {
     movementsToday: number;
     salesToday: number;
     cashBalance: number;
+    profitToday: number;
+    unitsSoldToday: number;
+    avgTicketToday: number;
+    noMovementCount: number;
   };
-  movementSeries: { date: string; in: number; out: number }[];
-  categoryBreakdown: { name: string; color: string | null; value: number }[];
-  topProducts: { productId: string; name: string; sku: string; quantity: number }[];
+  alerts: {
+    lowStock: { productId: string; name: string; sku: string; currentStock: number; minStock: number }[];
+    noMovement: { productId: string; name: string; sku: string; daysSinceLastMovement: number | null }[];
+    noSupplier: { productId: string; name: string; sku: string }[];
+  };
   recentActivity: StockMovement[];
 };

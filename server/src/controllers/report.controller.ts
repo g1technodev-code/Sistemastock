@@ -64,3 +64,14 @@ export const categoryBreakdown = catchAsync(async (_req: Request, res: Response)
   const data = await reportService.getCategoryBreakdownReport();
   res.json({ items: serializeDecimals(data) });
 });
+
+export const salesStats = catchAsync(async (_req: Request, res: Response) => {
+  const data = await reportService.getSalesStatsReport();
+  res.json(serializeDecimals(data));
+});
+
+export const profitability = catchAsync(async (req: Request, res: Response) => {
+  const days = Number(req.query.days) || 30;
+  const data = await reportService.getProfitabilityReport(days);
+  res.json(serializeDecimals(data));
+});
