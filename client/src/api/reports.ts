@@ -32,6 +32,30 @@ export type MovementsReport = {
 export type TopProductReportItem = { productId: string; name: string; sku: string; in: number; out: number };
 export type CategoryBreakdownItem = { name: string; color: string | null; productCount: number; stockValue: number; units: number };
 
+export type SalesStatsPeriod = { total: number; count: number; avgTicket: number; profit: number };
+export type SalesStatsReport = {
+  periods: { today: SalesStatsPeriod; week: SalesStatsPeriod; month: SalesStatsPeriod; year: SalesStatsPeriod };
+  topProducts: { productId: string; name: string; sku: string; quantity: number; revenue: number }[];
+  topCategories: { name: string; color: string | null; quantity: number; revenue: number }[];
+  byEmployee: { userId: string; name: string; total: number; count: number }[];
+  byPaymentMethod: { paymentMethod: string; total: number; count: number }[];
+};
+
+export type ProfitabilityProduct = {
+  productId: string;
+  name: string;
+  sku: string;
+  quantity: number;
+  revenue: number;
+  cost: number;
+  profit: number;
+  marginPercent: number;
+};
+export type ProfitabilityReport = {
+  totals: { revenue: number; cost: number; grossProfit: number; marginPercent: number };
+  products: ProfitabilityProduct[];
+};
+
 export async function getStockValuationReport(): Promise<StockValuationReport> {
   const { data } = await api.get("/reports/stock-valuation");
   return data;
@@ -50,6 +74,16 @@ export async function getTopProductsReport(days = 30): Promise<TopProductReportI
 export async function getCategoryBreakdownReport(): Promise<CategoryBreakdownItem[]> {
   const { data } = await api.get("/reports/category-breakdown");
   return data.items;
+}
+
+export async function getSalesStatsReport(): Promise<SalesStatsReport> {
+  const { data } = await api.get("/reports/sales-stats");
+  return data;
+}
+
+export async function getProfitabilityReport(days = 30): Promise<ProfitabilityReport> {
+  const { data } = await api.get("/reports/profitability", { params: { days } });
+  return data;
 }
 
 export async function downloadCsv(report: "stock-valuation" | "movements", filename: string, params: Record<string, string> = {}) {

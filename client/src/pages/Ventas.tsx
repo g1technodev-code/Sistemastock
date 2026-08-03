@@ -18,6 +18,8 @@ import { Table, THead, TBody, TR, TH, TD } from "../components/ui/Table";
 import { EmptyState } from "../components/ui/EmptyState";
 import { Pagination } from "../components/ui/Pagination";
 import { StatCard } from "../components/ui/StatCard";
+import { Tabs } from "../components/ui/Tabs";
+import { TableSkeleton } from "../components/ui/Skeleton";
 import { useProducts } from "../hooks/useProducts";
 import { useCashStatus } from "../hooks/useCash";
 import { useCreateSale, useSales, useSalesSummary } from "../hooks/useSales";
@@ -131,26 +133,14 @@ export default function Ventas() {
         <StatCard label="Ventas hoy" value={formatNumber(summary?.count ?? 0)} icon={ShoppingCart} />
       </div>
 
-      <div className="flex gap-2 border-b border-neutral-200 dark:border-neutral-800">
-        <button
-          onClick={() => setTab("new")}
-          className={cn(
-            "flex items-center gap-1.5 border-b-2 px-3 py-2 text-sm font-medium",
-            tab === "new" ? "border-indigo-600 text-indigo-600 dark:text-indigo-400" : "border-transparent text-neutral-500",
-          )}
-        >
-          <ShoppingCart className="h-4 w-4" /> Nueva venta
-        </button>
-        <button
-          onClick={() => setTab("history")}
-          className={cn(
-            "flex items-center gap-1.5 border-b-2 px-3 py-2 text-sm font-medium",
-            tab === "history" ? "border-indigo-600 text-indigo-600 dark:text-indigo-400" : "border-transparent text-neutral-500",
-          )}
-        >
-          <ListChecks className="h-4 w-4" /> Historial{user?.role === "EMPLOYEE" ? " (mío)" : ""}
-        </button>
-      </div>
+      <Tabs
+        value={tab}
+        onChange={setTab}
+        tabs={[
+          { value: "new", label: "Nueva venta", icon: ShoppingCart },
+          { value: "history", label: `Historial${user?.role === "EMPLOYEE" ? " (mío)" : ""}`, icon: ListChecks },
+        ]}
+      />
 
       {tab === "new" ? (
         <>
@@ -322,7 +312,7 @@ export default function Ventas() {
           </div>
 
           {loadingHistory && !sales ? (
-            <div className="p-8 text-center text-sm text-neutral-400">Cargando...</div>
+            <TableSkeleton columns={7} />
           ) : !sales || sales.items.length === 0 ? (
             <EmptyState icon={Receipt} title="Sin ventas" description="Aún no se han registrado ventas." />
           ) : (

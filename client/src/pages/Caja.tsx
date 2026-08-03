@@ -12,12 +12,13 @@ import { EmptyState } from "../components/ui/EmptyState";
 import { Pagination } from "../components/ui/Pagination";
 import { StatCard } from "../components/ui/StatCard";
 import { ConfirmDialog } from "../components/ui/ConfirmDialog";
+import { Tabs } from "../components/ui/Tabs";
+import { TableSkeleton } from "../components/ui/Skeleton";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 import { extractErrorMessage } from "../api/client";
 import { formatCurrency, formatDateTime } from "../lib/formatters";
 import { permissions } from "../lib/permissions";
-import { cn } from "../lib/utils";
 import {
   useCashStatus,
   useCashSummary,
@@ -253,33 +254,19 @@ export default function Caja() {
         )}
       </div>
 
-      <div className="flex gap-2 border-b border-neutral-200 dark:border-neutral-800">
-        <button
-          onClick={() => setTab("shifts")}
-          className={cn(
-            "flex items-center gap-1.5 border-b-2 px-3 py-2 text-sm font-medium",
-            tab === "shifts" ? "border-indigo-600 text-indigo-600 dark:text-indigo-400" : "border-transparent text-neutral-500",
-          )}
-        >
-          <ListChecks className="h-4 w-4" /> Turnos{user?.role === "EMPLOYEE" ? " (míos)" : ""}
-        </button>
-        {canViewLedger && (
-          <button
-            onClick={() => setTab("ledger")}
-            className={cn(
-              "flex items-center gap-1.5 border-b-2 px-3 py-2 text-sm font-medium",
-              tab === "ledger" ? "border-indigo-600 text-indigo-600 dark:text-indigo-400" : "border-transparent text-neutral-500",
-            )}
-          >
-            <WalletCards className="h-4 w-4" /> Movimientos de caja
-          </button>
-        )}
-      </div>
+      <Tabs
+        value={tab}
+        onChange={setTab}
+        tabs={[
+          { value: "shifts", label: `Turnos${user?.role === "EMPLOYEE" ? " (míos)" : ""}`, icon: ListChecks },
+          ...(canViewLedger ? [{ value: "ledger" as const, label: "Movimientos de caja", icon: WalletCards }] : []),
+        ]}
+      />
 
       {tab === "shifts" ? (
         <Card>
           {loadingShifts && !shifts ? (
-            <div className="p-8 text-center text-sm text-neutral-400">Cargando...</div>
+            <TableSkeleton columns={6} />
           ) : !shifts || shifts.items.length === 0 ? (
             <EmptyState icon={ListChecks} title="Sin turnos" description="Aún no se han registrado turnos de caja." />
           ) : (
@@ -319,7 +306,7 @@ export default function Caja() {
       ) : (
         <Card>
           {loadingLedger && !movements ? (
-            <div className="p-8 text-center text-sm text-neutral-400">Cargando...</div>
+            <TableSkeleton columns={6} />
           ) : !movements || movements.items.length === 0 ? (
             <EmptyState icon={WalletCards} title="Sin movimientos" description="Aún no hay movimientos de caja." />
           ) : (

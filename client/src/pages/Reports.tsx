@@ -10,14 +10,15 @@ import { Table, THead, TBody, TR, TH, TD } from "../components/ui/Table";
 import { EmptyState } from "../components/ui/EmptyState";
 import { FullPageSpinner } from "../components/ui/Spinner";
 import { ChartLegend, ChartTooltip } from "../components/charts/ChartPrimitives";
-import { useDarkMode } from "../hooks/useDarkMode";
+import { useTheme } from "../context/ThemeContext";
 import { getCategoricalPalette, getChrome, status } from "../lib/chartColors";
 import { formatCurrency, formatDate, formatNumber } from "../lib/formatters";
 import { useToast } from "../context/ToastContext";
 import { extractErrorMessage } from "../api/client";
 
 export default function Reports() {
-  const isDark = useDarkMode();
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
   const chrome = getChrome(isDark);
   const palette = getCategoricalPalette(isDark);
   const { showError } = useToast();
