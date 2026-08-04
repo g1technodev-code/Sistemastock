@@ -24,7 +24,7 @@ export function StatCard({
         : "bg-indigo-50 text-indigo-600 dark:bg-indigo-950 dark:text-indigo-400";
 
   return (
-    <Card className="p-5">
+    <Card className="p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg dark:hover:shadow-black/50">
       <div className="flex items-center justify-between">
         <span className="text-sm font-medium text-neutral-500 dark:text-neutral-400">{label}</span>
         <div className={cn("rounded-lg p-2", iconToneClass)}>

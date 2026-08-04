@@ -7,6 +7,7 @@ import { EmptyState } from "../components/ui/EmptyState";
 import { FullPageSpinner } from "../components/ui/Spinner";
 import { DataTable, type DataTableColumn } from "../components/ui/DataTable";
 import { formatCurrency, formatNumber } from "../lib/formatters";
+import { SalesChart } from "../components/ui/SalesChart";
 import type { PaymentMethod } from "../lib/types";
 
 const PAYMENT_METHOD_LABEL: Record<PaymentMethod, string> = {
@@ -78,6 +79,8 @@ export default function Estadisticas() {
         <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">Estadísticas de ventas</h1>
         <p className="text-sm text-neutral-500 dark:text-neutral-400">Rendimiento de ventas por período, producto, categoría, empleado y método de pago.</p>
       </div>
+
+      <SalesChart />
 
       <Card>
         <CardHeader title="Ventas por período" description="Total vendido, cantidad de ventas, ticket promedio y ganancia" />

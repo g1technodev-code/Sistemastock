@@ -259,7 +259,19 @@ export function setupMockServer() {
   });
 
   // ----- USERS -----
-  mock.onGet("/users").reply(200, db.users);
+  mock.onGet("/users").reply(200, { items: db.users, pagination: { page: 1, limit: 100, total: db.users.length, totalPages: 1 } });
+
+  // ----- REPORTS -----
+  mock.onGet("/reports/stock-valuation").reply(200, { totalValue: 100000, items: [] });
+  mock.onGet("/reports/movements").reply(200, { items: [], pagination: { page: 1, limit: 100, total: 0, totalPages: 1 } });
+  mock.onGet("/reports/top-products").reply(200, []);
+  mock.onGet("/reports/category-breakdown").reply(200, []);
+  mock.onGet("/reports/sales-stats").reply(200, {
+    today: { total: 0, count: 0 },
+    week: { total: 0, count: 0 },
+    month: { total: 0, count: 0 }
+  });
+  mock.onGet("/reports/profitability").reply(200, []);
 
   // ----- STOCK MOVEMENTS -----
   mock.onGet("/stock/movements").reply(200, { items: db.stockMovements, pagination: { page: 1, limit: 100, total: db.stockMovements.length, totalPages: 1 } });
