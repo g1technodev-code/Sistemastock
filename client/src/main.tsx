@@ -7,6 +7,7 @@ import App from "./App.tsx";
 import { AuthProvider } from "./context/AuthContext";
 import { ToastProvider } from "./context/ToastContext";
 import { ThemeProvider } from "./context/ThemeContext";
+import { setupMockServer } from "./api/mockServer";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -17,6 +18,8 @@ const queryClient = new QueryClient({
     },
   },
 });
+
+setupMockServer();
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
