@@ -58,7 +58,7 @@ export function setupMockServer() {
   mock.onPost("/auth/logout").reply(200, { success: true });
 
   // ----- DASHBOARD -----
-  mock.onGet("/dashboard").reply(200, {
+  mock.onGet("/dashboard/summary").reply(200, {
     kpis: {
       totalProducts: db.products.length,
       totalStockValue: db.products.reduce((acc, p) => acc + (p.currentStock * p.costPrice), 0),
