@@ -27,6 +27,7 @@ const saveToStorage = (key: string, value: any) => {
 export function setupMockServer() {
   console.log("🚀 MOCK SERVER INICIADO - Usando datos de prueba de Argentina completos");
   const mock = new MockAdapter(api, { delayResponse: 500 });
+  const globalMock = new MockAdapter(axios, { delayResponse: 500 });
 
   // --- DATOS INICIALES ---
   const initialCategories: Category[] = [
@@ -116,6 +117,7 @@ export function setupMockServer() {
   // ----- AUTH -----
   mock.onPost("/auth/login").reply(200, { accessToken: "mock-token", user: mockUser });
   mock.onPost("/auth/refresh").reply(200, { accessToken: "mock-token", user: mockUser });
+  globalMock.onPost(/\/auth\/refresh/).reply(200, { accessToken: "mock-token", user: mockUser });
   mock.onGet("/auth/me").reply(200, { user: mockUser });
   mock.onPost("/auth/logout").reply(200, { success: true });
 
@@ -259,14 +261,14 @@ export function setupMockServer() {
   });
 
   // ----- USERS -----
-  mock.onGet(/\/users(\?.*)?$/).reply(200, { items: db.users, pagination: { page: 1, limit: 100, total: db.users.length, totalPages: 1 } });
+  mock.onGet("/users").reply(200, { items: db.users, pagination: { page: 1, limit: 100, total: db.users.length, totalPages: 1 } });
 
   // ----- REPORTS -----
-  mock.onGet(/\/reports\/stock-valuation/).reply(200, { rows: [], totals: { stockValue: 0, potentialRevenue: 0, units: 0 } });
-  mock.onGet(/\/reports\/movements/).reply(200, { series: [], movements: [] });
-  mock.onGet(/\/reports\/top-products/).reply(200, { items: [] });
-  mock.onGet(/\/reports\/category-breakdown/).reply(200, { items: [] });
-  mock.onGet(/\/reports\/sales-stats/).reply(200, {
+  mock.onGet("/reports/stock-valuation").reply(200, { rows: [], totals: { stockValue: 0, potentialRevenue: 0, units: 0 } });
+  mock.onGet("/reports/movements").reply(200, { series: [], movements: [] });
+  mock.onGet("/reports/top-products").reply(200, { items: [] });
+  mock.onGet("/reports/category-breakdown").reply(200, { items: [] });
+  mock.onGet("/reports/sales-stats").reply(200, {
     periods: { 
       today: { total: 0, count: 0, avgTicket: 0, profit: 0 },
       week: { total: 0, count: 0, avgTicket: 0, profit: 0 },
@@ -278,7 +280,7 @@ export function setupMockServer() {
     byEmployee: [],
     byPaymentMethod: []
   });
-  mock.onGet(/\/reports\/profitability/).reply(200, {
+  mock.onGet("/reports/profitability").reply(200, {
     totals: { revenue: 0, cost: 0, grossProfit: 0, marginPercent: 0 },
     products: []
   });
