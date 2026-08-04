@@ -262,16 +262,26 @@ export function setupMockServer() {
   mock.onGet("/users").reply(200, { items: db.users, pagination: { page: 1, limit: 100, total: db.users.length, totalPages: 1 } });
 
   // ----- REPORTS -----
-  mock.onGet("/reports/stock-valuation").reply(200, { totalValue: 100000, items: [] });
-  mock.onGet("/reports/movements").reply(200, { items: [], pagination: { page: 1, limit: 100, total: 0, totalPages: 1 } });
-  mock.onGet("/reports/top-products").reply(200, []);
-  mock.onGet("/reports/category-breakdown").reply(200, []);
+  mock.onGet("/reports/stock-valuation").reply(200, { rows: [], totals: { stockValue: 0, potentialRevenue: 0, units: 0 } });
+  mock.onGet("/reports/movements").reply(200, { series: [], movements: [] });
+  mock.onGet("/reports/top-products").reply(200, { items: [] });
+  mock.onGet("/reports/category-breakdown").reply(200, { items: [] });
   mock.onGet("/reports/sales-stats").reply(200, {
-    today: { total: 0, count: 0 },
-    week: { total: 0, count: 0 },
-    month: { total: 0, count: 0 }
+    periods: { 
+      today: { total: 0, count: 0, avgTicket: 0, profit: 0 },
+      week: { total: 0, count: 0, avgTicket: 0, profit: 0 },
+      month: { total: 0, count: 0, avgTicket: 0, profit: 0 },
+      year: { total: 0, count: 0, avgTicket: 0, profit: 0 }
+    },
+    topProducts: [],
+    topCategories: [],
+    byEmployee: [],
+    byPaymentMethod: []
   });
-  mock.onGet("/reports/profitability").reply(200, []);
+  mock.onGet("/reports/profitability").reply(200, {
+    totals: { revenue: 0, cost: 0, grossProfit: 0, marginPercent: 0 },
+    products: []
+  });
 
   // ----- STOCK MOVEMENTS -----
   mock.onGet("/stock/movements").reply(200, { items: db.stockMovements, pagination: { page: 1, limit: 100, total: db.stockMovements.length, totalPages: 1 } });
