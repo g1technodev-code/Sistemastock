@@ -10,6 +10,7 @@
     "db:down": "docker compose down",
     "db:migrate": "npm run prisma:migrate --prefix server",
     "db:seed": "npm run prisma:seed --prefix server"
+    
   },
   "devDependencies": {
     "concurrently": "^9.1.0"
