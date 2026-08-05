@@ -121,7 +121,7 @@ export function Sidebar({ mobileOpen, onCloseMobile }: { mobileOpen: boolean; on
     <>
       <aside
         className={cn(
-          "hidden shrink-0 border-r border-neutral-200/60 bg-white transition-[width] duration-300 ease-in-out lg:block dark:border-white/5 dark:bg-neutral-950",
+          "hidden shrink-0 border-r border-neutral-200 bg-white transition-[width] duration-300 ease-in-out lg:block dark:border-white/5 dark:bg-neutral-950",
           collapsed ? "w-[72px]" : "w-[260px]",
         )}
       >
@@ -131,7 +131,7 @@ export function Sidebar({ mobileOpen, onCloseMobile }: { mobileOpen: boolean; on
       {mobileOpen && (
         <div className="fixed inset-0 z-40 lg:hidden">
           <div className="absolute inset-0 bg-neutral-950/20 backdrop-blur-sm transition-opacity" onClick={onCloseMobile} />
-          <aside className="relative h-full w-[260px] border-r border-neutral-200/60 bg-white/95 backdrop-blur-xl shadow-2xl dark:border-white/10 dark:bg-neutral-950/95 animate-in slide-in-from-left">
+          <aside className="relative h-full w-[260px] border-r border-neutral-200 bg-white/95 backdrop-blur-xl shadow-2xl dark:border-white/10 dark:bg-neutral-950/95 animate-in slide-in-from-left">
             {renderContent(false)}
           </aside>
         </div>

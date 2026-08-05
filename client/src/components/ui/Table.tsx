@@ -10,22 +10,22 @@ export function Table({ className, ...props }: HTMLAttributes<HTMLTableElement>)
 }
 
 export function THead({ className, ...props }: HTMLAttributes<HTMLTableSectionElement>) {
-  return <thead className={cn("sticky top-0 z-10 bg-neutral-50/90 backdrop-blur-md dark:bg-neutral-900/90", className)} {...props} />;
+  return <thead className={cn("sticky top-0 z-10 bg-neutral-100/90 backdrop-blur-md dark:bg-neutral-900/90", className)} {...props} />;
 }
 
 export function TBody({ className, ...props }: HTMLAttributes<HTMLTableSectionElement>) {
-  return <tbody className={cn("divide-y divide-neutral-100 dark:divide-neutral-800/60", className)} {...props} />;
+  return <tbody className={cn("divide-y divide-neutral-200 dark:divide-neutral-800/60", className)} {...props} />;
 }
 
 export function TR({ className, ...props }: HTMLAttributes<HTMLTableRowElement>) {
-  return <tr className={cn("transition-colors duration-150 hover:bg-neutral-50/80 dark:hover:bg-neutral-800/40 group", className)} {...props} />;
+  return <tr className={cn("transition-colors duration-150 hover:bg-neutral-50 dark:hover:bg-neutral-800/40 group", className)} {...props} />;
 }
 
 export function TH({ className, ...props }: ThHTMLAttributes<HTMLTableCellElement>) {
   return (
     <th
       className={cn(
-        "px-5 py-4 text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400 border-b border-neutral-200 dark:border-neutral-800",
+        "px-5 py-4 text-xs font-bold uppercase tracking-wider text-neutral-600 dark:text-neutral-400 border-b-2 border-neutral-200 dark:border-neutral-800",
         className,
       )}
       {...props}

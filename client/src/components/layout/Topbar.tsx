@@ -28,18 +28,18 @@ export function Topbar({ onOpenMenu, onOpenSearch }: { onOpenMenu: () => void; o
   const lowStockCount = lowStock?.pagination.total ?? 0;
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b border-neutral-200/60 bg-white/70 px-4 backdrop-blur-xl dark:border-white/10 dark:bg-neutral-950/70 sm:px-6">
+    <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b border-neutral-200 bg-white/70 px-4 backdrop-blur-xl dark:border-white/10 dark:bg-neutral-950/70 sm:px-6">
       <button onClick={onOpenMenu} className="rounded-full p-2 text-neutral-500 transition-colors hover:bg-neutral-100 lg:hidden dark:hover:bg-neutral-800">
         <Menu className="h-5 w-5" />
       </button>
 
       <button
         onClick={onOpenSearch}
-        className="flex flex-1 items-center gap-3 rounded-full border border-neutral-200/80 bg-white/50 px-4 py-2.5 text-sm text-neutral-400 shadow-sm transition-all duration-200 hover:border-neutral-300 hover:bg-white max-w-lg dark:border-white/10 dark:bg-neutral-900/50 dark:hover:border-white/20 dark:hover:bg-neutral-900"
+        className="flex flex-1 items-center gap-3 rounded-full border border-neutral-300 bg-white px-4 py-2.5 text-sm text-neutral-400 shadow-sm transition-all duration-200 hover:border-neutral-400 hover:bg-white max-w-lg dark:border-white/10 dark:bg-neutral-900/50 dark:hover:border-white/20 dark:hover:bg-neutral-900"
       >
         <Search className="h-4 w-4" />
         <span className="flex-1 text-left font-medium">Buscar...</span>
-        <kbd className="hidden rounded border border-neutral-300/80 bg-neutral-100 px-2 py-0.5 text-[10px] font-bold text-neutral-500 sm:inline dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-400">
+        <kbd className="hidden rounded border border-neutral-300 bg-neutral-100 px-2 py-0.5 text-[10px] font-bold text-neutral-500 sm:inline dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-400">
           ⌘ K
         </kbd>
       </button>
@@ -66,7 +66,7 @@ export function Topbar({ onOpenMenu, onOpenSearch }: { onOpenMenu: () => void; o
             )}
           </button>
           {alertsOpen && (
-            <div className="absolute right-0 z-40 mt-3 w-80 rounded-2xl border border-neutral-200/60 bg-white/95 p-2 shadow-float backdrop-blur-xl dark:border-white/10 dark:bg-neutral-900/95 animate-in zoom-in-95 duration-200">
+            <div className="absolute right-0 z-40 mt-3 w-80 rounded-2xl border border-neutral-200 bg-white/95 p-2 shadow-float backdrop-blur-xl dark:border-white/10 dark:bg-neutral-900/95 animate-in zoom-in-95 duration-200">
               <div className="flex items-center justify-between px-3 py-2 border-b border-neutral-100 dark:border-neutral-800/60">
                 <span className="text-sm font-bold tracking-tight text-neutral-900 dark:text-neutral-100">Alertas de stock</span>
                 <Badge tone="danger">{lowStockCount}</Badge>
@@ -107,7 +107,7 @@ export function Topbar({ onOpenMenu, onOpenSearch }: { onOpenMenu: () => void; o
             </div>
           </button>
           {userMenuOpen && (
-            <div className="absolute right-0 z-40 mt-3 w-56 rounded-2xl border border-neutral-200/60 bg-white/95 p-2 shadow-float backdrop-blur-xl dark:border-white/10 dark:bg-neutral-900/95 animate-in zoom-in-95 duration-200">
+            <div className="absolute right-0 z-40 mt-3 w-56 rounded-2xl border border-neutral-200 bg-white/95 p-2 shadow-float backdrop-blur-xl dark:border-white/10 dark:bg-neutral-900/95 animate-in zoom-in-95 duration-200">
               <div className="px-4 py-3">
                 <p className="truncate text-sm font-bold text-neutral-900 dark:text-neutral-100">{user?.name}</p>
                 <p className="truncate text-xs font-medium text-neutral-500 dark:text-neutral-400 mt-0.5">{user?.email}</p>
