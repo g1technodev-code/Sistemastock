@@ -1,5 +1,7 @@
 import type { Role } from "./types";
 
+export const ROLE_LABEL: Record<Role, string> = { ADMIN: "Administrador", MANAGER: "Gestor", EMPLOYEE: "Empleado" };
+
 /** Mirrors the server-side RBAC matrix in server/src/middlewares/auth.middleware.ts usage across routes. */
 export const permissions = {
   // Catalog management: Admins can do anything. Employees can see products, but maybe not manage categories/suppliers

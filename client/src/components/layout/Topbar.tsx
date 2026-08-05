@@ -5,6 +5,7 @@ import { useAuth } from "../../context/AuthContext";
 import { useTheme } from "../../context/ThemeContext";
 import { useLowStockAlerts } from "../../hooks/useLowStockAlerts";
 import { initials } from "../../lib/formatters";
+import { ROLE_LABEL } from "../../lib/permissions";
 import { Badge } from "../ui/Badge";
 
 export function Topbar({ onOpenMenu, onOpenSearch }: { onOpenMenu: () => void; onOpenSearch: () => void }) {
@@ -112,7 +113,7 @@ export function Topbar({ onOpenMenu, onOpenSearch }: { onOpenMenu: () => void; o
                 <p className="truncate text-sm font-bold text-neutral-900 dark:text-neutral-100">{user?.name}</p>
                 <p className="truncate text-xs font-medium text-neutral-500 dark:text-neutral-400 mt-0.5">{user?.email}</p>
                 <div className="mt-2">
-                  <Badge tone="info">{user?.role}</Badge>
+                  <Badge tone="info">{user ? ROLE_LABEL[user.role] : ""}</Badge>
                 </div>
               </div>
               <div className="my-1 h-px bg-neutral-100 dark:bg-neutral-800/60" />
