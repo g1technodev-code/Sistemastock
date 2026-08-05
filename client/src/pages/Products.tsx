@@ -6,7 +6,7 @@ import { Button } from "../components/ui/Button";
 import { Input, Select } from "../components/ui/Field";
 import { Badge } from "../components/ui/Badge";
 import { DataTable, type DataTableColumn } from "../components/ui/DataTable";
-import { Modal } from "../components/ui/Modal";
+import { Drawer } from "../components/ui/Drawer";
 import { EmptyState } from "../components/ui/EmptyState";
 import { ConfirmDialog } from "../components/ui/ConfirmDialog";
 import { ProductForm, type ProductFormValues } from "../components/products/ProductForm";
@@ -61,7 +61,7 @@ export default function Products() {
   }, [location.state, navigate, canManage]);
 
   useBarcodeScanner(async (barcode) => {
-    if (formOpen) return; // Si ya hay un modal abierto, ignorar
+    if (formOpen) return; // Si ya hay un modal/drawer abierto, ignorar
     try {
       const res = await listProducts({ q: barcode, isActive: true, limit: 2 });
       const match = res.items.find((p) => p.sku === barcode || p.barcode === barcode);
@@ -121,10 +121,10 @@ export default function Products() {
       render: (product) => (
         <div>
           <div className="flex items-center gap-2">
-            <span className="font-medium text-neutral-900 dark:text-neutral-100">{product.name}</span>
+            <span className="font-bold text-neutral-900 dark:text-neutral-100">{product.name}</span>
             {!product.isActive && <Badge tone="neutral">Inactivo</Badge>}
           </div>
-          <div className="text-xs text-neutral-400">{product.sku}</div>
+          <div className="text-xs font-medium text-neutral-400 mt-0.5">{product.sku}</div>
         </div>
       ),
     },
@@ -132,7 +132,7 @@ export default function Products() {
       key: "category",
       header: "Categoría",
       sortValue: (product) => product.category?.name?.toLowerCase() ?? "",
-      render: (product) => product.category?.name ?? "—",
+      render: (product) => <Badge tone="info">{product.category?.name ?? "Sin categoría"}</Badge>,
     },
     {
       key: "stock",
@@ -140,8 +140,8 @@ export default function Products() {
       sortValue: (product) => product.currentStock,
       render: (product) => (
         <div className="flex items-center gap-2">
-          <span>
-            {formatNumber(product.currentStock)} {product.unit}
+          <span className="font-semibold text-neutral-900 dark:text-neutral-100">
+            {formatNumber(product.currentStock)} <span className="text-neutral-400 font-medium">{product.unit}</span>
           </span>
           {product.currentStock <= product.minStock && <Badge tone="danger">Bajo</Badge>}
         </div>
@@ -151,36 +151,36 @@ export default function Products() {
       key: "cost",
       header: "Costo",
       sortValue: (product) => product.costPrice,
-      render: (product) => formatCurrency(product.costPrice),
+      render: (product) => <span className="font-medium text-neutral-600 dark:text-neutral-400">{formatCurrency(product.costPrice)}</span>,
     },
     {
       key: "price",
       header: "Precio venta",
       sortValue: (product) => product.sellPrice,
-      render: (product) => formatCurrency(product.sellPrice),
+      render: (product) => <span className="font-bold text-primary-600 dark:text-primary-400">{formatCurrency(product.sellPrice)}</span>,
     },
   ];
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+    <div className="mx-auto flex max-w-7xl flex-col gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">Productos</h1>
-          <p className="text-sm text-neutral-500 dark:text-neutral-400">Catálogo completo de tu inventario.</p>
+          <h1 className="text-2xl font-black tracking-tight text-neutral-900 dark:text-white">Productos</h1>
+          <p className="mt-1 text-sm font-medium text-neutral-500 dark:text-neutral-400">Catálogo completo de tu inventario.</p>
         </div>
         {canManage && (
-          <Button onClick={openCreate}>
-            <Plus className="h-4 w-4" /> Nuevo producto
+          <Button onClick={openCreate} className="shadow-sm">
+            <Plus className="h-4 w-4" strokeWidth={2.5} /> Nuevo producto
           </Button>
         )}
       </div>
 
-      <Card className="p-4">
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="relative min-w-[220px] flex-1">
+      <Card className="p-2">
+        <div className="flex flex-wrap items-center gap-3 p-2">
+          <div className="relative min-w-[280px] flex-1">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
             <Input
-              className="pl-9"
+              className="pl-9 h-10 border-transparent bg-neutral-100/80 hover:bg-neutral-200/50 focus:bg-white dark:bg-neutral-800/80 dark:hover:bg-neutral-800"
               placeholder="Buscar por nombre, SKU o código de barras..."
               value={search}
               onChange={(e) => {
@@ -190,7 +190,7 @@ export default function Products() {
             />
           </div>
           <Select
-            className="w-48"
+            className="w-48 h-10"
             value={categoryId}
             onChange={(e) => {
               setCategoryId(e.target.value);
@@ -209,18 +209,18 @@ export default function Products() {
               setLowStockOnly((v) => !v);
               setPage(1);
             }}
-            className={`flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
+            className={`flex items-center gap-2 rounded-xl border px-4 py-2 text-sm font-bold transition-all duration-200 ${
               lowStockOnly
-                ? "border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-300"
-                : "border-neutral-300 bg-white text-neutral-600 hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
+                ? "border-warning-300 bg-warning-50 text-warning-700 shadow-sm dark:border-warning-800/60 dark:bg-warning-500/10 dark:text-warning-400"
+                : "border-neutral-200 bg-white text-neutral-600 hover:border-neutral-300 hover:bg-neutral-50 dark:border-white/10 dark:bg-neutral-900/50 dark:text-neutral-400 dark:hover:bg-neutral-900"
             }`}
           >
-            <AlertTriangle className="h-4 w-4" /> Stock bajo
+            <AlertTriangle className="h-4 w-4" strokeWidth={2.5} /> Stock bajo
           </button>
         </div>
       </Card>
 
-      <Card>
+      <Card className="shadow-float">
         <DataTable
           columns={productColumns}
           data={data?.items}
@@ -240,7 +240,7 @@ export default function Products() {
                       <Pencil className="h-4 w-4" />
                     </Button>
                     <Button variant="ghost" size="sm" onClick={() => setDeleteTarget(product)}>
-                      <Trash2 className="h-4 w-4 text-red-500" />
+                      <Trash2 className="h-4 w-4 text-danger-500" />
                     </Button>
                   </>
                 )
@@ -249,14 +249,14 @@ export default function Products() {
         />
       </Card>
 
-      <Modal open={formOpen} onClose={() => setFormOpen(false)} title={editingProduct ? "Editar producto" : "Nuevo producto"} size="lg">
+      <Drawer open={formOpen} onClose={() => setFormOpen(false)} title={editingProduct ? "Editar producto" : "Nuevo producto"}>
         <ProductForm
           initialValues={editingProduct ?? undefined}
           onSubmit={handleSubmit}
           onCancel={() => setFormOpen(false)}
           isSubmitting={create.isPending || update.isPending}
         />
-      </Modal>
+      </Drawer>
 
       <ConfirmDialog
         open={!!deleteTarget}

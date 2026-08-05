@@ -46,21 +46,21 @@ export function Modal({
         aria-modal="true"
         aria-labelledby={titleId}
         tabIndex={-1}
-        className={`relative w-full ${sizeClass} max-h-[90vh] overflow-y-auto rounded-xl border border-neutral-200 bg-white shadow-xl focus:outline-none dark:border-neutral-800 dark:bg-neutral-900`}
+        className={`relative w-full ${sizeClass} max-h-[90vh] overflow-y-auto rounded-2xl border border-neutral-200/60 bg-white/95 backdrop-blur-xl shadow-float focus:outline-none dark:border-white/10 dark:bg-neutral-900/95 animate-in zoom-in-95 duration-200`}
       >
-        <div className="flex items-center justify-between border-b border-neutral-200 px-5 py-4 dark:border-neutral-800">
-          <h2 id={titleId} className="text-base font-semibold text-neutral-900 dark:text-neutral-100">
+        <div className="flex items-center justify-between border-b border-neutral-100 px-6 py-5 dark:border-neutral-800/60">
+          <h2 id={titleId} className="text-lg font-bold tracking-tight text-neutral-900 dark:text-neutral-100">
             {title}
           </h2>
           <button
             onClick={onClose}
             aria-label="Cerrar"
-            className="rounded-md p-1 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:hover:bg-neutral-800 dark:hover:text-neutral-200"
+            className="rounded-full p-2 text-neutral-400 transition-colors hover:bg-neutral-100 hover:text-neutral-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 dark:hover:bg-neutral-800 dark:hover:text-neutral-200"
           >
             <X className="h-5 w-5" />
           </button>
         </div>
-        <div className="p-5">{children}</div>
+        <div className="p-6">{children}</div>
       </div>
     </div>,
     document.body,

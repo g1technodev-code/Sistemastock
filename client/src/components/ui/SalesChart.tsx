@@ -14,20 +14,20 @@ const mockData = [
 
 export function SalesChart() {
   return (
-    <Card className="col-span-full mb-6 dark:bg-neutral-900/60 dark:backdrop-blur-md dark:border-white/10">
+    <Card className="col-span-full shadow-float dark:bg-neutral-900/60 dark:backdrop-blur-md dark:border-white/10 relative z-0">
       <CardHeader title="Evolución de Ingresos" description="Últimos 7 días (Simulado)" />
-      <div className="h-[300px] w-full p-4">
+      <div className="h-[320px] w-full p-4 pl-0">
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={mockData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#525252" opacity={0.2} />
-            <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#888' }} dy={10} />
-            <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#888' }} tickFormatter={(val) => `$${val/1000}k`} />
+          <BarChart data={mockData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+            <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="#a3a3a3" opacity={0.15} />
+            <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#737373', fontWeight: 500 }} dy={12} />
+            <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#737373', fontWeight: 500 }} tickFormatter={(val) => `$${val/1000}k`} />
             <Tooltip 
-              cursor={{ fill: '#888', opacity: 0.1 }}
-              contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
-              formatter={(value: any) => [formatCurrency(value as number), "Ingresos"]}
+              cursor={{ fill: '#737373', opacity: 0.05 }}
+              contentStyle={{ borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1)', padding: '12px 16px', fontWeight: 600 }}
+              formatter={(value: any) => [formatCurrency(Number(value)), "Ingresos"] as any}
             />
-            <Bar dataKey="ingresos" fill="#6366f1" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="ingresos" fill="#2563EB" radius={[6, 6, 0, 0]} maxBarSize={48} animationDuration={1000} />
           </BarChart>
         </ResponsiveContainer>
       </div>

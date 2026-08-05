@@ -2,7 +2,7 @@ import { forwardRef, type InputHTMLAttributes, type ReactNode, type SelectHTMLAt
 import { cn } from "../../lib/utils";
 
 const fieldBase =
-  "w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 placeholder:text-neutral-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:bg-neutral-50 disabled:text-neutral-400 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100 dark:disabled:bg-neutral-800";
+  "w-full rounded-xl border border-neutral-200/80 bg-white/50 px-4 py-2.5 text-sm text-neutral-900 placeholder:text-neutral-400 transition-all duration-200 hover:border-neutral-300 focus:border-primary-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary-500/10 disabled:bg-neutral-50 disabled:text-neutral-400 dark:border-neutral-700/50 dark:bg-neutral-900/50 dark:text-neutral-100 dark:hover:border-neutral-600 dark:focus:border-primary-500 dark:focus:bg-neutral-900 dark:disabled:bg-neutral-800 shadow-sm";
 
 export function FieldWrapper({
   label,

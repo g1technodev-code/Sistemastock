@@ -199,17 +199,17 @@ export default function Ventas() {
                         disabled={outOfStock}
                         onClick={() => addToCart(p.id, p.name, p.sku, p.sellPrice, p.currentStock)}
                         className={cn(
-                          "flex flex-col items-start gap-1 rounded-lg border p-3 text-left text-sm transition-colors",
+                          "flex flex-col items-start gap-2 rounded-2xl border p-4 text-left transition-all duration-200 active:scale-95",
                           outOfStock
                             ? "cursor-not-allowed border-neutral-200 opacity-50 dark:border-neutral-800"
-                            : "border-neutral-200 hover:border-indigo-400 hover:bg-indigo-50 dark:border-neutral-700 dark:hover:bg-indigo-950",
+                            : "border-neutral-200 hover:border-primary-400 hover:bg-primary-50 hover:shadow-md dark:border-neutral-700/60 dark:hover:border-primary-500/50 dark:hover:bg-primary-500/10",
                         )}
                       >
-                        <span className="font-medium text-neutral-900 dark:text-neutral-100">{p.name}</span>
-                        <span className="text-xs text-neutral-400">{p.sku}</span>
-                        <div className="flex w-full items-center justify-between">
-                          <span className="font-medium text-indigo-600 dark:text-indigo-400">{formatCurrency(p.sellPrice)}</span>
-                          <span className="text-xs text-neutral-500">Stock: {p.currentStock}</span>
+                        <span className="font-bold tracking-tight text-neutral-900 dark:text-neutral-100">{p.name}</span>
+                        <span className="text-xs font-medium text-neutral-400">{p.sku}</span>
+                        <div className="flex w-full items-center justify-between mt-1">
+                          <span className="text-lg font-black text-primary-600 dark:text-primary-400">{formatCurrency(p.sellPrice)}</span>
+                          <span className="rounded-full bg-neutral-100 px-2 py-0.5 text-xs font-semibold text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400">Stock: {p.currentStock}</span>
                         </div>
                       </button>
                     );
@@ -218,39 +218,44 @@ export default function Ventas() {
               </CardBody>
             </Card>
 
-            <Card className="lg:w-96 lg:shrink-0">
-              <CardHeader title="Carrito" description={`${cart.length} producto(s)`} />
-              <CardBody className="flex flex-col gap-3">
+            <Card className="lg:w-[420px] lg:shrink-0 h-fit sticky top-24 shadow-2xl ring-1 ring-black/5 dark:ring-white/5">
+              <CardHeader title="Carrito de Compra" description={`${cart.length} producto(s)`} />
+              <CardBody className="flex flex-col gap-4">
                 {cart.length === 0 ? (
-                  <p className="py-6 text-center text-sm text-neutral-400">Agrega productos al carrito.</p>
+                  <div className="flex flex-col items-center justify-center py-12">
+                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-neutral-100 dark:bg-neutral-800">
+                      <ShoppingCart className="h-8 w-8 text-neutral-400" />
+                    </div>
+                    <p className="mt-4 text-sm font-medium text-neutral-500 dark:text-neutral-400">Agrega productos al carrito.</p>
+                  </div>
                 ) : (
-                  <div className="flex flex-col gap-2">
+                  <div className="flex max-h-[300px] flex-col gap-3 overflow-y-auto pr-1">
                     {cart.map((line) => (
-                      <div key={line.productId} className="flex items-center gap-2 rounded-lg border border-neutral-200 p-2 dark:border-neutral-700">
+                      <div key={line.productId} className="flex items-center gap-3 rounded-xl border border-neutral-200/80 bg-neutral-50/50 p-3 dark:border-neutral-700/50 dark:bg-neutral-800/20">
                         <div className="min-w-0 flex-1">
-                          <div className="truncate text-sm font-medium text-neutral-900 dark:text-neutral-100">{line.name}</div>
-                          <div className="text-xs text-neutral-400">{formatCurrency(line.unitPrice)} c/u</div>
+                          <div className="truncate text-sm font-bold text-neutral-900 dark:text-neutral-100">{line.name}</div>
+                          <div className="text-xs font-medium text-neutral-500 dark:text-neutral-400">{formatCurrency(line.unitPrice)} c/u</div>
                         </div>
-                        <div className="flex items-center gap-1">
+                        <div className="flex items-center gap-2">
                           <button
                             type="button"
                             onClick={() => changeQuantity(line.productId, -1)}
-                            className="flex h-6 w-6 items-center justify-center rounded-md border border-neutral-300 text-neutral-500 hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-neutral-800"
+                            className="flex h-8 w-8 items-center justify-center rounded-full bg-white border border-neutral-200 text-neutral-500 shadow-sm transition-colors hover:bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-700"
                           >
-                            <Minus className="h-3 w-3" />
+                            <Minus className="h-4 w-4" />
                           </button>
-                          <span className="w-6 text-center text-sm">{line.quantity}</span>
+                          <span className="w-6 text-center font-bold">{line.quantity}</span>
                           <button
                             type="button"
                             disabled={line.quantity >= line.availableStock}
                             onClick={() => changeQuantity(line.productId, 1)}
-                            className="flex h-6 w-6 items-center justify-center rounded-md border border-neutral-300 text-neutral-500 hover:bg-neutral-100 disabled:opacity-40 dark:border-neutral-700 dark:hover:bg-neutral-800"
+                            className="flex h-8 w-8 items-center justify-center rounded-full bg-white border border-neutral-200 text-neutral-500 shadow-sm transition-colors hover:bg-neutral-100 disabled:opacity-40 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-700"
                           >
-                            <Plus className="h-3 w-3" />
+                            <Plus className="h-4 w-4" />
                           </button>
                         </div>
-                        <span className="w-16 text-right text-sm font-medium">{formatCurrency(line.unitPrice * line.quantity)}</span>
-                        <button type="button" onClick={() => removeLine(line.productId)} className="text-neutral-400 hover:text-red-500">
+                        <span className="w-16 text-right font-black text-primary-600 dark:text-primary-400">{formatCurrency(line.unitPrice * line.quantity)}</span>
+                        <button type="button" onClick={() => removeLine(line.productId)} className="rounded-full p-2 text-neutral-400 hover:bg-danger-50 hover:text-danger-500 dark:hover:bg-danger-500/10">
                           <Trash2 className="h-4 w-4" />
                         </button>
                       </div>
@@ -258,9 +263,9 @@ export default function Ventas() {
                   </div>
                 )}
 
-                <div className="flex flex-col gap-1.5 pt-2">
-                  <span className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Medio de pago</span>
-                  <div className="grid grid-cols-3 gap-2">
+                <div className="flex flex-col gap-2 pt-4">
+                  <span className="text-sm font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">Medio de pago</span>
+                  <div className="grid grid-cols-3 gap-3">
                     {(["EFECTIVO", "TRANSFERENCIA", "TARJETA"] as PaymentMethod[]).map((m) => {
                       const Icon = PAYMENT_METHOD_ICON[m];
                       return (
@@ -269,13 +274,13 @@ export default function Ventas() {
                           type="button"
                           onClick={() => setPaymentMethod(m)}
                           className={cn(
-                            "flex flex-col items-center gap-1 rounded-lg border p-2 text-xs font-medium transition-colors",
+                            "flex flex-col items-center gap-2 rounded-xl border p-3 text-xs font-bold transition-all duration-200 active:scale-95",
                             paymentMethod === m
-                              ? "border-indigo-500 bg-indigo-50 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300"
-                              : "border-neutral-200 text-neutral-500 hover:bg-neutral-50 dark:border-neutral-700 dark:hover:bg-neutral-800",
+                              ? "border-primary-500 bg-primary-500 text-white shadow-md dark:bg-primary-600"
+                              : "border-neutral-200 text-neutral-500 hover:border-neutral-300 hover:bg-neutral-50 dark:border-neutral-700 dark:text-neutral-400 dark:hover:border-neutral-600 dark:hover:bg-neutral-800/60",
                           )}
                         >
-                          <Icon className="h-4 w-4" />
+                          <Icon className="h-5 w-5" strokeWidth={paymentMethod === m ? 3 : 2} />
                           {PAYMENT_METHOD_LABEL[m]}
                         </button>
                       );
@@ -309,6 +314,7 @@ export default function Ventas() {
                   onClick={checkout}
                   disabled={cart.length === 0 || !hasOpenShift || missingReceiptInfo}
                   isLoading={createSale.isPending}
+                  className="mt-2 h-14 text-lg font-bold shadow-lg"
                 >
                   Confirmar venta
                 </Button>

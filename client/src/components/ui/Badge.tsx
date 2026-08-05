@@ -4,16 +4,16 @@ import { cn } from "../../lib/utils";
 type Tone = "neutral" | "success" | "warning" | "danger" | "info";
 
 const toneClasses: Record<Tone, string> = {
-  neutral: "bg-neutral-100 text-neutral-800 border border-neutral-200 dark:bg-neutral-800/80 dark:text-neutral-200 dark:border-neutral-700",
-  success: "bg-emerald-100 text-emerald-800 border border-emerald-200 dark:bg-emerald-500/20 dark:text-emerald-300 dark:border-emerald-500/30",
-  warning: "bg-amber-100 text-amber-800 border border-amber-200 dark:bg-amber-500/20 dark:text-amber-300 dark:border-amber-500/30",
-  danger: "bg-red-100 text-red-800 border border-red-200 dark:bg-red-500/20 dark:text-red-300 dark:border-red-500/30",
-  info: "bg-indigo-100 text-indigo-800 border border-indigo-200 dark:bg-indigo-500/20 dark:text-indigo-300 dark:border-indigo-500/30",
+  neutral: "bg-neutral-100/80 text-neutral-800 border border-neutral-200 dark:bg-neutral-800/80 dark:text-neutral-200 dark:border-neutral-700",
+  success: "bg-success-100 text-success-800 border border-success-200 dark:bg-success-500/10 dark:text-success-400 dark:border-success-500/20",
+  warning: "bg-warning-100 text-warning-800 border border-warning-200 dark:bg-warning-500/10 dark:text-warning-400 dark:border-warning-500/20",
+  danger: "bg-danger-100 text-danger-800 border border-danger-200 dark:bg-danger-500/10 dark:text-danger-400 dark:border-danger-500/20",
+  info: "bg-primary-100 text-primary-800 border border-primary-200 dark:bg-primary-500/10 dark:text-primary-400 dark:border-primary-500/20",
 };
 
 export function Badge({ tone = "neutral", children, className }: { tone?: Tone; children: ReactNode; className?: string }) {
   return (
-    <span className={cn("inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium", toneClasses[tone], className)}>
+    <span className={cn("inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold tracking-wide uppercase", toneClasses[tone], className)}>
       {children}
     </span>
   );

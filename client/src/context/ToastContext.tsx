@@ -40,10 +40,10 @@ export function ToastProvider({ children }: { children: ReactNode }) {
           <div
             key={toast.id}
             className={cn(
-              "flex items-start gap-2 rounded-lg border px-4 py-3 shadow-lg backdrop-blur text-sm min-w-[280px] max-w-sm animate-in fade-in slide-in-from-bottom-2",
+              "flex items-start gap-3 rounded-2xl border px-4 py-3.5 shadow-float backdrop-blur-xl text-sm font-medium min-w-[320px] max-w-sm animate-in fade-in slide-in-from-bottom-5 duration-300",
               toast.variant === "success"
-                ? "bg-white/95 border-emerald-200 text-emerald-900 dark:bg-neutral-900/95 dark:border-emerald-900 dark:text-emerald-200"
-                : "bg-white/95 border-red-200 text-red-900 dark:bg-neutral-900/95 dark:border-red-900 dark:text-red-200",
+                ? "bg-white/95 border-success-200 text-success-900 dark:bg-neutral-900/95 dark:border-success-900/50 dark:text-success-100"
+                : "bg-white/95 border-danger-200 text-danger-900 dark:bg-neutral-900/95 dark:border-danger-900/50 dark:text-danger-100",
             )}
           >
             {toast.variant === "success" ? (

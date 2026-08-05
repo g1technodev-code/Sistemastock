@@ -42,21 +42,21 @@ export function Drawer({
         aria-modal="true"
         aria-labelledby={titleId}
         tabIndex={-1}
-        className="relative flex h-full w-full max-w-lg flex-col border-l border-neutral-200 bg-white shadow-xl focus:outline-none dark:border-neutral-800 dark:bg-neutral-900"
+        className="relative flex h-full w-full max-w-lg flex-col border-l border-neutral-200/60 bg-white/95 backdrop-blur-xl shadow-2xl focus:outline-none dark:border-white/10 dark:bg-neutral-900/95 animate-in slide-in-from-right"
       >
-        <div className="flex items-center justify-between border-b border-neutral-200 px-5 py-4 dark:border-neutral-800">
-          <div id={titleId} className="text-base font-semibold text-neutral-900 dark:text-neutral-100">
+        <div className="flex items-center justify-between border-b border-neutral-100 px-6 py-5 dark:border-neutral-800/60">
+          <div id={titleId} className="text-lg font-bold tracking-tight text-neutral-900 dark:text-neutral-100">
             {title}
           </div>
           <button
             onClick={onClose}
             aria-label="Cerrar"
-            className="rounded-md p-1 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:hover:bg-neutral-800 dark:hover:text-neutral-200"
+            className="rounded-full p-2 text-neutral-400 transition-colors hover:bg-neutral-100 hover:text-neutral-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 dark:hover:bg-neutral-800 dark:hover:text-neutral-200"
           >
             <X className="h-5 w-5" />
           </button>
         </div>
-        <div className="flex-1 overflow-y-auto p-5">{children}</div>
+        <div className="flex-1 overflow-y-auto p-6">{children}</div>
       </div>
     </div>,
     document.body,

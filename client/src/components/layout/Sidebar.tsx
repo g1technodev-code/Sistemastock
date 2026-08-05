@@ -63,21 +63,21 @@ export function Sidebar({ mobileOpen, onCloseMobile }: { mobileOpen: boolean; on
   function renderContent(isCollapsed: boolean) {
     return (
       <div className="flex h-full flex-col">
-        <div className={cn("flex items-center gap-2 px-5 py-5", isCollapsed && "justify-center px-3")}>
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-neutral-900 text-white dark:bg-white dark:text-neutral-900">
+        <div className={cn("flex items-center gap-3 px-6 py-6", isCollapsed && "justify-center px-3")}>
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary-600 text-white shadow-sm dark:bg-primary-500">
             <Boxes className="h-5 w-5" />
           </div>
           {!isCollapsed && (
-            <span className="text-lg font-semibold tracking-tight text-neutral-900 dark:text-neutral-100">StockFlow</span>
+            <span className="text-xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100">StockFlow</span>
           )}
           <button
             onClick={onCloseMobile}
-            className="ml-auto rounded-md p-1 text-neutral-400 hover:bg-neutral-100 lg:hidden dark:hover:bg-neutral-800"
+            className="ml-auto rounded-full p-2 text-neutral-400 hover:bg-neutral-100 lg:hidden dark:hover:bg-neutral-800 transition-colors"
           >
             <X className="h-5 w-5" />
           </button>
         </div>
-        <nav className="flex-1 space-y-0.5 px-3">
+        <nav className="flex-1 space-y-1 px-4 mt-2">
           {items.map((item) => (
             <NavLink
               key={item.to}
@@ -86,33 +86,33 @@ export function Sidebar({ mobileOpen, onCloseMobile }: { mobileOpen: boolean; on
               title={isCollapsed ? item.label : undefined}
               className={({ isActive }) =>
                 cn(
-                  "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500",
+                  "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500",
                   isCollapsed && "justify-center px-0",
                   isActive
-                    ? "bg-indigo-50 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300"
-                    : "text-neutral-600 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:bg-neutral-800",
+                    ? "bg-primary-50 text-primary-700 dark:bg-primary-500/10 dark:text-primary-400 shadow-sm"
+                    : "text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900 dark:text-neutral-400 dark:hover:bg-neutral-800/60 dark:hover:text-neutral-200",
                 )
               }
             >
-              <item.icon className="h-4 w-4 shrink-0" />
+              <item.icon className={cn("h-[18px] w-[18px] shrink-0", isCollapsed && "h-5 w-5")} strokeWidth={2.5} />
               {!isCollapsed && item.label}
             </NavLink>
           ))}
         </nav>
-        <div className="hidden px-3 py-3 lg:block">
+        <div className="hidden px-4 py-4 lg:block">
           <button
             onClick={() => setCollapsed((v) => !v)}
             aria-label={isCollapsed ? "Expandir menú" : "Colapsar menú"}
             className={cn(
-              "flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-neutral-500 transition-colors hover:bg-neutral-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:text-neutral-400 dark:hover:bg-neutral-800",
+              "flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-neutral-500 transition-colors hover:bg-neutral-100 hover:text-neutral-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 dark:text-neutral-400 dark:hover:bg-neutral-800/60 dark:hover:text-neutral-200",
               isCollapsed && "justify-center px-0",
             )}
           >
-            {isCollapsed ? <PanelLeftOpen className="h-4 w-4 shrink-0" /> : <PanelLeftClose className="h-4 w-4 shrink-0" />}
+            {isCollapsed ? <PanelLeftOpen className="h-5 w-5 shrink-0" strokeWidth={2.5} /> : <PanelLeftClose className="h-5 w-5 shrink-0" strokeWidth={2.5} />}
             {!isCollapsed && "Colapsar"}
           </button>
         </div>
-        {!isCollapsed && <div className="px-5 py-4 text-xs text-neutral-400 dark:text-neutral-600">StockFlow v1.0</div>}
+        {!isCollapsed && <div className="px-6 py-4 text-xs font-medium text-neutral-400 dark:text-neutral-600">StockFlow v1.0</div>}
       </div>
     );
   }
@@ -121,8 +121,8 @@ export function Sidebar({ mobileOpen, onCloseMobile }: { mobileOpen: boolean; on
     <>
       <aside
         className={cn(
-          "hidden shrink-0 border-r border-neutral-200 bg-white transition-[width] duration-200 ease-in-out lg:block dark:border-neutral-800 dark:bg-neutral-900",
-          collapsed ? "w-16" : "w-64",
+          "hidden shrink-0 border-r border-neutral-200/60 bg-white transition-[width] duration-300 ease-in-out lg:block dark:border-white/5 dark:bg-neutral-950",
+          collapsed ? "w-[72px]" : "w-[260px]",
         )}
       >
         {renderContent(collapsed)}
@@ -130,8 +130,8 @@ export function Sidebar({ mobileOpen, onCloseMobile }: { mobileOpen: boolean; on
 
       {mobileOpen && (
         <div className="fixed inset-0 z-40 lg:hidden">
-          <div className="absolute inset-0 bg-neutral-950/40" onClick={onCloseMobile} />
-          <aside className="relative h-full w-64 border-r border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-900">
+          <div className="absolute inset-0 bg-neutral-950/20 backdrop-blur-sm transition-opacity" onClick={onCloseMobile} />
+          <aside className="relative h-full w-[260px] border-r border-neutral-200/60 bg-white/95 backdrop-blur-xl shadow-2xl dark:border-white/10 dark:bg-neutral-950/95 animate-in slide-in-from-left">
             {renderContent(false)}
           </aside>
         </div>
