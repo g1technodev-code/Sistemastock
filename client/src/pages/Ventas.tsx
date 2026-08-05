@@ -25,6 +25,8 @@ import { useCreateSale, useSales } from "../hooks/useSales";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 import { extractErrorMessage } from "../api/client";
+import { listProducts } from "../api/products";
+import { useBarcodeScanner } from "../hooks/useBarcodeScanner";
 import { formatCurrency, formatDateTime } from "../lib/formatters";
 import { cn } from "../lib/utils";
 import type { PaymentMethod } from "../lib/types";
@@ -61,6 +63,29 @@ export default function Ventas() {
   const [receiptNumber, setReceiptNumber] = useState("");
   const [payerName, setPayerName] = useState("");
   const createSale = useCreateSale();
+
+  const handleScan = async (code: string) => {
+    try {
+      const res = await listProducts({ q: code, isActive: true, limit: 10 });
+      // Buscamos coincidencia exacta por SKU o código de barras
+      const match = res.items.find((p) => p.sku === code || p.barcode === code);
+      if (match) {
+        if (match.currentStock > 0) {
+          addToCart(match.id, match.name, match.sku, match.sellPrice, match.currentStock);
+          showSuccess(`Agregado: ${match.name}`);
+          setSearch(""); // Limpiamos la búsqueda si había algo
+        } else {
+          showError(`Sin stock: ${match.name}`);
+        }
+      } else {
+        showError(`Producto no encontrado: ${code}`);
+      }
+    } catch (error) {
+      showError("Error al procesar el código de barras");
+    }
+  };
+
+  useBarcodeScanner(handleScan);
 
   const total = useMemo(() => cart.reduce((sum, line) => sum + line.unitPrice * line.quantity, 0), [cart]);
   const hasOpenShift = !!cashStatus?.myOpenShift;
@@ -151,9 +176,15 @@ export default function Ventas() {
               <CardHeader title="Productos" description="Busca por nombre, SKU o código de barra" />
               <CardBody className="flex flex-col gap-3">
                 <Input
-                  placeholder="Buscar producto..."
+                  placeholder="Buscar producto o escanear código..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
+                  onKeyDown={async (e) => {
+                    if (e.key === "Enter" && search.trim()) {
+                      e.preventDefault();
+                      await handleScan(search.trim());
+                    }
+                  }}
                 />
                 <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                   {productsPage?.items.length === 0 && (
