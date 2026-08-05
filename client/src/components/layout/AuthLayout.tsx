@@ -16,10 +16,10 @@ export function AuthLayout({ children }: { children: ReactNode }) {
       </button>
       <div className="w-full max-w-sm">
         <div className="mb-8 flex flex-col items-center gap-2">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-600 text-white shadow-lg shadow-indigo-500/30 dark:from-indigo-500 dark:to-purple-500">
-            <Boxes className="h-6 w-6" />
+          <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl bg-white shadow-xl shadow-indigo-500/10 dark:shadow-none dark:ring-1 dark:ring-white/10">
+            <img src="/kipo-logo.png" alt="Kipo Logo" className="h-full w-full object-cover" />
           </div>
-          <span className="text-2xl font-bold tracking-tight text-neutral-900 dark:text-neutral-50 mt-2">StockFlow</span>
+          <span className="text-2xl font-bold tracking-tight text-neutral-900 dark:text-neutral-50 mt-2">Kipo</span>
           <p className="text-sm font-medium text-neutral-500 dark:text-neutral-400">Gestión de inventario para tu negocio</p>
         </div>
         {children}
