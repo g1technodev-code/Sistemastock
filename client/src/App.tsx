@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import { AppLayout } from "./components/layout/AppLayout";
 import { ProtectedRoute } from "./routes/ProtectedRoute";
+import { useAuth } from "./context/AuthContext";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Products from "./pages/Products";
@@ -19,6 +20,13 @@ import Users from "./pages/Users";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 
+function RootRedirect() {
+  const { user } = useAuth();
+  if (!user) return <Navigate to="/login" replace />;
+  if (user.role === "ADMIN") return <Navigate to="/dashboard" replace />;
+  return <Navigate to="/ventas" replace />;
+}
+
 export default function App() {
   return (
     <Routes>
@@ -31,21 +39,27 @@ export default function App() {
           </ProtectedRoute>
         }
       >
-        <Route path="/" element={<Navigate to="/dashboard" replace />} />
-        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/" element={<RootRedirect />} />
+        
+        <Route element={<ProtectedRoute allowedRoles={["ADMIN"]} />}>
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/categories" element={<Categories />} />
+          <Route path="/suppliers" element={<Suppliers />} />
+          <Route path="/inventario-fisico" element={<InventarioFisico />} />
+        </Route>
+
+        {/* Both Admin and Employee */}
         <Route path="/products" element={<Products />} />
         <Route path="/products/:id" element={<ProductDetail />} />
-        <Route path="/categories" element={<Categories />} />
-        <Route path="/suppliers" element={<Suppliers />} />
         <Route path="/stock" element={<Stock />} />
         <Route path="/ventas" element={<Ventas />} />
         <Route path="/compras" element={<Compras />} />
-        <Route path="/inventario-fisico" element={<InventarioFisico />} />
         <Route path="/caja" element={<Caja />} />
+
         <Route
           path="/reports"
           element={
-            <ProtectedRoute allowedRoles={["ADMIN", "MANAGER"]}>
+            <ProtectedRoute allowedRoles={["ADMIN"]}>
               <Reports />
             </ProtectedRoute>
           }
@@ -53,7 +67,7 @@ export default function App() {
         <Route
           path="/estadisticas"
           element={
-            <ProtectedRoute allowedRoles={["ADMIN", "MANAGER"]}>
+            <ProtectedRoute allowedRoles={["ADMIN"]}>
               <Estadisticas />
             </ProtectedRoute>
           }
@@ -61,7 +75,7 @@ export default function App() {
         <Route
           path="/rentabilidad"
           element={
-            <ProtectedRoute allowedRoles={["ADMIN", "MANAGER"]}>
+            <ProtectedRoute allowedRoles={["ADMIN"]}>
               <Rentabilidad />
             </ProtectedRoute>
           }
