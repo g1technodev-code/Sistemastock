@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Plus, Search, Package, Pencil, Trash2, AlertTriangle } from "lucide-react";
+import { Plus, Search, Package, Pencil, Trash2, AlertTriangle, Camera } from "lucide-react";
 import { Card } from "../components/ui/Card";
 import { Button } from "../components/ui/Button";
 import { Input, Select } from "../components/ui/Field";
@@ -10,6 +10,7 @@ import { Drawer } from "../components/ui/Drawer";
 import { EmptyState } from "../components/ui/EmptyState";
 import { ConfirmDialog } from "../components/ui/ConfirmDialog";
 import { ProductForm, type ProductFormValues } from "../components/products/ProductForm";
+import { CameraScannerModal } from "../components/common/CameraScannerModal";
 import { useProducts, useProductMutations } from "../hooks/useProducts";
 import { useCategories } from "../hooks/useCategories";
 import { useAuth } from "../context/AuthContext";
@@ -31,6 +32,7 @@ export default function Products() {
   const [search, setSearch] = useState("");
   const [categoryId, setCategoryId] = useState("");
   const [lowStockOnly, setLowStockOnly] = useState(false);
+  const [cameraOpen, setCameraOpen] = useState(false);
   const location = useLocation();
 
   const { data: categories } = useCategories();
@@ -55,29 +57,32 @@ export default function Products() {
       const barcode = location.state.newBarcode;
       setEditingProduct({ sku: barcode, barcode: barcode, name: "" } as Product);
       setFormOpen(true);
-      // Limpiamos el state para no reabrir en recargas
       navigate("/products", { replace: true, state: {} });
     }
   }, [location.state, navigate, canManage]);
 
-  useBarcodeScanner(async (barcode) => {
-    if (formOpen) return; // Si ya hay un modal/drawer abierto, ignorar
+  const handleGlobalScan = async (barcode: string) => {
+    if (formOpen) return;
     try {
-      const res = await listProducts({ q: barcode, isActive: true, limit: 2 });
+      const res = await listProducts({ q: barcode, isActive: true, limit: 10 });
       const match = res.items.find((p) => p.sku === barcode || p.barcode === barcode);
       if (match) {
         setSearch(barcode);
         setPage(1);
+        showSuccess(`Producto encontrado: ${match.name}`);
       } else if (canManage) {
         setEditingProduct({ sku: barcode, barcode: barcode, name: "" } as Product);
         setFormOpen(true);
+        showSuccess(`Código ${barcode} escaneado. Completa los datos para crear el producto.`);
       } else {
         showError("Producto no encontrado");
       }
     } catch (e) {
       showError("Error al procesar el escaneo");
     }
-  });
+  };
+
+  useBarcodeScanner(handleGlobalScan);
 
   const handleSubmit = async (values: ProductFormValues) => {
     try {
@@ -169,9 +174,14 @@ export default function Products() {
           <p className="mt-1 text-sm font-medium text-neutral-500 dark:text-neutral-400">Catálogo completo de tu inventario.</p>
         </div>
         {canManage && (
-          <Button onClick={openCreate} className="shadow-sm">
-            <Plus className="h-4 w-4" strokeWidth={2.5} /> Nuevo producto
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button onClick={() => setCameraOpen(true)} variant="outline" className="shadow-sm">
+              <Camera className="h-4 w-4 text-primary-600 dark:text-primary-400" strokeWidth={2.5} /> Escanear
+            </Button>
+            <Button onClick={openCreate} className="shadow-sm">
+              <Plus className="h-4 w-4" strokeWidth={2.5} /> Nuevo producto
+            </Button>
+          </div>
         )}
       </div>
 
@@ -267,6 +277,13 @@ export default function Products() {
         isLoading={remove.isPending}
         onConfirm={handleDelete}
         onCancel={() => setDeleteTarget(null)}
+      />
+
+      <CameraScannerModal
+        open={cameraOpen}
+        onClose={() => setCameraOpen(false)}
+        onScan={handleGlobalScan}
+        title="Escanear Código de Producto"
       />
     </div>
   );
