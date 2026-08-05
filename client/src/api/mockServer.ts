@@ -177,7 +177,9 @@ export function setupMockServer() {
   });
 
   // ----- CATEGORIES -----
-  mock.onGet("/categories").reply(200, db.categories);
+  mock.onGet("/categories").reply(() => {
+    return [200, { items: db.categories }];
+  });
 
   // ----- SUPPLIERS -----
   mock.onGet("/suppliers").reply(200, { items: db.suppliers });
@@ -242,6 +244,30 @@ export function setupMockServer() {
     const input = JSON.parse(config.data);
     const newSale: Sale = { ...input, id: `sale-${Date.now()}`, status: "COMPLETED", createdAt: new Date().toISOString(), user: mockUser };
     db.sales.unshift(newSale);
+    
+    // Decrease stock for each item sold
+    input.items.forEach((item: any) => {
+      const product = db.products.find(p => p.id === item.productId);
+      if (product) {
+        product.currentStock -= item.quantity;
+        // Add stock movement
+        db.stockMovements.unshift({
+          id: `st-mov-${Date.now()}-${Math.random()}`,
+          productId: product.id,
+          product: product as any,
+          type: "SALE",
+          quantity: item.quantity,
+          previousStock: product.currentStock + item.quantity,
+          newStock: product.currentStock,
+          userId: mockUser.id,
+          user: mockUser as any,
+          referenceId: newSale.id,
+          notes: "Venta registrada",
+          createdAt: new Date().toISOString()
+        });
+      }
+    });
+
     persist();
     return [201, { sale: newSale }];
   });
@@ -269,17 +295,24 @@ export function setupMockServer() {
   mock.onGet(/\/reports\/movements/).reply(200, { series: [], movements: [] });
   mock.onGet(/\/reports\/top-products/).reply(200, { items: [] });
   mock.onGet(/\/reports\/category-breakdown/).reply(200, { items: [] });
-  mock.onGet(/\/reports\/sales-stats/).reply(200, {
-    periods: { 
-      today: { total: 0, count: 0, avgTicket: 0, profit: 0 },
-      week: { total: 0, count: 0, avgTicket: 0, profit: 0 },
-      month: { total: 0, count: 0, avgTicket: 0, profit: 0 },
-      year: { total: 0, count: 0, avgTicket: 0, profit: 0 }
-    },
-    topProducts: [],
-    topCategories: [],
-    byEmployee: [],
-    byPaymentMethod: []
+  mock.onGet(/\/reports\/sales-stats/).reply(() => {
+    const totalSales = db.sales.reduce((acc, sale) => acc + sale.total, 0);
+    const profit = db.sales.reduce((acc, sale) => {
+      return acc + sale.items.reduce((sum, item) => sum + (item.unitPrice - (item.product?.costPrice || 0)) * item.quantity, 0);
+    }, 0);
+    
+    return [200, {
+      periods: { 
+        today: { total: totalSales, count: db.sales.length, avgTicket: db.sales.length ? totalSales / db.sales.length : 0, profit: profit },
+        week: { total: totalSales, count: db.sales.length, avgTicket: db.sales.length ? totalSales / db.sales.length : 0, profit: profit },
+        month: { total: totalSales, count: db.sales.length, avgTicket: db.sales.length ? totalSales / db.sales.length : 0, profit: profit },
+        year: { total: totalSales, count: db.sales.length, avgTicket: db.sales.length ? totalSales / db.sales.length : 0, profit: profit }
+      },
+      topProducts: [],
+      topCategories: [],
+      byEmployee: [],
+      byPaymentMethod: []
+    }];
   });
   mock.onGet(/\/reports\/profitability/).reply(200, {
     totals: { revenue: 0, cost: 0, grossProfit: 0, marginPercent: 0 },
