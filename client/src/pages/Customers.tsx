@@ -17,12 +17,15 @@ import {
 import { listCustomers, getCustomer, createCustomer, updateCustomer, registerPayment } from "../api/customers";
 import { formatCurrency, formatDate } from "../lib/formatters";
 import type { Customer, CustomerMovement } from "../lib/types";
+import { useToast } from "../context/ToastContext";
+import { extractErrorMessage } from "../api/client";
 import { Badge } from "../components/ui/Badge";
 import { Modal } from "../components/ui/Modal";
 import { Drawer } from "../components/ui/Drawer";
 
 export default function Customers() {
   const queryClient = useQueryClient();
+  const { showSuccess, showError } = useToast();
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [createModalOpen, setCreateModalOpen] = useState(false);
@@ -47,7 +50,11 @@ export default function Customers() {
     mutationFn: createCustomer,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["customers"] });
+      showSuccess("Cliente creado correctamente");
       setCreateModalOpen(false);
+    },
+    onError: (err) => {
+      showError(extractErrorMessage(err, "No se pudo crear el cliente"));
     },
   });
 
@@ -57,7 +64,11 @@ export default function Customers() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["customers"] });
       queryClient.invalidateQueries({ queryKey: ["customer-detail"] });
+      showSuccess("Cliente actualizado correctamente");
       setEditingCustomer(null);
+    },
+    onError: (err) => {
+      showError(extractErrorMessage(err, "No se pudo actualizar el cliente"));
     },
   });
 
@@ -67,7 +78,11 @@ export default function Customers() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["customers"] });
       queryClient.invalidateQueries({ queryKey: ["customer-detail"] });
+      showSuccess("Pago registrado correctamente");
       setPaymentCustomer(null);
+    },
+    onError: (err) => {
+      showError(extractErrorMessage(err, "No se pudo registrar el pago"));
     },
   });
 

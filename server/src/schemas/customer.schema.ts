@@ -1,12 +1,17 @@
 import { z } from "zod";
 
+const nullishString = z.string().transform((v) => (v.trim() === "" ? null : v.trim())).nullable().optional();
+const optionalEmail = z
+  .union([z.string().email("Email inválido"), z.literal(""), z.null(), z.undefined()])
+  .transform((v) => (v === "" || !v ? null : v));
+
 export const createCustomerSchema = z.object({
   name: z.string().min(2, "El nombre debe tener al menos 2 caracteres"),
-  taxId: z.string().optional().nullable(),
-  email: z.string().email("Email inválido").optional().nullable().or(z.literal("")),
-  phone: z.string().optional().nullable(),
-  address: z.string().optional().nullable(),
-  creditLimit: z.number().min(0, "El límite de crédito no puede ser negativo").optional().nullable(),
+  taxId: nullishString,
+  email: optionalEmail,
+  phone: nullishString,
+  address: nullishString,
+  creditLimit: z.number().min(0, "El límite de crédito no puede ser negativo").nullable().optional(),
 });
 
 export const updateCustomerSchema = createCustomerSchema.partial().extend({
