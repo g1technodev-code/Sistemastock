@@ -41,12 +41,10 @@ export default function App() {
       >
         <Route path="/" element={<RootRedirect />} />
         
-        <Route element={<ProtectedRoute allowedRoles={["ADMIN"]} />}>
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/categories" element={<Categories />} />
-          <Route path="/suppliers" element={<Suppliers />} />
-          <Route path="/inventario-fisico" element={<InventarioFisico />} />
-        </Route>
+        <Route path="/dashboard" element={<ProtectedRoute allowedRoles={["ADMIN"]}><Dashboard /></ProtectedRoute>} />
+        <Route path="/categories" element={<ProtectedRoute allowedRoles={["ADMIN"]}><Categories /></ProtectedRoute>} />
+        <Route path="/suppliers" element={<ProtectedRoute allowedRoles={["ADMIN"]}><Suppliers /></ProtectedRoute>} />
+        <Route path="/inventario-fisico" element={<ProtectedRoute allowedRoles={["ADMIN"]}><InventarioFisico /></ProtectedRoute>} />
 
         {/* Both Admin and Employee */}
         <Route path="/products" element={<Products />} />

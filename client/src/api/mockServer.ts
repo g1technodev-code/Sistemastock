@@ -255,14 +255,15 @@ export function setupMockServer() {
           id: `st-mov-${Date.now()}-${Math.random()}`,
           productId: product.id,
           product: product as any,
-          type: "SALE",
+          type: "OUT",
           quantity: item.quantity,
-          previousStock: product.currentStock + item.quantity,
-          newStock: product.currentStock,
+          quantityBefore: product.currentStock + item.quantity,
+          quantityAfter: product.currentStock,
+          unitCost: product.costPrice,
+          reason: "Venta registrada",
+          reference: newSale.id,
           userId: mockUser.id,
           user: mockUser as any,
-          referenceId: newSale.id,
-          notes: "Venta registrada",
           createdAt: new Date().toISOString()
         });
       }
@@ -298,7 +299,11 @@ export function setupMockServer() {
   mock.onGet(/\/reports\/sales-stats/).reply(() => {
     const totalSales = db.sales.reduce((acc, sale) => acc + sale.total, 0);
     const profit = db.sales.reduce((acc, sale) => {
-      return acc + sale.items.reduce((sum, item) => sum + (item.unitPrice - (item.product?.costPrice || 0)) * item.quantity, 0);
+      return acc + sale.items.reduce((sum, item) => {
+        const p = db.products.find(x => x.id === item.productId);
+        const cost = p ? p.costPrice : 0;
+        return sum + (item.unitPrice - cost) * item.quantity;
+      }, 0);
     }, 0);
     
     return [200, {
