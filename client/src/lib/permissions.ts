@@ -19,7 +19,7 @@ export const permissions = {
   canViewCategories: (role: Role) => role === "ADMIN",
   canViewSuppliers: (role: Role) => role === "ADMIN",
   canViewStockMovements: (role: Role) => role === "ADMIN" || role === "EMPLOYEE",
-  canViewPhysicalInventory: (role: Role) => role === "ADMIN",
+  canViewPhysicalInventory: (role: Role) => role === "ADMIN" || role === "EMPLOYEE",
   canViewSales: (role: Role) => role === "ADMIN" || role === "EMPLOYEE",
   canViewPurchases: (role: Role) => role === "ADMIN" || role === "EMPLOYEE",
   canViewCash: (role: Role) => role === "ADMIN" || role === "EMPLOYEE",

@@ -75,7 +75,7 @@ export default function App() {
           <Route path="/dashboard" element={<ProtectedRoute allowedRoles={["ADMIN"]}><Dashboard /></ProtectedRoute>} />
           <Route path="/categories" element={<ProtectedRoute allowedRoles={["ADMIN"]}><Categories /></ProtectedRoute>} />
           <Route path="/suppliers" element={<ProtectedRoute allowedRoles={["ADMIN"]}><Suppliers /></ProtectedRoute>} />
-          <Route path="/inventario-fisico" element={<ProtectedRoute allowedRoles={["ADMIN"]}><InventarioFisico /></ProtectedRoute>} />
+          <Route path="/inventario-fisico" element={<InventarioFisico />} />
 
           {/* Both Admin and Employee */}
           <Route path="/products" element={<Products />} />

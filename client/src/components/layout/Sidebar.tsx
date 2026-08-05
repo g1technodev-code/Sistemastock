@@ -19,6 +19,7 @@ import {
   X,
   PanelLeftClose,
   PanelLeftOpen,
+  LogOut,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { permissions } from "../../lib/permissions";
@@ -49,7 +50,7 @@ function getInitialCollapsed(): boolean {
 }
 
 export function Sidebar({ mobileOpen, onCloseMobile }: { mobileOpen: boolean; onCloseMobile: () => void }) {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const [collapsed, setCollapsed] = useState(getInitialCollapsed);
 
   useEffect(() => {
@@ -77,7 +78,7 @@ export function Sidebar({ mobileOpen, onCloseMobile }: { mobileOpen: boolean; on
             <X className="h-5 w-5" />
           </button>
         </div>
-        <nav className="flex-1 space-y-1 px-4 mt-2">
+        <nav className="flex-1 space-y-1 px-4 mt-2 overflow-y-auto">
           {items.map((item) => (
             <NavLink
               key={item.to}
@@ -98,8 +99,24 @@ export function Sidebar({ mobileOpen, onCloseMobile }: { mobileOpen: boolean; on
               {!isCollapsed && item.label}
             </NavLink>
           ))}
+          <div className="pt-2">
+            <button
+              onClick={() => {
+                onCloseMobile();
+                logout();
+              }}
+              title={isCollapsed ? "Cerrar sesión" : undefined}
+              className={cn(
+                "flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-danger-600 transition-all duration-200 hover:bg-danger-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-danger-500 dark:text-danger-400 dark:hover:bg-danger-500/10",
+                isCollapsed && "justify-center px-0",
+              )}
+            >
+              <LogOut className={cn("h-[18px] w-[18px] shrink-0", isCollapsed && "h-5 w-5")} strokeWidth={2.5} />
+              {!isCollapsed && "Cerrar sesión"}
+            </button>
+          </div>
         </nav>
-        <div className="hidden px-4 py-4 lg:block">
+        <div className="hidden px-4 py-4 lg:block border-t border-neutral-100 dark:border-neutral-800/60">
           <button
             onClick={() => setCollapsed((v) => !v)}
             aria-label={isCollapsed ? "Expandir menú" : "Colapsar menú"}
