@@ -1,4 +1,4 @@
-import { api } from "../lib/api";
+import { api } from "./client";
 import type { NotificationItem, Paginated } from "../lib/types";
 
 export type ListNotificationsParams = {

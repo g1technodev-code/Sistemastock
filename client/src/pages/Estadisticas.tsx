@@ -14,6 +14,7 @@ const PAYMENT_METHOD_LABEL: Record<PaymentMethod, string> = {
   EFECTIVO: "Efectivo",
   TRANSFERENCIA: "Transferencia",
   TARJETA: "Tarjeta",
+  CUENTA_CORRIENTE: "Cuenta Corriente",
 };
 
 type PeriodRow = { key: "today" | "week" | "month" | "year"; label: string };

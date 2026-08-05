@@ -1,4 +1,4 @@
-import { api } from "../lib/api";
+import { api } from "./client";
 import type { Customer, CustomerMovement, Paginated } from "../lib/types";
 
 export type ListCustomersParams = {

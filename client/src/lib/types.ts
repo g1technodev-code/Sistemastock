@@ -133,6 +133,8 @@ export type Sale = {
   payerName: string | null;
   userId: string;
   user: { id: string; name: string };
+  customerId?: string | null;
+  customer?: { id: string; name: string } | null;
   createdAt: string;
   items: SaleItem[];
 };

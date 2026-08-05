@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import { listCustomers, getCustomer, createCustomer, updateCustomer, registerPayment } from "../api/customers";
 import { formatCurrency, formatDate } from "../lib/formatters";
-import type { Customer } from "../lib/types";
+import type { Customer, CustomerMovement } from "../lib/types";
 import { Badge } from "../components/ui/Badge";
 import { Modal } from "../components/ui/Modal";
 import { Drawer } from "../components/ui/Drawer";
@@ -141,7 +141,7 @@ export default function Customers() {
                 </tr>
               )}
 
-              {data?.items.map((c) => {
+              {data?.items.map((c: Customer) => {
                 const hasDebt = c.currentBalance > 0;
                 return (
                   <tr key={c.id} className="hover:bg-neutral-50/50 transition-colors dark:hover:bg-neutral-900/50">
@@ -354,7 +354,7 @@ export default function Customers() {
                 {customerDetail.movements.length === 0 && (
                   <p className="text-sm text-neutral-400 italic">No hay movimientos registrados.</p>
                 )}
-                {customerDetail.movements.map((m) => {
+                {customerDetail.movements.map((m: CustomerMovement) => {
                   const isCharge = m.type === "CHARGE";
                   return (
                     <div key={m.id} className="flex items-center justify-between rounded-xl border border-neutral-200 bg-white p-3 shadow-sm dark:border-neutral-800 dark:bg-neutral-900">

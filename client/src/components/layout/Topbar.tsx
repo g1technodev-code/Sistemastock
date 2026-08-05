@@ -8,6 +8,7 @@ import { listNotifications, markAllNotificationsAsRead, markNotificationAsRead }
 import { initials, formatDate } from "../../lib/formatters";
 import { ROLE_LABEL } from "../../lib/permissions";
 import { Badge } from "../ui/Badge";
+import type { NotificationItem } from "../../lib/types";
 
 export function Topbar({ onOpenMenu, onOpenSearch }: { onOpenMenu: () => void; onOpenSearch: () => void }) {
   const { user, logout } = useAuth();
@@ -110,7 +111,7 @@ export function Topbar({ onOpenMenu, onOpenSearch }: { onOpenMenu: () => void; o
                     <p className="text-sm font-medium text-neutral-500 dark:text-neutral-400">Sin notificaciones recientes.</p>
                   </div>
                 )}
-                {notificationsData?.items.map((n) => {
+                {notificationsData?.items.map((n: NotificationItem) => {
                   const isStock = n.type === "LOW_STOCK";
                   const targetLink = isStock ? "/products" : "/caja";
                   return (

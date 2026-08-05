@@ -34,7 +34,7 @@ import { useBarcodeScanner } from "../hooks/useBarcodeScanner";
 import { CameraScannerModal } from "../components/common/CameraScannerModal";
 import { formatCurrency, formatDateTime } from "../lib/formatters";
 import { cn } from "../lib/utils";
-import type { PaymentMethod } from "../lib/types";
+import type { Customer, PaymentMethod } from "../lib/types";
 
 const PAYMENT_METHOD_LABEL: Record<PaymentMethod, string> = {
   EFECTIVO: "Efectivo",
@@ -327,7 +327,7 @@ export default function Ventas() {
                       onChange={(e) => setSelectedCustomerId(e.target.value)}
                     >
                       <option value="">-- Selecciona un cliente --</option>
-                      {customersData?.items.filter((c) => c.isActive).map((c) => (
+                      {customersData?.items.filter((c: Customer) => c.isActive).map((c: Customer) => (
                         <option key={c.id} value={c.id}>
                           {c.name} {c.taxId ? `(${c.taxId})` : ""} - Deuda: {formatCurrency(c.currentBalance)}
                         </option>
