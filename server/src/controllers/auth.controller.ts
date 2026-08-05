@@ -7,17 +7,27 @@ import { loginSchema } from "../schemas/auth.schema";
 const REFRESH_COOKIE = "sf_refresh";
 
 function setRefreshCookie(res: Response, token: string) {
+  const isProduction = env.nodeEnv === "production";
   res.cookie(REFRESH_COOKIE, token, {
     httpOnly: true,
-    secure: env.nodeEnv === "production",
-    sameSite: "lax",
+    // El frontend (Vercel) y el backend (Railway) viven en dominios distintos,
+    // asi que la cookie es cross-site: "none" es obligatorio para que el
+    // navegador la reenvie en /auth/refresh. Requiere secure=true (HTTPS),
+    // por eso en dev (http://localhost) usamos "lax" en su lugar.
+    secure: isProduction,
+    sameSite: isProduction ? "none" : "lax",
     path: "/api/auth",
     maxAge: env.jwt.refreshExpiresInDays * 24 * 60 * 60 * 1000,
   });
 }
 
 function clearRefreshCookie(res: Response) {
-  res.clearCookie(REFRESH_COOKIE, { path: "/api/auth" });
+  const isProduction = env.nodeEnv === "production";
+  res.clearCookie(REFRESH_COOKIE, {
+    path: "/api/auth",
+    secure: isProduction,
+    sameSite: isProduction ? "none" : "lax",
+  });
 }
 
 export const login = catchAsync(async (req: Request, res: Response) => {
