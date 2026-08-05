@@ -37,6 +37,7 @@ const NAV_ITEMS = [
   { to: "/ventas", label: "Ventas", icon: ShoppingCart, show: permissions.canViewSales, shortcut: "⇧V" },
   { to: "/compras", label: "Compras", icon: ShoppingBag, show: permissions.canViewPurchases, shortcut: "⇧X" },
   { to: "/caja", label: "Caja", icon: Wallet, show: permissions.canViewCash, shortcut: "⇧C" },
+  { to: "/customers", label: "Clientes", icon: Users, show: permissions.canViewCustomers },
   { to: "/reports", label: "Reportes", icon: BarChart3, show: permissions.canViewReports },
   { to: "/estadisticas", label: "Estadísticas", icon: LineChart, show: permissions.canViewReports },
   { to: "/rentabilidad", label: "Rentabilidad", icon: Percent, show: permissions.canViewReports },

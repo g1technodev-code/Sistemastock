@@ -22,6 +22,7 @@ const Estadisticas = lazy(() => import("./pages/Estadisticas"));
 const Rentabilidad = lazy(() => import("./pages/Rentabilidad"));
 const Users = lazy(() => import("./pages/Users"));
 const Settings = lazy(() => import("./pages/Settings"));
+const Customers = lazy(() => import("./pages/Customers"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 // Precargar todas las rutas en segundo plano para eliminar pantallas de carga al navegar
@@ -84,6 +85,7 @@ export default function App() {
           <Route path="/ventas" element={<Ventas />} />
           <Route path="/compras" element={<Compras />} />
           <Route path="/caja" element={<Caja />} />
+          <Route path="/customers" element={<Customers />} />
 
           <Route
             path="/reports"

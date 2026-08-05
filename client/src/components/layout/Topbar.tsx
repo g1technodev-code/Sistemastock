@@ -1,21 +1,42 @@
 import { useState, useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Menu, Search, Bell, LogOut, AlertTriangle, Sun, Moon } from "lucide-react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Menu, Search, Bell, LogOut, AlertTriangle, Sun, Moon, Wallet, CheckCheck } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { useTheme } from "../../context/ThemeContext";
-import { useLowStockAlerts } from "../../hooks/useLowStockAlerts";
-import { initials } from "../../lib/formatters";
+import { listNotifications, markAllNotificationsAsRead, markNotificationAsRead } from "../../api/notifications";
+import { initials, formatDate } from "../../lib/formatters";
 import { ROLE_LABEL } from "../../lib/permissions";
 import { Badge } from "../ui/Badge";
 
 export function Topbar({ onOpenMenu, onOpenSearch }: { onOpenMenu: () => void; onOpenSearch: () => void }) {
   const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const queryClient = useQueryClient();
   const [alertsOpen, setAlertsOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const alertsRef = useRef<HTMLDivElement>(null);
   const userRef = useRef<HTMLDivElement>(null);
-  const { data: lowStock } = useLowStockAlerts();
+
+  const { data: notificationsData } = useQuery({
+    queryKey: ["notifications"],
+    queryFn: () => listNotifications({ limit: 10 }),
+    refetchInterval: 15_000,
+  });
+
+  const markAllMutation = useMutation({
+    mutationFn: markAllNotificationsAsRead,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+    },
+  });
+
+  const markOneMutation = useMutation({
+    mutationFn: markNotificationAsRead,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+    },
+  });
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
@@ -26,7 +47,7 @@ export function Topbar({ onOpenMenu, onOpenSearch }: { onOpenMenu: () => void; o
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
 
-  const lowStockCount = lowStock?.pagination.total ?? 0;
+  const unreadCount = notificationsData?.unreadCount ?? 0;
 
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b border-neutral-200 bg-white/70 px-4 backdrop-blur-xl dark:border-white/10 dark:bg-neutral-950/70 sm:px-6">
@@ -60,42 +81,67 @@ export function Topbar({ onOpenMenu, onOpenSearch }: { onOpenMenu: () => void; o
             className="relative rounded-full p-2.5 text-neutral-500 transition-colors hover:bg-neutral-100 dark:text-neutral-400 dark:hover:bg-neutral-800"
           >
             <Bell className="h-[18px] w-[18px]" strokeWidth={2.5} />
-            {lowStockCount > 0 && (
+            {unreadCount > 0 && (
               <span className="absolute right-1.5 top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-danger-500 text-[10px] font-bold text-white shadow-sm ring-2 ring-white dark:ring-neutral-950">
-                {lowStockCount > 9 ? "9+" : lowStockCount}
+                {unreadCount > 9 ? "9+" : unreadCount}
               </span>
             )}
           </button>
           {alertsOpen && (
-            <div className="absolute right-0 z-40 mt-3 w-80 rounded-2xl border border-neutral-200 bg-white/95 p-2 shadow-float backdrop-blur-xl dark:border-white/10 dark:bg-neutral-900/95 animate-in zoom-in-95 duration-200">
+            <div className="absolute right-0 z-40 mt-3 w-80 sm:w-96 rounded-2xl border border-neutral-200 bg-white/95 p-2 shadow-float backdrop-blur-xl dark:border-white/10 dark:bg-neutral-900/95 animate-in zoom-in-95 duration-200">
               <div className="flex items-center justify-between px-3 py-2 border-b border-neutral-100 dark:border-neutral-800/60">
-                <span className="text-sm font-bold tracking-tight text-neutral-900 dark:text-neutral-100">Alertas de stock</span>
-                <Badge tone="danger">{lowStockCount}</Badge>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-bold tracking-tight text-neutral-900 dark:text-neutral-100">Notificaciones</span>
+                  {unreadCount > 0 && <Badge tone="danger">{unreadCount}</Badge>}
+                </div>
+                {unreadCount > 0 && (
+                  <button
+                    onClick={() => markAllMutation.mutate()}
+                    title="Marcar todas como leídas"
+                    className="flex items-center gap-1 text-xs font-semibold text-primary-600 hover:text-primary-500 transition-colors dark:text-primary-400"
+                  >
+                    <CheckCheck className="h-3.5 w-3.5" /> Leer todas
+                  </button>
+                )}
               </div>
-              <div className="max-h-72 overflow-y-auto p-1 mt-1">
-                {lowStockCount === 0 && (
+              <div className="max-h-80 overflow-y-auto p-1 mt-1 space-y-1">
+                {notificationsData?.items.length === 0 && (
                   <div className="px-2 py-8 text-center">
-                    <p className="text-sm font-medium text-neutral-500 dark:text-neutral-400">Todo el stock está en niveles saludables.</p>
+                    <p className="text-sm font-medium text-neutral-500 dark:text-neutral-400">Sin notificaciones recientes.</p>
                   </div>
                 )}
-                {lowStock?.items.map((p) => (
-                  <Link
-                    key={p.id}
-                    to="/products"
-                    onClick={() => setAlertsOpen(false)}
-                    className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors hover:bg-neutral-50 dark:hover:bg-neutral-800/60"
-                  >
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-warning-100 text-warning-600 dark:bg-warning-500/10 dark:text-warning-400">
-                      <AlertTriangle className="h-4 w-4" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="truncate font-semibold text-neutral-900 dark:text-neutral-100">{p.name}</p>
-                      <p className="text-xs text-neutral-500 dark:text-neutral-400">
-                        Actual: {p.currentStock} / Min: {p.minStock}
-                      </p>
-                    </div>
-                  </Link>
-                ))}
+                {notificationsData?.items.map((n) => {
+                  const isStock = n.type === "LOW_STOCK";
+                  const targetLink = isStock ? "/products" : "/caja";
+                  return (
+                    <Link
+                      key={n.id}
+                      to={targetLink}
+                      onClick={() => {
+                        if (!n.isRead) markOneMutation.mutate(n.id);
+                        setAlertsOpen(false);
+                      }}
+                      className={`flex items-start gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors ${
+                        n.isRead
+                          ? "opacity-60 hover:bg-neutral-50 dark:hover:bg-neutral-800/60"
+                          : "bg-primary-50/40 dark:bg-primary-500/10 hover:bg-primary-50 dark:hover:bg-primary-500/20"
+                      }`}
+                    >
+                      <div className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${
+                        isStock
+                          ? "bg-warning-100 text-warning-600 dark:bg-warning-500/10 dark:text-warning-400"
+                          : "bg-primary-100 text-primary-600 dark:bg-primary-500/10 dark:text-primary-400"
+                      }`}>
+                        {isStock ? <AlertTriangle className="h-4 w-4" /> : <Wallet className="h-4 w-4" />}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="truncate font-semibold text-neutral-900 dark:text-neutral-100">{n.title}</p>
+                        <p className="text-xs text-neutral-600 dark:text-neutral-400 line-clamp-2 mt-0.5">{n.message}</p>
+                        <p className="text-[10px] text-neutral-400 mt-1">{formatDate(n.createdAt)}</p>
+                      </div>
+                    </Link>
+                  );
+                })}
               </div>
             </div>
           )}

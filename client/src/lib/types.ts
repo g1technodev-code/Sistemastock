@@ -1,17 +1,57 @@
 export type Role = "ADMIN" | "MANAGER" | "EMPLOYEE";
 export type MovementType = "IN" | "OUT" | "ADJUSTMENT";
-export type PaymentMethod = "EFECTIVO" | "TRANSFERENCIA" | "TARJETA";
+export type PaymentMethod = "EFECTIVO" | "TRANSFERENCIA" | "TARJETA" | "CUENTA_CORRIENTE";
 export type SaleStatus = "COMPLETED" | "VOIDED";
 export type CashMovementType = "SALE_IN" | "WITHDRAWAL" | "ADJUSTMENT";
 export type CashShiftStatus = "OPEN" | "CLOSED";
 export type PurchaseStatus = "PENDING" | "RECEIVED" | "CANCELLED";
 export type InventoryCountStatus = "OPEN" | "COMPLETED";
+export type CustomerMovementType = "CHARGE" | "PAYMENT";
+export type NotificationType = "LOW_STOCK" | "SHIFT_OPEN" | "SHIFT_CLOSE";
 
 export type AuthUser = {
   id: string;
   name: string;
   email: string;
   role: Role;
+};
+
+export type Customer = {
+  id: string;
+  name: string;
+  taxId: string | null;
+  email: string | null;
+  phone: string | null;
+  address: string | null;
+  currentBalance: number;
+  creditLimit: number | null;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type CustomerMovement = {
+  id: string;
+  customerId: string;
+  type: CustomerMovementType;
+  amount: number;
+  balanceBefore: number;
+  balanceAfter: number;
+  saleId: string | null;
+  userId: string;
+  user: { id: string; name: string };
+  note: string | null;
+  createdAt: string;
+};
+
+export type NotificationItem = {
+  id: string;
+  type: NotificationType;
+  title: string;
+  message: string;
+  metadata: Record<string, unknown> | null;
+  isRead: boolean;
+  createdAt: string;
 };
 
 export type Category = {

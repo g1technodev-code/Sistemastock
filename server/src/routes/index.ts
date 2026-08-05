@@ -13,6 +13,8 @@ import dashboardRoutes from "./dashboard.routes";
 import reportRoutes from "./report.routes";
 import searchRoutes from "./search.routes";
 import settingsRoutes from "./settings.routes";
+import customerRoutes from "./customer.routes";
+import notificationRoutes from "./notification.routes";
 
 const router = Router();
 
@@ -30,5 +32,7 @@ router.use("/dashboard", dashboardRoutes);
 router.use("/reports", reportRoutes);
 router.use("/search", searchRoutes);
 router.use("/settings", settingsRoutes);
+router.use("/customers", customerRoutes);
+router.use("/notifications", notificationRoutes);
 
 export default router;

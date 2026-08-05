@@ -1,7 +1,8 @@
-import { Prisma, CashMovementType, CashShiftStatus, Role } from "@prisma/client";
+import { Prisma, CashMovementType, CashShiftStatus, Role, NotificationType } from "@prisma/client";
 import { prisma } from "../config/prisma";
 import { ApiError } from "../utils/apiError";
 import { parsePagination, paginatedResponse } from "../utils/pagination";
+import { createNotification } from "./notification.service";
 import type {
   OpenShiftInput,
   CloseShiftInput,
@@ -48,7 +49,9 @@ export async function getStatus(userId: string) {
 }
 
 export async function openShift(input: OpenShiftInput, userId: string) {
-  return prisma.$transaction(async (tx) => {
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+
+  const shift = await prisma.$transaction(async (tx) => {
     const existing = await tx.cashShift.findFirst({
       where: { openedById: userId, status: CashShiftStatus.OPEN },
     });
@@ -69,14 +72,26 @@ export async function openShift(input: OpenShiftInput, userId: string) {
       include: SHIFT_INCLUDE,
     });
   });
+
+  // Notificación al administrador
+  await createNotification(
+    NotificationType.SHIFT_OPEN,
+    "Apertura de turno de caja",
+    `${user?.name || "Un usuario"} ha abierto su turno de caja con $${input.countedAmount}.`,
+    { shiftId: shift.id, userId, countedAmount: input.countedAmount },
+  );
+
+  return shift;
 }
 
 export async function closeShift(shiftId: string, input: CloseShiftInput, requesterId: string, requesterRole: Role) {
-  return prisma.$transaction(async (tx) => {
-    const shift = await tx.cashShift.findUnique({ where: { id: shiftId } });
-    if (!shift) throw ApiError.notFound("Turno no encontrado");
-    if (shift.status === CashShiftStatus.CLOSED) throw ApiError.badRequest("El turno ya está cerrado");
-    if (shift.openedById !== requesterId && requesterRole !== Role.ADMIN) {
+  const user = await prisma.user.findUnique({ where: { id: requesterId } });
+
+  const shift = await prisma.$transaction(async (tx) => {
+    const target = await tx.cashShift.findUnique({ where: { id: shiftId } });
+    if (!target) throw ApiError.notFound("Turno no encontrado");
+    if (target.status === CashShiftStatus.CLOSED) throw ApiError.badRequest("El turno ya está cerrado");
+    if (target.openedById !== requesterId && requesterRole !== Role.ADMIN) {
       throw ApiError.forbidden("Solo el dueño del turno o un administrador pueden cerrarlo");
     }
 
@@ -84,8 +99,6 @@ export async function closeShift(shiftId: string, input: CloseShiftInput, reques
     const closingExpected = Number(register.currentBalance);
     const closingDiscrepancy = input.countedAmount - closingExpected;
 
-    // Closing a shift is a verification checkpoint only — it never mutates the
-    // running CashRegister balance. Only createWithdrawal (owner-only) may do that.
     return tx.cashShift.update({
       where: { id: shiftId },
       data: {
@@ -95,11 +108,25 @@ export async function closeShift(shiftId: string, input: CloseShiftInput, reques
         closingCounted: input.countedAmount,
         closingExpected,
         closingDiscrepancy,
-        note: input.note || shift.note,
+        note: input.note || target.note,
       },
       include: SHIFT_INCLUDE,
     });
   });
+
+  // Notificación al administrador
+  const discrepancyText = shift.closingDiscrepancy
+    ? ` (Diferencia: $${Number(shift.closingDiscrepancy)})`
+    : "";
+
+  await createNotification(
+    NotificationType.SHIFT_CLOSE,
+    "Cierre de turno de caja",
+    `${user?.name || "Un usuario"} ha cerrado el turno de caja. Conteo final: $${input.countedAmount}${discrepancyText}.`,
+    { shiftId: shift.id, requesterId, countedAmount: input.countedAmount, discrepancy: shift.closingDiscrepancy },
+  );
+
+  return shift;
 }
 
 function buildShiftWhere(query: ListShiftsQuery): Prisma.CashShiftWhereInput {

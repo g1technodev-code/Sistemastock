@@ -23,4 +23,5 @@ export const permissions = {
   canViewSales: (role: Role) => role === "ADMIN" || role === "EMPLOYEE",
   canViewPurchases: (role: Role) => role === "ADMIN" || role === "EMPLOYEE",
   canViewCash: (role: Role) => role === "ADMIN" || role === "EMPLOYEE",
+  canViewCustomers: (_role: Role) => true,
 };

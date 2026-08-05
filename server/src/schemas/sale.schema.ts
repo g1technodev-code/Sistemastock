@@ -2,7 +2,8 @@ import { z } from "zod";
 
 export const createSaleSchema = z
   .object({
-    paymentMethod: z.enum(["EFECTIVO", "TRANSFERENCIA", "TARJETA"]),
+    paymentMethod: z.enum(["EFECTIVO", "TRANSFERENCIA", "TARJETA", "CUENTA_CORRIENTE"]),
+    customerId: z.string().optional().nullable(),
     items: z
       .array(
         z.object({
@@ -14,20 +15,24 @@ export const createSaleSchema = z
     receiptNumber: z.string().optional().nullable(),
     payerName: z.string().optional().nullable(),
   })
-  .refine((data) => data.paymentMethod === "EFECTIVO" || !!data.receiptNumber?.trim(), {
+  .refine((data) => data.paymentMethod === "EFECTIVO" || data.paymentMethod === "CUENTA_CORRIENTE" || !!data.receiptNumber?.trim(), {
     message: "Indica el número de comprobante",
     path: ["receiptNumber"],
   })
-  .refine((data) => data.paymentMethod === "EFECTIVO" || !!data.payerName?.trim(), {
+  .refine((data) => data.paymentMethod === "EFECTIVO" || data.paymentMethod === "CUENTA_CORRIENTE" || !!data.payerName?.trim(), {
     message: "Indica el nombre de quien pagó",
     path: ["payerName"],
+  })
+  .refine((data) => data.paymentMethod !== "CUENTA_CORRIENTE" || !!data.customerId?.trim(), {
+    message: "Debes seleccionar un cliente para vender a Cuenta Corriente",
+    path: ["customerId"],
   });
 
 export const listSalesQuerySchema = z.object({
   page: z.coerce.number().optional(),
   limit: z.coerce.number().optional(),
   userId: z.string().optional(),
-  paymentMethod: z.enum(["EFECTIVO", "TRANSFERENCIA", "TARJETA"]).optional(),
+  paymentMethod: z.enum(["EFECTIVO", "TRANSFERENCIA", "TARJETA", "CUENTA_CORRIENTE"]).optional(),
   from: z.string().optional(),
   to: z.string().optional(),
 });
