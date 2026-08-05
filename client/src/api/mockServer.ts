@@ -265,11 +265,11 @@ export function setupMockServer() {
   mock.onGet(new RegExp(".*/users.*")).reply(200, { items: db.users, pagination: { page: 1, limit: 100, total: db.users.length, totalPages: 1 } });
 
   // ----- REPORTS -----
-  mock.onGet(new RegExp(".*/reports/stock-valuation.*")).reply(200, { rows: [], totals: { stockValue: 0, potentialRevenue: 0, units: 0 } });
-  mock.onGet(new RegExp(".*/reports/movements.*")).reply(200, { series: [], movements: [] });
-  mock.onGet(new RegExp(".*/reports/top-products.*")).reply(200, { items: [] });
-  mock.onGet(new RegExp(".*/reports/category-breakdown.*")).reply(200, { items: [] });
-  mock.onGet(new RegExp(".*/reports/sales-stats.*")).reply(200, {
+  mock.onGet(/\/reports\/stock-valuation/).reply(200, { rows: [], totals: { stockValue: 0, potentialRevenue: 0, units: 0 } });
+  mock.onGet(/\/reports\/movements/).reply(200, { series: [], movements: [] });
+  mock.onGet(/\/reports\/top-products/).reply(200, { items: [] });
+  mock.onGet(/\/reports\/category-breakdown/).reply(200, { items: [] });
+  mock.onGet(/\/reports\/sales-stats/).reply(200, {
     periods: { 
       today: { total: 0, count: 0, avgTicket: 0, profit: 0 },
       week: { total: 0, count: 0, avgTicket: 0, profit: 0 },
@@ -281,7 +281,7 @@ export function setupMockServer() {
     byEmployee: [],
     byPaymentMethod: []
   });
-  mock.onGet(new RegExp(".*/reports/profitability.*")).reply(200, {
+  mock.onGet(/\/reports\/profitability/).reply(200, {
     totals: { revenue: 0, cost: 0, grossProfit: 0, marginPercent: 0 },
     products: []
   });
