@@ -24,6 +24,24 @@ const Users = lazy(() => import("./pages/Users"));
 const Settings = lazy(() => import("./pages/Settings"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
+// Precargar todas las rutas en segundo plano para eliminar pantallas de carga al navegar
+export function preloadAllPages() {
+  import("./pages/Dashboard");
+  import("./pages/Products");
+  import("./pages/Ventas");
+  import("./pages/Caja");
+  import("./pages/Stock");
+  import("./pages/Compras");
+  import("./pages/Categories");
+  import("./pages/Suppliers");
+  import("./pages/InventarioFisico");
+  import("./pages/Reports");
+  import("./pages/Estadisticas");
+  import("./pages/Rentabilidad");
+  import("./pages/Users");
+  import("./pages/Settings");
+}
+
 function PageLoader() {
   return (
     <div className="flex h-[60vh] w-full items-center justify-center">

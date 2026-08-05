@@ -4,12 +4,16 @@ import { Sidebar } from "./Sidebar";
 import { Topbar } from "./Topbar";
 import { QuickSearch } from "../search/QuickSearch";
 import { GlobalScannerModal } from "./GlobalScannerModal";
+import { preloadAllPages } from "../../App";
 
 export function AppLayout() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
 
   useEffect(() => {
+    // Precargar las rutas en segundo plano al iniciar la app
+    preloadAllPages();
+
     const handler = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();

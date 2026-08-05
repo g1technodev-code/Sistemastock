@@ -27,8 +27,8 @@ const saveToStorage = (key: string, value: any) => {
 
 export function setupMockServer() {
   console.log("🚀 MOCK SERVER INICIADO - Usando datos de prueba de Argentina completos");
-  const mock = new MockAdapter(api, { delayResponse: 500 });
-  const globalMock = new MockAdapter(axios, { delayResponse: 500 });
+  const mock = new MockAdapter(api, { delayResponse: 50 });
+  const globalMock = new MockAdapter(axios, { delayResponse: 50 });
 
   // --- DATOS INICIALES ---
   const initialCategories: Category[] = [
