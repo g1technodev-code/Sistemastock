@@ -64,11 +64,11 @@ export function Sidebar({ mobileOpen, onCloseMobile }: { mobileOpen: boolean; on
     return (
       <div className="flex h-full flex-col">
         <div className={cn("flex items-center gap-3 px-6 py-6", isCollapsed && "justify-center px-3")}>
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary-600 text-white shadow-sm dark:bg-primary-500">
-            <Boxes className="h-5 w-5" />
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white shadow-sm dark:bg-neutral-900">
+            <img src="/kipo-logo.png" alt="Kipo Logo" className="h-full w-full object-cover" />
           </div>
           {!isCollapsed && (
-            <span className="text-xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100">StockFlow</span>
+            <span className="text-xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100">Kipo</span>
           )}
           <button
             onClick={onCloseMobile}
@@ -112,7 +112,7 @@ export function Sidebar({ mobileOpen, onCloseMobile }: { mobileOpen: boolean; on
             {!isCollapsed && "Colapsar"}
           </button>
         </div>
-        {!isCollapsed && <div className="px-6 py-4 text-xs font-medium text-neutral-400 dark:text-neutral-600">StockFlow v1.0</div>}
+        {!isCollapsed && <div className="px-6 py-4 text-xs font-medium text-neutral-400 dark:text-neutral-600">Kipo v1.0</div>}
       </div>
     );
   }
