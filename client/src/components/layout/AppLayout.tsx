@@ -3,6 +3,7 @@ import { Outlet } from "react-router-dom";
 import { Sidebar } from "./Sidebar";
 import { Topbar } from "./Topbar";
 import { QuickSearch } from "../search/QuickSearch";
+import { GlobalScannerModal } from "./GlobalScannerModal";
 
 export function AppLayout() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -29,6 +30,7 @@ export function AppLayout() {
         </main>
       </div>
       <QuickSearch open={searchOpen} onClose={() => setSearchOpen(false)} />
+      <GlobalScannerModal />
     </div>
   );
 }
