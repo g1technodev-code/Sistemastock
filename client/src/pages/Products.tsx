@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Plus, Search, Package, Pencil, Trash2, AlertTriangle } from "lucide-react";
 import { Card } from "../components/ui/Card";
 import { Button } from "../components/ui/Button";
@@ -17,6 +17,8 @@ import { useToast } from "../context/ToastContext";
 import { permissions } from "../lib/permissions";
 import { extractErrorMessage } from "../api/client";
 import { formatCurrency, formatNumber } from "../lib/formatters";
+import { listProducts } from "../api/products";
+import { useBarcodeScanner } from "../hooks/useBarcodeScanner";
 import type { Product } from "../lib/types";
 
 export default function Products() {
@@ -29,6 +31,7 @@ export default function Products() {
   const [search, setSearch] = useState("");
   const [categoryId, setCategoryId] = useState("");
   const [lowStockOnly, setLowStockOnly] = useState(false);
+  const location = useLocation();
 
   const { data: categories } = useCategories();
   const { data, isLoading } = useProducts({ page, limit: 10, q: search || undefined, categoryId: categoryId || undefined, lowStock: lowStockOnly || undefined });
@@ -46,6 +49,35 @@ export default function Products() {
     setEditingProduct(product);
     setFormOpen(true);
   };
+
+  useEffect(() => {
+    if (location.state?.newBarcode && canManage) {
+      const barcode = location.state.newBarcode;
+      setEditingProduct({ sku: barcode, barcode: barcode, name: "" } as Product);
+      setFormOpen(true);
+      // Limpiamos el state para no reabrir en recargas
+      navigate("/products", { replace: true, state: {} });
+    }
+  }, [location.state, navigate, canManage]);
+
+  useBarcodeScanner(async (barcode) => {
+    if (formOpen) return; // Si ya hay un modal abierto, ignorar
+    try {
+      const res = await listProducts({ q: barcode, isActive: true, limit: 2 });
+      const match = res.items.find((p) => p.sku === barcode || p.barcode === barcode);
+      if (match) {
+        setSearch(barcode);
+        setPage(1);
+      } else if (canManage) {
+        setEditingProduct({ sku: barcode, barcode: barcode, name: "" } as Product);
+        setFormOpen(true);
+      } else {
+        showError("Producto no encontrado");
+      }
+    } catch (e) {
+      showError("Error al procesar el escaneo");
+    }
+  });
 
   const handleSubmit = async (values: ProductFormValues) => {
     try {

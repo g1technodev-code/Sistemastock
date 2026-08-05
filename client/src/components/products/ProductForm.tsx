@@ -120,7 +120,7 @@ export function ProductForm({
         {...register("minStock")}
       />
 
-      {initialValues && (
+      {initialValues && initialValues.id && (
         <label className="flex items-center gap-2 text-sm text-neutral-700 dark:text-neutral-300">
           <input type="checkbox" className="h-4 w-4 rounded border-neutral-300" {...register("isActive")} />
           Producto activo (desmarca para desactivarlo sin eliminar su historial)
@@ -132,7 +132,7 @@ export function ProductForm({
           Cancelar
         </Button>
         <Button type="submit" isLoading={isSubmitting}>
-          {initialValues ? "Guardar cambios" : "Crear producto"}
+          {initialValues && initialValues.id ? "Guardar cambios" : "Crear producto"}
         </Button>
       </div>
     </form>

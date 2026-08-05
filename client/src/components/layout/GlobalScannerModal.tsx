@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Modal } from "../ui/Modal";
 import { Badge } from "../ui/Badge";
+import { Button } from "../ui/Button";
 import { useBarcodeScanner } from "../../hooks/useBarcodeScanner";
 import { listProducts } from "../../api/products";
 import { formatCurrency } from "../../lib/formatters";
@@ -13,11 +14,12 @@ export function GlobalScannerModal() {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const location = useLocation();
+  const navigate = useNavigate();
 
   useBarcodeScanner(async (barcode) => {
-    // Si estamos en la página de ventas, ignoramos el escaneo global
-    // ya que Ventas maneja su propia lógica para agregar al carrito
-    if (location.pathname === "/ventas") return;
+    // Si estamos en la página de ventas o productos, ignoramos el escaneo global
+    // ya que esas páginas manejan su propia lógica
+    if (location.pathname === "/ventas" || location.pathname === "/products") return;
 
     setLoading(true);
     setOpen(true);
@@ -32,6 +34,7 @@ export function GlobalScannerModal() {
         setProduct(match);
       } else {
         setErrorMsg(`Producto no encontrado con el código: ${barcode}`);
+        setProduct({ sku: barcode, barcode: barcode } as Product);
       }
     } catch (e) {
       setErrorMsg("Ocurrió un error al buscar el producto.");
@@ -48,12 +51,24 @@ export function GlobalScannerModal() {
         )}
         
         {!loading && errorMsg && (
-          <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-center text-sm text-red-700 dark:border-red-900/50 dark:bg-red-950/50 dark:text-red-400">
-            {errorMsg}
+          <div className="flex flex-col gap-4">
+            <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-center text-sm text-red-700 dark:border-red-900/50 dark:bg-red-950/50 dark:text-red-400">
+              {errorMsg}
+            </div>
+            {product && (
+              <Button
+                onClick={() => {
+                  setOpen(false);
+                  navigate("/products", { state: { newBarcode: product.barcode } });
+                }}
+              >
+                Crear nuevo producto
+              </Button>
+            )}
           </div>
         )}
 
-        {!loading && product && (
+        {!loading && product && !errorMsg && (
           <div className="flex flex-col gap-3">
             <div className="flex items-start justify-between">
               <div>
