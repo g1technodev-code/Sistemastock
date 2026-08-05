@@ -1,28 +1,28 @@
 import { useEffect, useState } from "react";
-import { Outlet } from "react-router-dom";
+import { Outlet, useNavigate } from "react-router-dom";
 import { Sidebar } from "./Sidebar";
 import { Topbar } from "./Topbar";
 import { QuickSearch } from "../search/QuickSearch";
 import { GlobalScannerModal } from "./GlobalScannerModal";
 import { preloadAllPages } from "../../App";
+import { useHotkeys } from "../../hooks/useHotkeys";
 
 export function AppLayout() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     // Precargar las rutas en segundo plano al iniciar la app
     preloadAllPages();
-
-    const handler = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
-        e.preventDefault();
-        setSearchOpen(true);
-      }
-    };
-    document.addEventListener("keydown", handler);
-    return () => document.removeEventListener("keydown", handler);
   }, []);
+
+  useHotkeys({
+    "ctrl+k": () => setSearchOpen(true),
+    "shift+v": () => navigate("/ventas"),
+    "shift+c": () => navigate("/caja"),
+    "shift+x": () => navigate("/compras"),
+  });
 
   return (
     <div className="flex h-screen overflow-hidden bg-neutral-50 dark:bg-neutral-950">
