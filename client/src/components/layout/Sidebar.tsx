@@ -34,9 +34,9 @@ const NAV_ITEMS = [
   { to: "/suppliers", label: "Proveedores", icon: Truck, show: permissions.canViewSuppliers },
   { to: "/stock", label: "Movimientos de stock", icon: ArrowLeftRight, show: permissions.canViewStockMovements },
   { to: "/inventario-fisico", label: "Inventario físico", icon: ClipboardCheck, show: permissions.canViewPhysicalInventory },
-  { to: "/ventas", label: "Ventas", icon: ShoppingCart, show: permissions.canViewSales },
-  { to: "/compras", label: "Compras", icon: ShoppingBag, show: permissions.canViewPurchases },
-  { to: "/caja", label: "Caja", icon: Wallet, show: permissions.canViewCash },
+  { to: "/ventas", label: "Ventas", icon: ShoppingCart, show: permissions.canViewSales, shortcut: "⇧V" },
+  { to: "/compras", label: "Compras", icon: ShoppingBag, show: permissions.canViewPurchases, shortcut: "⇧X" },
+  { to: "/caja", label: "Caja", icon: Wallet, show: permissions.canViewCash, shortcut: "⇧C" },
   { to: "/reports", label: "Reportes", icon: BarChart3, show: permissions.canViewReports },
   { to: "/estadisticas", label: "Estadísticas", icon: LineChart, show: permissions.canViewReports },
   { to: "/rentabilidad", label: "Rentabilidad", icon: Percent, show: permissions.canViewReports },
@@ -84,7 +84,7 @@ export function Sidebar({ mobileOpen, onCloseMobile }: { mobileOpen: boolean; on
               key={item.to}
               to={item.to}
               onClick={onCloseMobile}
-              title={isCollapsed ? item.label : undefined}
+              title={isCollapsed ? `${item.label}${item.shortcut ? ` (${item.shortcut})` : ""}` : undefined}
               className={({ isActive }) =>
                 cn(
                   "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500",
@@ -96,7 +96,16 @@ export function Sidebar({ mobileOpen, onCloseMobile }: { mobileOpen: boolean; on
               }
             >
               <item.icon className={cn("h-[18px] w-[18px] shrink-0", isCollapsed && "h-5 w-5")} strokeWidth={2.5} />
-              {!isCollapsed && item.label}
+              {!isCollapsed && (
+                <>
+                  <span className="flex-1">{item.label}</span>
+                  {item.shortcut && (
+                    <kbd className="rounded border border-neutral-200 bg-neutral-100 px-1.5 py-0.5 text-[10px] font-mono text-neutral-400 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-500">
+                      {item.shortcut}
+                    </kbd>
+                  )}
+                </>
+              )}
             </NavLink>
           ))}
           <div className="pt-2">
