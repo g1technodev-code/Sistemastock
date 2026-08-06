@@ -1,13 +1,15 @@
-import { Prisma, MovementType, PaymentMethod, SaleStatus, CashMovementType, CashShiftStatus } from "@prisma/client";
+import { Prisma, MovementType, PaymentMethod, SaleStatus, CashMovementType, CashShiftStatus, CustomerMovementType, NotificationType } from "@prisma/client";
 import { prisma } from "../config/prisma";
 import { ApiError } from "../utils/apiError";
 import { parsePagination, paginatedResponse } from "../utils/pagination";
 import { getOrCreateRegister, CASH_REGISTER_ID } from "./cash.service";
+import { createNotification } from "./notification.service";
 import type { CreateSaleInput, ListSalesQuery, SalesSummaryQuery } from "../schemas/sale.schema";
 
 const SALE_INCLUDE = {
   items: { include: { product: { select: { id: true, sku: true, name: true, unit: true } } } },
   user: { select: { id: true, name: true } },
+  customer: { select: { id: true, name: true, taxId: true, currentBalance: true } },
 };
 
 function startOfDay(date: Date): Date {
@@ -22,6 +24,8 @@ type PendingMovement = {
   quantityBefore: number;
   quantityAfter: number;
   unitCost: Prisma.Decimal;
+  productName: string;
+  minStock: number;
 };
 
 export async function createSale(input: CreateSaleInput, userId: string) {
@@ -33,8 +37,13 @@ export async function createSale(input: CreateSaleInput, userId: string) {
       throw ApiError.badRequest("Debes abrir tu turno de caja antes de registrar ventas");
     }
 
-    // Process lines in a stable productId order so concurrent sales sharing a product
-    // always acquire row locks in the same order — avoids cross-transaction deadlocks.
+    if (input.paymentMethod === PaymentMethod.CUENTA_CORRIENTE) {
+      if (!input.customerId) throw ApiError.badRequest("Debes seleccionar un cliente para vender a Cuenta Corriente");
+      const customer = await tx.customer.findUnique({ where: { id: input.customerId } });
+      if (!customer) throw ApiError.notFound("Cliente no encontrado");
+      if (!customer.isActive) throw ApiError.badRequest("El cliente se encuentra inactivo");
+    }
+
     const sortedItems = [...input.items].sort((a, b) => a.productId.localeCompare(b.productId));
 
     let total = 0;
@@ -46,8 +55,6 @@ export async function createSale(input: CreateSaleInput, userId: string) {
       if (!product) throw ApiError.notFound(`Producto no encontrado: ${line.productId}`);
       if (!product.isActive) throw ApiError.badRequest(`El producto "${product.name}" no está activo`);
 
-      // Atomic conditional decrement — same guard pattern as stock.service.ts's OUT
-      // movement, so two concurrent sales can't both pass a stale stock check.
       const result = await tx.product.updateMany({
         where: { id: line.productId, currentStock: { gte: line.quantity } },
         data: { currentStock: { decrement: line.quantity } },
@@ -59,8 +66,6 @@ export async function createSale(input: CreateSaleInput, userId: string) {
         );
       }
 
-      // Re-read post-write inside the same transaction rather than trusting the
-      // pre-write snapshot, which could be stale under concurrent sales on this product.
       const fresh = await tx.product.findUnique({ where: { id: line.productId } });
       const quantityAfter = fresh!.currentStock;
       const quantityBefore = quantityAfter + line.quantity;
@@ -76,16 +81,31 @@ export async function createSale(input: CreateSaleInput, userId: string) {
         quantityBefore,
         quantityAfter,
         unitCost: product.costPrice,
+        productName: product.name,
+        minStock: product.minStock,
       });
     }
 
     total = Math.round(total * 100) / 100;
+
+    if (input.paymentMethod === PaymentMethod.CUENTA_CORRIENTE && input.customerId) {
+      const customer = await tx.customer.findUnique({ where: { id: input.customerId } });
+      if (customer?.creditLimit !== null && customer?.creditLimit !== undefined) {
+        const potentialBalance = Number(customer.currentBalance) + total;
+        if (potentialBalance > Number(customer.creditLimit)) {
+          throw ApiError.badRequest(
+            `El saldo total ($${potentialBalance}) supera el límite de crédito permitido ($${customer.creditLimit}) para ${customer.name}`,
+          );
+        }
+      }
+    }
 
     const sale = await tx.sale.create({
       data: {
         total,
         paymentMethod: input.paymentMethod,
         userId,
+        customerId: input.customerId || null,
         receiptNumber: input.receiptNumber?.trim() || null,
         payerName: input.payerName?.trim() || null,
       },
@@ -117,6 +137,16 @@ export async function createSale(input: CreateSaleInput, userId: string) {
           userId,
         },
       });
+
+      // Notificación automática si el stock cayó al nivel mínimo o menos
+      if (movement.quantityAfter <= movement.minStock) {
+        await createNotification(
+          NotificationType.LOW_STOCK,
+          "Alerta de Stock Bajo",
+          `El producto "${movement.productName}" tiene un stock crítico de ${movement.quantityAfter} unidades (Mínimo: ${movement.minStock}).`,
+          { productId: movement.productId, currentStock: movement.quantityAfter, minStock: movement.minStock },
+        );
+      }
     }
 
     if (input.paymentMethod === PaymentMethod.EFECTIVO) {
@@ -137,6 +167,28 @@ export async function createSale(input: CreateSaleInput, userId: string) {
           balanceAfter,
           saleId: sale.id,
           userId,
+        },
+      });
+    } else if (input.paymentMethod === PaymentMethod.CUENTA_CORRIENTE && input.customerId) {
+      const customer = await tx.customer.findUnique({ where: { id: input.customerId } });
+      const balanceBefore = Number(customer!.currentBalance);
+      const balanceAfter = balanceBefore + total;
+
+      await tx.customer.update({
+        where: { id: input.customerId },
+        data: { currentBalance: balanceAfter },
+      });
+
+      await tx.customerMovement.create({
+        data: {
+          customerId: input.customerId,
+          type: CustomerMovementType.CHARGE,
+          amount: total,
+          balanceBefore,
+          balanceAfter,
+          saleId: sale.id,
+          userId,
+          note: `Venta a cuenta corriente #${sale.id.slice(-6)}`,
         },
       });
     }

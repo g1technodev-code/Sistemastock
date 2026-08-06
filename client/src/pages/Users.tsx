@@ -17,6 +17,7 @@ import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 import { extractErrorMessage } from "../api/client";
 import { formatDate, initials } from "../lib/formatters";
+import { ROLE_LABEL } from "../lib/permissions";
 import type { ManagedUser, Role } from "../lib/types";
 
 const createSchema = z.object({
@@ -26,8 +27,6 @@ const createSchema = z.object({
   role: z.enum(["ADMIN", "MANAGER", "EMPLOYEE"]),
 });
 type CreateFormValues = z.infer<typeof createSchema>;
-
-const ROLE_LABEL: Record<Role, string> = { ADMIN: "Administrador", MANAGER: "Gestor", EMPLOYEE: "Empleado" };
 
 export default function Users() {
   const { user: currentUser } = useAuth();

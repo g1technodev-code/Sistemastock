@@ -154,7 +154,7 @@ export default function Caja() {
               <div className="flex flex-col gap-4">
                 <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
                   <span className="text-neutral-500 dark:text-neutral-400">
-                    Abierto: <span className="text-neutral-900 dark:text-neutral-100">{formatDateTime(status.myOpenShift.openedAt)}</span>
+                    Abierto por: <span className="font-medium text-neutral-900 dark:text-neutral-100">{status.myOpenShift.openedBy.name}</span> ({formatDateTime(status.myOpenShift.openedAt)})
                   </span>
                   <span className="text-neutral-500 dark:text-neutral-400">
                     Contado: <span className="text-neutral-900 dark:text-neutral-100">{formatCurrency(status.myOpenShift.openingCounted)}</span>
@@ -196,8 +196,9 @@ export default function Caja() {
               <div className="flex flex-col gap-4">
                 {lastClosed && (
                   <div className="flex flex-wrap items-center gap-x-6 gap-y-2 rounded-lg border border-neutral-200 p-3 text-sm dark:border-neutral-800">
-                    <span className="text-neutral-500 dark:text-neutral-400">Último cierre:</span>
-                    <span className="text-neutral-900 dark:text-neutral-100">{formatDateTime(lastClosed.closedAt!)}</span>
+                    <span className="text-neutral-500 dark:text-neutral-400">
+                      Último cierre por: <span className="font-medium text-neutral-900 dark:text-neutral-100">{lastClosed.closedBy?.name ?? "—"}</span> ({formatDateTime(lastClosed.closedAt!)})
+                    </span>
                     <DiscrepancyBadge value={lastClosed.closingDiscrepancy ?? 0} />
                   </div>
                 )}
@@ -277,6 +278,7 @@ export default function Caja() {
                     <TH>Abierto por</TH>
                     <TH>Apertura</TH>
                     <TH>Diferencia apertura</TH>
+                    <TH>Cerrado por</TH>
                     <TH>Cierre</TH>
                     <TH>Diferencia cierre</TH>
                     <TH>Estado</TH>
@@ -285,11 +287,12 @@ export default function Caja() {
                 <TBody>
                   {shifts.items.map((s) => (
                     <TR key={s.id}>
-                      <TD>{s.openedBy.name}</TD>
+                      <TD className="font-medium text-neutral-900 dark:text-neutral-100">{s.openedBy.name}</TD>
                       <TD className="text-xs text-neutral-400">{formatDateTime(s.openedAt)}</TD>
                       <TD>
                         <DiscrepancyBadge value={s.openingDiscrepancy} />
                       </TD>
+                      <TD className="font-medium text-neutral-900 dark:text-neutral-100">{s.closedBy?.name ?? "—"}</TD>
                       <TD className="text-xs text-neutral-400">{s.closedAt ? formatDateTime(s.closedAt) : "—"}</TD>
                       <TD>{s.closingDiscrepancy !== null ? <DiscrepancyBadge value={s.closingDiscrepancy} /> : "—"}</TD>
                       <TD>

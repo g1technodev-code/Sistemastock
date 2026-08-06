@@ -1,9 +1,11 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { Camera } from "lucide-react";
 import { Input, Select, Textarea } from "../ui/Field";
 import { Button } from "../ui/Button";
+import { CameraScannerModal } from "../common/CameraScannerModal";
 import { useCategories } from "../../hooks/useCategories";
 import { useSuppliers } from "../../hooks/useSuppliers";
 import type { Product } from "../../lib/types";
@@ -38,11 +40,14 @@ export function ProductForm({
 }) {
   const { data: categories } = useCategories();
   const { data: suppliers } = useSuppliers();
+  const [cameraOpen, setCameraOpen] = useState(false);
 
   const {
     register,
     handleSubmit,
     reset,
+    setValue,
+    getValues,
     formState: { errors },
   } = useForm<ProductFormInput, unknown, ProductFormValues>({
     resolver: zodResolver(schema),
@@ -77,11 +82,37 @@ export function ProductForm({
     });
   }, [initialValues, reset]);
 
+  const handleBarcodeScanned = (code: string) => {
+    setValue("barcode", code, { shouldValidate: true, shouldDirty: true });
+    if (!getValues("sku")) {
+      setValue("sku", code, { shouldValidate: true, shouldDirty: true });
+    }
+  };
+
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
       <div className="grid grid-cols-2 gap-4">
-        <Input label="SKU" required error={errors.sku?.message} {...register("sku")} />
-        <Input label="Código de barras" {...register("barcode")} />
+        <Input label="SKU *" required error={errors.sku?.message} {...register("sku")} />
+        <div>
+          <label className="block text-xs font-semibold uppercase text-neutral-600 dark:text-neutral-400 mb-1">
+            Código de barras
+          </label>
+          <div className="flex gap-2">
+            <input
+              {...register("barcode")}
+              placeholder="Escanear o ingresar..."
+              className="w-full rounded-xl border border-neutral-300 px-3.5 py-2 text-sm dark:border-neutral-800 dark:bg-neutral-900"
+            />
+            <button
+              type="button"
+              onClick={() => setCameraOpen(true)}
+              title="Escanear con Cámara"
+              className="flex items-center justify-center rounded-xl border border-neutral-300 bg-white px-3 text-neutral-700 shadow-sm hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-200 dark:hover:bg-neutral-800"
+            >
+              <Camera className="h-4 w-4 text-primary-600 dark:text-primary-400" />
+            </button>
+          </div>
+        </div>
       </div>
       <Input label="Nombre" required error={errors.name?.message} {...register("name")} />
       <Textarea label="Descripción" rows={2} {...register("description")} />
@@ -120,7 +151,7 @@ export function ProductForm({
         {...register("minStock")}
       />
 
-      {initialValues && (
+      {initialValues && initialValues.id && (
         <label className="flex items-center gap-2 text-sm text-neutral-700 dark:text-neutral-300">
           <input type="checkbox" className="h-4 w-4 rounded border-neutral-300" {...register("isActive")} />
           Producto activo (desmarca para desactivarlo sin eliminar su historial)
@@ -132,9 +163,16 @@ export function ProductForm({
           Cancelar
         </Button>
         <Button type="submit" isLoading={isSubmitting}>
-          {initialValues ? "Guardar cambios" : "Crear producto"}
+          {initialValues && initialValues.id ? "Guardar cambios" : "Crear producto"}
         </Button>
       </div>
+
+      <CameraScannerModal
+        open={cameraOpen}
+        onClose={() => setCameraOpen(false)}
+        onScan={handleBarcodeScanned}
+        title="Escanear Código para Producto"
+      />
     </form>
   );
 }

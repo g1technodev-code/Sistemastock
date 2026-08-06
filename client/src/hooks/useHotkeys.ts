@@ -5,6 +5,7 @@ export type HotkeyMap = Record<string, (e: KeyboardEvent) => void>;
 const TYPING_TAGS = new Set(["INPUT", "TEXTAREA", "SELECT"]);
 
 function comboFromEvent(e: KeyboardEvent): string {
+  if (!e.key) return "";
   const parts: string[] = [];
   if (e.ctrlKey || e.metaKey) parts.push("ctrl");
   if (e.altKey) parts.push("alt");

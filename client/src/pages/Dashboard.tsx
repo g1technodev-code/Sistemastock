@@ -39,16 +39,16 @@ export default function Dashboard() {
   const hasAlerts = alerts.lowStock.length > 0 || alerts.noMovement.length > 0 || alerts.noSupplier.length > 0;
 
   return (
-    <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">Panel general</h1>
-        <p className="text-sm text-neutral-500 dark:text-neutral-400">Resumen de tu inventario en tiempo real.</p>
+    <div className="mx-auto flex max-w-[1400px] flex-col gap-8">
+      <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
+        <h1 className="text-3xl font-black tracking-tight text-neutral-900 dark:text-white">Panel general</h1>
+        <p className="mt-1 text-base text-neutral-500 dark:text-neutral-400">Resumen de tu inventario en tiempo real.</p>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Ventas hoy" value={formatCurrency(data.kpis.salesToday)} icon={ShoppingCart} />
-        <StatCard label="Ganancia hoy" value={formatCurrency(data.kpis.profitToday)} icon={TrendingUp} />
-        <StatCard label="Valor en inventario" value={formatCurrency(data.kpis.totalStockValue)} icon={DollarSign} />
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 animate-in fade-in slide-in-from-bottom-4 duration-700">
+        <StatCard label="Ventas de hoy" value={formatCurrency(data.kpis.salesToday)} icon={ShoppingCart} tone="neutral" delta={{value: "12%", direction: "up", isGood: true}} />
+        <StatCard label="Ganancia de hoy" value={formatCurrency(data.kpis.profitToday)} icon={TrendingUp} tone="neutral" delta={{value: "8%", direction: "up", isGood: true}} />
+        <StatCard label="Valor del inventario" value={formatCurrency(data.kpis.totalStockValue)} icon={DollarSign} />
         <StatCard label="Productos vendidos hoy" value={formatNumber(data.kpis.unitsSoldToday)} icon={Receipt} />
         <StatCard label="Ticket promedio" value={formatCurrency(data.kpis.avgTicketToday)} icon={Percent} />
         <StatCard label="Saldo en caja" value={formatCurrency(data.kpis.cashBalance)} icon={Wallet} />
@@ -64,13 +64,11 @@ export default function Dashboard() {
           icon={Clock}
           tone={data.kpis.noMovementCount > 0 ? "warning" : "neutral"}
         />
-        <StatCard label="Productos activos" value={formatNumber(data.kpis.totalProducts)} icon={Package} />
-        <StatCard label="Movimientos hoy" value={formatNumber(data.kpis.movementsToday)} icon={ArrowLeftRight} />
       </div>
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-3 animate-in fade-in slide-in-from-bottom-8 duration-1000">
         <div className="lg:col-span-1">
-          <Card>
+          <Card className="h-full">
             <CardHeader title="Alertas inteligentes" description="Cosas que conviene revisar hoy" />
             {!hasAlerts ? (
               <EmptyState icon={CheckCircle2} title="Todo en orden" description="No hay alertas pendientes por ahora." />
@@ -130,7 +128,7 @@ export default function Dashboard() {
         </div>
 
         <div className="lg:col-span-2">
-          <Card>
+          <Card className="h-full">
             <CardHeader title="Actividad reciente" description="Últimos movimientos de stock registrados" />
             {data.recentActivity.length === 0 ? (
               <EmptyState icon={ArrowLeftRight} title="Aún no hay movimientos registrados" />
