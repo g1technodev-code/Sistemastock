@@ -25,7 +25,7 @@ async function issueTokenPair(user: { id: string; localId?: string | null; email
 }
 
 export async function login(email: string, password: string) {
-  const user = await prisma.user.findUnique({ where: { email } });
+  const user = await prisma.user.findUnique({ where: { email }, include: { local: true } });
   if (!user || !user.isActive) {
     throw ApiError.unauthorized("Credenciales inválidas");
   }
@@ -33,6 +33,10 @@ export async function login(email: string, password: string) {
   const valid = await comparePassword(password, user.passwordHash);
   if (!valid) {
     throw ApiError.unauthorized("Credenciales inválidas");
+  }
+
+  if (user.local?.status === "SUSPENDED") {
+    throw ApiError.forbidden("Tu cuenta está suspendida. Contactá al administrador.");
   }
 
   const tokens = await issueTokenPair(user);
@@ -46,7 +50,7 @@ export async function refresh(refreshTokenValue: string) {
   const tokenHash = hashRefreshToken(refreshTokenValue);
   const stored = await prisma.refreshToken.findUnique({
     where: { tokenHash },
-    include: { user: true },
+    include: { user: { include: { local: true } } },
   });
 
   if (!stored) {
@@ -63,6 +67,10 @@ export async function refresh(refreshTokenValue: string) {
 
   if (!stored.user.isActive) {
     throw ApiError.forbidden("Tu cuenta ha sido desactivada");
+  }
+
+  if (stored.user.local?.status === "SUSPENDED") {
+    throw ApiError.forbidden("Tu cuenta está suspendida. Contactá al administrador.");
   }
 
   await prisma.refreshToken.update({
