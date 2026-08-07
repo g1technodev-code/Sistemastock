@@ -13,9 +13,9 @@ export const listLocales = catchAsync(async (req: Request, res: Response) => {
   res.json(result);
 });
 
-export const updateStatus = catchAsync(async (req: Request, res: Response) => {
-  const { id } = req.params;
-  const { status } = req.body as { status: "ACTIVE" | "SUSPENDED" | "DUE_SOON" };
-  const updated = await superadminAction.updateLocalStatus(id, status);
-  res.json({ local: updated });
+export const createLocal = catchAsync(async (req: Request, res: Response) => {
+  const { name, ownerEmail, adminPassword, plan } = req.body;
+  const result = await superadminAction.createLocal({ name, ownerEmail, adminPassword, plan });
+  res.status(201).json(result);
 });
+

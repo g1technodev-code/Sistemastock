@@ -50,6 +50,24 @@ export async function createUser(creatorLocalId: string | null | undefined, inpu
     throw ApiError.forbidden("No tienes permisos para asignar el rol SuperAdmin");
   }
 
+  if (creatorLocalId) {
+    const local = await prisma.local.findUnique({ where: { id: creatorLocalId } });
+    if (local) {
+      const currentUsersCount = await prisma.user.count({ where: { localId: creatorLocalId } });
+      const PLAN_USER_LIMITS: Record<string, number> = {
+        TRIAL: 3,
+        BASICO: 3,
+        PRO: Infinity,
+      };
+      const limit = PLAN_USER_LIMITS[local.plan] ?? 3;
+      if (currentUsersCount >= limit) {
+        throw ApiError.forbidden(
+          `Tu plan ${local.plan} permite hasta ${limit} usuario(s). Actualiza tu plan a PRO para obtener usuarios ilimitados.`,
+        );
+      }
+    }
+  }
+
   const existing = await prisma.user.findUnique({ where: { email: input.email } });
   if (existing) throw ApiError.conflict("Ya existe un usuario con ese email");
 
@@ -65,6 +83,7 @@ export async function createUser(creatorLocalId: string | null | undefined, inpu
     select: SELECT_FIELDS,
   });
 }
+
 
 export async function updateUser(id: string, input: UpdateUserInput, actingUserId: string, actingUserRole?: Role) {
   if (input.role === "SUPERADMIN" && actingUserRole !== "SUPERADMIN") {

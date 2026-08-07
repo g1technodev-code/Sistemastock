@@ -30,6 +30,8 @@ import {
 import { useAuth } from "../../context/AuthContext";
 import { permissions } from "../../lib/permissions";
 import { cn } from "../../lib/utils";
+import type { Role } from "../../lib/types";
+
 
 const COLLAPSE_STORAGE_KEY = "stockflow-sidebar-collapsed";
 
@@ -61,7 +63,8 @@ const TENANT_NAV_ITEMS: NavItem[] = [
   { to: "/compras", label: "Compras", icon: ShoppingBag, show: permissions.canViewPurchases, shortcut: "⇧X" },
   { to: "/caja", label: "Caja", icon: Wallet, show: permissions.canViewCash, shortcut: "⇧C" },
   { to: "/customers", label: "Clientes", icon: Users, show: permissions.canViewCustomers },
-  { to: "/plans", label: "Suscripciones", icon: CreditCard, show: () => true },
+  { to: "/plans", label: "Suscripciones", icon: CreditCard, show: (role: Role) => role !== "EMPLOYEE" },
+
   { to: "/reports", label: "Reportes", icon: BarChart3, show: permissions.canViewReports },
   { to: "/estadisticas", label: "Estadísticas", icon: LineChart, show: permissions.canViewReports },
   { to: "/rentabilidad", label: "Rentabilidad", icon: Percent, show: permissions.canViewReports },

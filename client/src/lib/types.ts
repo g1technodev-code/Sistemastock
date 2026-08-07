@@ -10,18 +10,30 @@ export type CustomerMovementType = "CHARGE" | "PAYMENT";
 export type NotificationType = "LOW_STOCK" | "SHIFT_OPEN" | "SHIFT_CLOSE";
 
 export type LocalStatus = "ACTIVE" | "DUE_SOON" | "SUSPENDED";
-export type PlanType = "BASICO" | "PRO";
+export type PlanType = "TRIAL" | "BASICO" | "PRO";
 
 export type LocalItem = {
   id: string;
   name: string;
   ownerEmail: string;
   plan: PlanType;
+  isTrial?: boolean;
   status: LocalStatus;
   dueDate: string;
   monthlyPrice: number;
   createdAt: string;
   updatedAt: string;
+};
+
+export type ConversionAlert = {
+  localId: string;
+  name: string;
+  ownerEmail: string;
+  plan: PlanType;
+  isTrial: boolean;
+  status: LocalStatus;
+  dueDate: string;
+  alertStatus: "TRIAL_ACTIVE" | "CONVERTED" | "SUSPENDED_EXPIRED";
 };
 
 export type SuperAdminMetrics = {
@@ -31,6 +43,7 @@ export type SuperAdminMetrics = {
   dueSoonLocales: number;
   mrr: number;
 };
+
 
 export type AuthUser = {
   id: string;

@@ -100,7 +100,8 @@ export default function App() {
           <Route path="/compras" element={<Compras />} />
           <Route path="/caja" element={<Caja />} />
           <Route path="/customers" element={<Customers />} />
-          <Route path="/plans" element={<Plans />} />
+          <Route path="/plans" element={<ProtectedRoute allowedRoles={["ADMIN"]}><Plans /></ProtectedRoute>} />
+
 
           <Route
 

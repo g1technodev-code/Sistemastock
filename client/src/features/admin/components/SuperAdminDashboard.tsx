@@ -1,17 +1,18 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Building2, ShieldAlert, CheckCircle, DollarSign, Search, Power, AlertCircle, Sparkles } from "lucide-react";
-import { getSuperAdminMetrics, listLocales, updateLocalStatus } from "../actions/superadmin.api";
+import { Building2, ShieldAlert, CheckCircle, DollarSign, Search, Power, AlertCircle, Sparkles, Plus, Clock, UserCheck } from "lucide-react";
+import { getSuperAdminMetrics, listLocales, updateLocalStatus, createLocal } from "../actions/superadmin.api";
 import { Card, CardHeader, CardBody } from "../../../components/ui/Card";
 import { StatCard } from "../../../components/ui/StatCard";
 import { Badge } from "../../../components/ui/Badge";
 import { Input, Select } from "../../../components/ui/Field";
 import { Button } from "../../../components/ui/Button";
+import { Modal } from "../../../components/ui/Modal";
 import { DataTable, type DataTableColumn } from "../../../components/ui/DataTable";
 import { FullPageSpinner } from "../../../components/ui/Spinner";
 import { useToast } from "../../../context/ToastContext";
 import { formatCurrency, formatDate } from "../../../lib/formatters";
-import type { LocalItem, LocalStatus } from "../../../lib/types";
+import type { LocalItem, LocalStatus, PlanType } from "../../../lib/types";
 
 const STATUS_TONE: Record<LocalStatus, "success" | "danger" | "warning"> = {
   ACTIVE: "success",
@@ -29,6 +30,12 @@ export default function SuperAdminDashboard() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [name, setName] = useState("");
+  const [ownerEmail, setOwnerEmail] = useState("");
+  const [adminPassword, setAdminPassword] = useState("");
+  const [plan, setPlan] = useState<PlanType>("TRIAL");
+
   const { showSuccess, showError } = useToast();
   const queryClient = useQueryClient();
 
@@ -40,6 +47,23 @@ export default function SuperAdminDashboard() {
   const { data: localesData, isLoading: localesLoading } = useQuery({
     queryKey: ["superadmin-locales", page, search, statusFilter],
     queryFn: () => listLocales({ page, limit: 10, q: search || undefined, status: statusFilter || undefined }),
+  });
+
+  const createMutation = useMutation({
+    mutationFn: createLocal,
+    onSuccess: () => {
+      showSuccess("Local y usuario administrador registrados exitosamente");
+      setCreateModalOpen(false);
+      setName("");
+      setOwnerEmail("");
+      setAdminPassword("");
+      setPlan("TRIAL");
+      queryClient.invalidateQueries({ queryKey: ["superadmin-metrics"] });
+      queryClient.invalidateQueries({ queryKey: ["superadmin-locales"] });
+    },
+    onError: (err: any) => {
+      showError(err?.response?.data?.message || "No se pudo registrar el local");
+    },
   });
 
   const statusMutation = useMutation({
@@ -58,7 +82,16 @@ export default function SuperAdminDashboard() {
     return <FullPageSpinner />;
   }
 
-  const { metrics } = metricsData;
+  const { metrics, conversionAlerts } = metricsData;
+
+  const handleCreateSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name || !ownerEmail || !adminPassword) {
+      showError("Completa todos los campos obligatorios");
+      return;
+    }
+    createMutation.mutate({ name, ownerEmail, adminPassword, plan });
+  };
 
   const columns: DataTableColumn<LocalItem>[] = [
     {
@@ -82,8 +115,8 @@ export default function SuperAdminDashboard() {
       key: "plan",
       header: "Plan Actual",
       render: (item) => (
-        <Badge tone={item.plan === "PRO" ? "success" : "neutral"} className="font-semibold">
-          Kipo {item.plan}
+        <Badge tone={item.plan === "PRO" ? "success" : item.plan === "TRIAL" ? "warning" : "neutral"} className="font-semibold">
+          {item.plan === "TRIAL" ? "Prueba (7 días)" : `Kipo ${item.plan}`}
         </Badge>
       ),
     },
@@ -152,9 +185,14 @@ export default function SuperAdminDashboard() {
             Administración centralizada de todos los locales registrados en Kipo.
           </p>
         </div>
-        <Badge tone="success" className="px-3 py-1.5 text-xs font-bold uppercase tracking-wider shrink-0">
-          Modo Administrador Máximo
-        </Badge>
+        <div className="flex items-center gap-3">
+          <Button onClick={() => setCreateModalOpen(true)}>
+            <Plus className="h-4 w-4 mr-1.5" /> Registrar Nuevo Local
+          </Button>
+          <Badge tone="success" className="px-3 py-1.5 text-xs font-bold uppercase tracking-wider shrink-0">
+            Modo Administrador Máximo
+          </Badge>
+        </div>
       </div>
 
       {/* Metrics Section */}
@@ -184,6 +222,49 @@ export default function SuperAdminDashboard() {
         />
       </div>
 
+      {/* Conversion Alerts Section */}
+      {conversionAlerts && conversionAlerts.length > 0 && (
+        <Card>
+          <CardHeader
+            title="Alertas de Conversión & Pruebas"
+            description="Estado de locales en prueba de 7 días y vencimientos recientes"
+          />
+          <CardBody>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {conversionAlerts.map((alert) => (
+                <div
+                  key={alert.localId}
+                  className="rounded-xl border border-neutral-800 bg-neutral-900/60 p-4 flex flex-col justify-between space-y-3"
+                >
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <h4 className="font-bold text-white text-sm">{alert.name}</h4>
+                      <p className="text-xs text-neutral-400">{alert.ownerEmail}</p>
+                    </div>
+                    {alert.alertStatus === "CONVERTED" ? (
+                      <Badge tone="success" className="text-[10px]">
+                        <UserCheck className="h-3 w-3 mr-1 inline" /> Convertido ({alert.plan})
+                      </Badge>
+                    ) : alert.alertStatus === "SUSPENDED_EXPIRED" ? (
+                      <Badge tone="danger" className="text-[10px]">
+                        <AlertCircle className="h-3 w-3 mr-1 inline" /> Vencido / Suspendido
+                      </Badge>
+                    ) : (
+                      <Badge tone="warning" className="text-[10px]">
+                        <Clock className="h-3 w-3 mr-1 inline" /> Trial Activo
+                      </Badge>
+                    )}
+                  </div>
+                  <div className="flex items-center justify-between text-xs text-neutral-400 pt-2 border-t border-neutral-800">
+                    <span>Vence: {formatDate(alert.dueDate)}</span>
+                    <span className="font-semibold text-neutral-300">Plan: {alert.plan}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardBody>
+        </Card>
+      )}
 
       {/* Locales List */}
       <Card>
@@ -223,6 +304,65 @@ export default function SuperAdminDashboard() {
         </CardBody>
       </Card>
 
+      {/* Modal Registrar Nuevo Local */}
+      <Modal
+        open={createModalOpen}
+        onClose={() => setCreateModalOpen(false)}
+        title="Registrar Nuevo Local"
+        size="md"
+      >
+        <form onSubmit={handleCreateSubmit} className="space-y-4">
+          <Input
+            label="Nombre del Local / Negocio"
+            placeholder="Ej. Ferretería Central"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            required
+          />
+          <Input
+            label="Email del Administrador"
+            type="email"
+            placeholder="admin@negocio.com"
+            value={ownerEmail}
+            onChange={(e) => setOwnerEmail(e.target.value)}
+            required
+          />
+          <Input
+            label="Contraseña Inicial"
+            type="password"
+            placeholder="••••••••"
+            value={adminPassword}
+            onChange={(e) => setAdminPassword(e.target.value)}
+            required
+          />
+          <Select
+            label="Plan Inicial"
+            value={plan}
+            onChange={(e) => setPlan(e.target.value as PlanType)}
+          >
+            <option value="TRIAL">Prueba Gratis (7 Días)</option>
+            <option value="BASICO">Plan Básico ($24.900 ARS/mes - máx 3 usuarios)</option>
+            <option value="PRO">Plan Pro ($39.900 ARS/mes - usuarios ilimitados)</option>
+          </Select>
+
+          <div className="flex justify-end gap-3 pt-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setCreateModalOpen(false)}
+            >
+              Cancelar
+            </Button>
+            <Button
+              type="submit"
+              isLoading={createMutation.isPending}
+            >
+              Registrar Local
+            </Button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 }
+
