@@ -6,15 +6,16 @@ import { serializeDecimals } from "../utils/serialize";
 
 export const list = catchAsync(async (req: Request, res: Response) => {
   const includeInactive = req.query.includeInactive !== "false";
-  const categories = await categoryService.listCategories(includeInactive);
+  const categories = await categoryService.listCategories(req.user?.localId, includeInactive);
   res.json({ items: serializeDecimals(categories) });
 });
 
 export const create = catchAsync(async (req: Request, res: Response) => {
   const input = upsertCategorySchema.parse(req.body);
-  const category = await categoryService.createCategory(input);
+  const category = await categoryService.createCategory(req.user?.localId, input);
   res.status(201).json({ category });
 });
+
 
 export const update = catchAsync(async (req: Request, res: Response) => {
   const input = upsertCategorySchema.parse(req.body);

@@ -6,9 +6,10 @@ import { serializeDecimals } from "../utils/serialize";
 
 export const createPurchase = catchAsync(async (req: Request, res: Response) => {
   const input = createPurchaseSchema.parse(req.body);
-  const purchase = await purchaseService.createPurchase(input, req.user!.id);
+  const purchase = await purchaseService.createPurchase(req.user?.localId, input, req.user!.id);
   res.status(201).json({ purchase: serializeDecimals(purchase) });
 });
+
 
 export const updatePurchase = catchAsync(async (req: Request, res: Response) => {
   const input = updatePurchaseSchema.parse(req.body);

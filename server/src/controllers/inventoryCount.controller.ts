@@ -6,9 +6,10 @@ import { serializeDecimals } from "../utils/serialize";
 
 export const createSession = catchAsync(async (req: Request, res: Response) => {
   const input = createInventoryCountSchema.parse(req.body);
-  const session = await inventoryCountService.createSession(input, req.user!.id);
+  const session = await inventoryCountService.createSession(req.user?.localId, input, req.user!.id);
   res.status(201).json({ session: serializeDecimals(session) });
 });
+
 
 export const listSessions = catchAsync(async (req: Request, res: Response) => {
   const query = listInventoryCountsQuerySchema.parse(req.query);

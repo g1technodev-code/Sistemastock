@@ -11,9 +11,10 @@ const listQuerySchema = z.object({
 
 export const list = catchAsync(async (req: Request, res: Response) => {
   const query = listQuerySchema.parse(req.query);
-  const result = await notificationService.listNotifications(query);
+  const result = await notificationService.listNotifications(req.user?.localId, query);
   res.json(result);
 });
+
 
 export const markRead = catchAsync(async (req: Request, res: Response) => {
   const id = req.params.id;

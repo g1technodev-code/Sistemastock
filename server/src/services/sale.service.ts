@@ -28,10 +28,11 @@ type PendingMovement = {
   minStock: number;
 };
 
-export async function createSale(input: CreateSaleInput, userId: string) {
+export async function createSale(localId: string | null | undefined, input: CreateSaleInput, userId: string) {
+  if (!localId) throw ApiError.badRequest("Debe estar asociado a un local");
   return prisma.$transaction(async (tx) => {
     const openShift = await tx.cashShift.findFirst({
-      where: { openedById: userId, status: CashShiftStatus.OPEN },
+      where: { localId, openedById: userId, status: CashShiftStatus.OPEN },
     });
     if (!openShift) {
       throw ApiError.badRequest("Debes abrir tu turno de caja antes de registrar ventas");
@@ -39,7 +40,7 @@ export async function createSale(input: CreateSaleInput, userId: string) {
 
     if (input.paymentMethod === PaymentMethod.CUENTA_CORRIENTE) {
       if (!input.customerId) throw ApiError.badRequest("Debes seleccionar un cliente para vender a Cuenta Corriente");
-      const customer = await tx.customer.findUnique({ where: { id: input.customerId } });
+      const customer = await tx.customer.findFirst({ where: { id: input.customerId, localId } });
       if (!customer) throw ApiError.notFound("Cliente no encontrado");
       if (!customer.isActive) throw ApiError.badRequest("El cliente se encuentra inactivo");
     }
@@ -51,12 +52,12 @@ export async function createSale(input: CreateSaleInput, userId: string) {
     const pendingMovements: PendingMovement[] = [];
 
     for (const line of sortedItems) {
-      const product = await tx.product.findUnique({ where: { id: line.productId } });
+      const product = await tx.product.findFirst({ where: { id: line.productId, localId } });
       if (!product) throw ApiError.notFound(`Producto no encontrado: ${line.productId}`);
       if (!product.isActive) throw ApiError.badRequest(`El producto "${product.name}" no está activo`);
 
       const result = await tx.product.updateMany({
-        where: { id: line.productId, currentStock: { gte: line.quantity } },
+        where: { id: line.productId, localId, currentStock: { gte: line.quantity } },
         data: { currentStock: { decrement: line.quantity } },
       });
       if (result.count === 0) {
@@ -69,12 +70,15 @@ export async function createSale(input: CreateSaleInput, userId: string) {
       const fresh = await tx.product.findUnique({ where: { id: line.productId } });
       const quantityAfter = fresh!.currentStock;
       const quantityBefore = quantityAfter + line.quantity;
+      const lineSubtotal = Number(product.sellPrice) * line.quantity;
 
-      const unitPrice = Number(product.sellPrice);
-      const subtotal = Math.round(unitPrice * line.quantity * 100) / 100;
-      total += subtotal;
-
-      saleItemsData.push({ productId: line.productId, quantity: line.quantity, unitPrice, subtotal });
+      total += lineSubtotal;
+      saleItemsData.push({
+        productId: line.productId,
+        quantity: line.quantity,
+        unitPrice: Number(product.sellPrice),
+        subtotal: lineSubtotal,
+      });
       pendingMovements.push({
         productId: line.productId,
         quantity: line.quantity,
@@ -86,11 +90,9 @@ export async function createSale(input: CreateSaleInput, userId: string) {
       });
     }
 
-    total = Math.round(total * 100) / 100;
-
     if (input.paymentMethod === PaymentMethod.CUENTA_CORRIENTE && input.customerId) {
       const customer = await tx.customer.findUnique({ where: { id: input.customerId } });
-      if (customer?.creditLimit !== null && customer?.creditLimit !== undefined) {
+      if (customer && customer.creditLimit !== null) {
         const potentialBalance = Number(customer.currentBalance) + total;
         if (potentialBalance > Number(customer.creditLimit)) {
           throw ApiError.badRequest(
@@ -102,6 +104,7 @@ export async function createSale(input: CreateSaleInput, userId: string) {
 
     const sale = await tx.sale.create({
       data: {
+        localId,
         total,
         paymentMethod: input.paymentMethod,
         userId,
@@ -126,6 +129,7 @@ export async function createSale(input: CreateSaleInput, userId: string) {
     for (const movement of pendingMovements) {
       await tx.stockMovement.create({
         data: {
+          localId,
           productId: movement.productId,
           type: MovementType.OUT,
           quantity: movement.quantity,
@@ -141,26 +145,29 @@ export async function createSale(input: CreateSaleInput, userId: string) {
       // Notificación automática si el stock cayó al nivel mínimo o menos
       if (movement.quantityAfter <= movement.minStock) {
         await createNotification(
+          localId,
           NotificationType.LOW_STOCK,
           "Alerta de Stock Bajo",
           `El producto "${movement.productName}" tiene un stock crítico de ${movement.quantityAfter} unidades (Mínimo: ${movement.minStock}).`,
           { productId: movement.productId, currentStock: movement.quantityAfter, minStock: movement.minStock },
         );
       }
+
     }
 
     if (input.paymentMethod === PaymentMethod.EFECTIVO) {
-      await getOrCreateRegister(tx);
+      const register = await getOrCreateRegister(tx, localId);
       await tx.cashRegister.update({
-        where: { id: CASH_REGISTER_ID },
+        where: { id: register.id },
         data: { currentBalance: { increment: total } },
       });
-      const fresh = await tx.cashRegister.findUnique({ where: { id: CASH_REGISTER_ID } });
+      const fresh = await tx.cashRegister.findUnique({ where: { id: register.id } });
       const balanceAfter = Number(fresh!.currentBalance);
       const balanceBefore = balanceAfter - total;
 
       await tx.cashMovement.create({
         data: {
+          localId,
           type: CashMovementType.SALE_IN,
           amount: total,
           balanceBefore,

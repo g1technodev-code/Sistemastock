@@ -13,12 +13,14 @@ const COUNT_INCLUDE = {
   completedBy: { select: { id: true, name: true } },
 };
 
-export async function createSession(input: CreateInventoryCountInput, userId: string) {
+export async function createSession(localId: string | null | undefined, input: CreateInventoryCountInput, userId: string) {
+  if (!localId) throw ApiError.badRequest("Debe estar asociado a un local");
   return prisma.inventoryCount.create({
-    data: { note: input.note?.trim() || null, startedById: userId },
+    data: { localId, note: input.note?.trim() || null, startedById: userId },
     include: COUNT_INCLUDE,
   });
 }
+
 
 export async function upsertItem(sessionId: string, input: UpsertItemInput) {
   return prisma.$transaction(async (tx) => {
@@ -124,6 +126,7 @@ export async function confirmSession(sessionId: string, userId: string) {
       await tx.product.update({ where: { id: item.productId }, data: { currentStock: quantityAfter } });
       await tx.stockMovement.create({
         data: {
+          localId: session.localId,
           productId: item.productId,
           type: MovementType.ADJUSTMENT,
           quantity: movementQuantity,
@@ -134,6 +137,7 @@ export async function confirmSession(sessionId: string, userId: string) {
           userId,
         },
       });
+
     }
 
     return tx.inventoryCount.update({

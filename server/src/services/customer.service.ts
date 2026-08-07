@@ -56,9 +56,11 @@ export async function getCustomer(id: string) {
   return customer;
 }
 
-export async function createCustomer(input: CreateCustomerInput) {
+export async function createCustomer(localId: string | null | undefined, input: CreateCustomerInput) {
+  if (!localId) throw ApiError.badRequest("Debe estar asociado a un local");
   return prisma.customer.create({
     data: {
+      localId,
       name: input.name.trim(),
       taxId: input.taxId?.trim() || null,
       email: input.email?.trim() || null,
@@ -68,6 +70,7 @@ export async function createCustomer(input: CreateCustomerInput) {
     },
   });
 }
+
 
 export async function updateCustomer(id: string, input: UpdateCustomerInput) {
   const customer = await prisma.customer.findUnique({ where: { id } });
@@ -117,18 +120,19 @@ export async function registerPayment(customerId: string, input: RegisterPayment
     });
 
     // Ingresamos el dinero abonado a la caja del negocio
-    await getOrCreateRegister(tx);
+    const register = await getOrCreateRegister(tx, customer.localId);
     await tx.cashRegister.update({
-      where: { id: CASH_REGISTER_ID },
+      where: { id: register.id },
       data: { currentBalance: { increment: input.amount } },
     });
 
-    const freshRegister = await tx.cashRegister.findUnique({ where: { id: CASH_REGISTER_ID } });
+    const freshRegister = await tx.cashRegister.findUnique({ where: { id: register.id } });
     const cashBalanceAfter = Number(freshRegister!.currentBalance);
     const cashBalanceBefore = cashBalanceAfter - input.amount;
 
     await tx.cashMovement.create({
       data: {
+        localId: customer.localId,
         type: CashMovementType.SALE_IN,
         amount: input.amount,
         balanceBefore: cashBalanceBefore,
@@ -141,3 +145,4 @@ export async function registerPayment(customerId: string, input: RegisterPayment
     return customerMovement;
   });
 }
+

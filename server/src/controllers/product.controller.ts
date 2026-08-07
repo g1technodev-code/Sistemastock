@@ -6,20 +6,21 @@ import { serializeDecimals } from "../utils/serialize";
 
 export const list = catchAsync(async (req: Request, res: Response) => {
   const query = listProductsQuerySchema.parse(req.query);
-  const result = await productService.listProducts(query);
+  const result = await productService.listProducts(req.user?.localId, query);
   res.json(serializeDecimals(result));
 });
 
 export const getOne = catchAsync(async (req: Request, res: Response) => {
-  const product = await productService.getProduct(req.params.id);
+  const product = await productService.getProduct(req.user?.localId, req.params.id);
   res.json({ product: serializeDecimals(product) });
 });
 
 export const create = catchAsync(async (req: Request, res: Response) => {
   const input = upsertProductSchema.parse(req.body);
-  const product = await productService.createProduct(input);
+  const product = await productService.createProduct(req.user?.localId, input);
   res.status(201).json({ product: serializeDecimals(product) });
 });
+
 
 export const update = catchAsync(async (req: Request, res: Response) => {
   const input = upsertProductSchema.parse(req.body);

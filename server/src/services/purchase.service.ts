@@ -30,24 +30,27 @@ async function buildItemsData(
   return { items, total: Math.round(total * 100) / 100 };
 }
 
-export async function createPurchase(input: CreatePurchaseInput, userId: string) {
+export async function createPurchase(localId: string | null | undefined, input: CreatePurchaseInput, userId: string) {
+  if (!localId) throw ApiError.badRequest("Debe estar asociado a un local");
   return prisma.$transaction(async (tx) => {
-    const supplier = await tx.supplier.findUnique({ where: { id: input.supplierId } });
+    const supplier = await tx.supplier.findFirst({ where: { id: input.supplierId, localId } });
     if (!supplier) throw ApiError.notFound("Proveedor no encontrado");
 
     const { items, total } = await buildItemsData(tx, input.items);
 
     const purchase = await tx.purchase.create({
       data: {
+        localId,
         supplierId: input.supplierId,
         userId,
         note: input.note?.trim() || null,
         total,
         items: { create: items },
       },
+      include: PURCHASE_INCLUDE,
     });
 
-    return tx.purchase.findUnique({ where: { id: purchase.id }, include: PURCHASE_INCLUDE });
+    return purchase;
   });
 }
 
@@ -135,6 +138,7 @@ export async function receivePurchase(id: string, userId: string) {
 
       await tx.stockMovement.create({
         data: {
+          localId: purchase.localId,
           productId: item.productId,
           type: MovementType.IN,
           quantity: item.quantity,
@@ -146,6 +150,7 @@ export async function receivePurchase(id: string, userId: string) {
           userId,
         },
       });
+
 
       // Update the product's cost basis to the latest purchase price when it changed.
       if (Number(fresh!.costPrice) !== Number(item.unitCost)) {

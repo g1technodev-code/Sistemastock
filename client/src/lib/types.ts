@@ -1,4 +1,4 @@
-export type Role = "ADMIN" | "MANAGER" | "EMPLOYEE";
+export type Role = "SUPERADMIN" | "ADMIN" | "MANAGER" | "EMPLOYEE";
 export type MovementType = "IN" | "OUT" | "ADJUSTMENT";
 export type PaymentMethod = "EFECTIVO" | "TRANSFERENCIA" | "TARJETA" | "CUENTA_CORRIENTE";
 export type SaleStatus = "COMPLETED" | "VOIDED";
@@ -9,12 +9,37 @@ export type InventoryCountStatus = "OPEN" | "COMPLETED";
 export type CustomerMovementType = "CHARGE" | "PAYMENT";
 export type NotificationType = "LOW_STOCK" | "SHIFT_OPEN" | "SHIFT_CLOSE";
 
+export type LocalStatus = "ACTIVE" | "DUE_SOON" | "SUSPENDED";
+export type PlanType = "BASICO" | "PRO";
+
+export type LocalItem = {
+  id: string;
+  name: string;
+  ownerEmail: string;
+  plan: PlanType;
+  status: LocalStatus;
+  dueDate: string;
+  monthlyPrice: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type SuperAdminMetrics = {
+  totalLocales: number;
+  activeLocales: number;
+  suspendedLocales: number;
+  dueSoonLocales: number;
+  mrr: number;
+};
+
 export type AuthUser = {
   id: string;
+  localId?: string | null;
   name: string;
   email: string;
   role: Role;
 };
+
 
 export type Customer = {
   id: string;

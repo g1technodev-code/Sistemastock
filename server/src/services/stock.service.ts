@@ -13,7 +13,8 @@ const MOVEMENT_INCLUDE = {
  * ADJUSTMENT's `quantity` is the absolute recounted stock level (e.g. after a
  * physical inventory count), not a delta — unlike IN/OUT which add/remove units.
  */
-export async function createMovement(input: CreateMovementInput, userId: string) {
+export async function createMovement(localId: string | null | undefined, input: CreateMovementInput, userId: string) {
+  if (!localId) throw ApiError.badRequest("Debe estar asociado a un local");
   return prisma.$transaction(async (tx) => {
     const product = await tx.product.findUnique({ where: { id: input.productId } });
     if (!product) throw ApiError.notFound("Producto no encontrado");
@@ -23,8 +24,6 @@ export async function createMovement(input: CreateMovementInput, userId: string)
     let movementQuantity = input.quantity;
 
     if (input.type === MovementType.OUT) {
-      // Atomic conditional update: avoids the read-then-write race where two concurrent
-      // OUT requests could both pass a stale stock check and drive stock negative.
       const result = await tx.product.updateMany({
         where: { id: input.productId, currentStock: { gte: input.quantity } },
         data: { currentStock: { decrement: input.quantity } },
@@ -35,10 +34,6 @@ export async function createMovement(input: CreateMovementInput, userId: string)
           `Stock insuficiente. Disponible: ${fresh?.currentStock ?? product.currentStock}, solicitado: ${input.quantity}`,
         );
       }
-      // Re-read after the write (same transaction sees its own write) rather than trusting
-      // the pre-write snapshot above, which could be stale under concurrent movements on
-      // this same product and would otherwise corrupt the quantityBefore/After audit trail
-      // even though the atomic decrement itself stays correct.
       const fresh = await tx.product.findUnique({ where: { id: input.productId } });
       quantityAfter = fresh!.currentStock;
       quantityBefore = quantityAfter + input.quantity;
@@ -51,7 +46,6 @@ export async function createMovement(input: CreateMovementInput, userId: string)
       quantityAfter = fresh!.currentStock;
       quantityBefore = quantityAfter - input.quantity;
     } else {
-      // ADJUSTMENT: set stock to the given absolute value.
       quantityBefore = product.currentStock;
       quantityAfter = input.quantity;
       movementQuantity = Math.abs(input.quantity - product.currentStock);
@@ -60,6 +54,7 @@ export async function createMovement(input: CreateMovementInput, userId: string)
 
     return tx.stockMovement.create({
       data: {
+        localId,
         productId: input.productId,
         type: input.type,
         quantity: movementQuantity,
@@ -75,8 +70,11 @@ export async function createMovement(input: CreateMovementInput, userId: string)
   });
 }
 
-function buildWhere(query: ListMovementsQuery): Prisma.StockMovementWhereInput {
-  const where: Prisma.StockMovementWhereInput = {};
+
+function buildWhere(localId: string | null | undefined, query: ListMovementsQuery): Prisma.StockMovementWhereInput {
+  const where: Prisma.StockMovementWhereInput = {
+    ...(localId ? { localId } : {}),
+  };
   if (query.productId) where.productId = query.productId;
   if (query.type) where.type = query.type;
   if (query.userId) where.userId = query.userId;
@@ -88,8 +86,8 @@ function buildWhere(query: ListMovementsQuery): Prisma.StockMovementWhereInput {
   return where;
 }
 
-export async function listMovements(query: ListMovementsQuery) {
-  const where = buildWhere(query);
+export async function listMovements(localId: string | null | undefined, query: ListMovementsQuery) {
+  const where = buildWhere(localId, query);
   const pagination = parsePagination(query);
 
   const [items, total] = await Promise.all([
@@ -105,3 +103,4 @@ export async function listMovements(query: ListMovementsQuery) {
 
   return paginatedResponse(items, total, pagination);
 }
+

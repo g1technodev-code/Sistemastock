@@ -9,8 +9,8 @@ import {
 } from "../utils/jwt";
 import type { AuthUser } from "../middlewares/auth.middleware";
 
-async function issueTokenPair(user: { id: string; email: string; role: AuthUser["role"] }) {
-  const accessToken = signAccessToken({ sub: user.id, email: user.email, role: user.role });
+async function issueTokenPair(user: { id: string; localId?: string | null; email: string; role: AuthUser["role"] }) {
+  const accessToken = signAccessToken({ sub: user.id, localId: user.localId, email: user.email, role: user.role });
 
   const refreshTokenValue = generateRefreshTokenValue();
   await prisma.refreshToken.create({
@@ -38,7 +38,7 @@ export async function login(email: string, password: string) {
   const tokens = await issueTokenPair(user);
   return {
     ...tokens,
-    user: { id: user.id, name: user.name, email: user.email, role: user.role },
+    user: { id: user.id, localId: user.localId, name: user.name, email: user.email, role: user.role },
   };
 }
 
@@ -54,7 +54,6 @@ export async function refresh(refreshTokenValue: string) {
   }
 
   if (stored.revokedAt || stored.expiresAt < new Date()) {
-    // Reuse of a rotated/expired token: treat as a compromise signal and kill the whole session family.
     await prisma.refreshToken.updateMany({
       where: { userId: stored.userId, revokedAt: null },
       data: { revokedAt: new Date() },
@@ -74,7 +73,7 @@ export async function refresh(refreshTokenValue: string) {
   const tokens = await issueTokenPair(stored.user);
   return {
     ...tokens,
-    user: { id: stored.user.id, name: stored.user.name, email: stored.user.email, role: stored.user.role },
+    user: { id: stored.user.id, localId: stored.user.localId, name: stored.user.name, email: stored.user.email, role: stored.user.role },
   };
 }
 
@@ -97,5 +96,6 @@ export async function revokeAllSessionsForUser(userId: string) {
 export async function getMe(userId: string) {
   const user = await prisma.user.findUnique({ where: { id: userId } });
   if (!user) throw ApiError.notFound("Usuario no encontrado");
-  return { id: user.id, name: user.name, email: user.email, role: user.role };
+  return { id: user.id, localId: user.localId, name: user.name, email: user.email, role: user.role };
 }
+

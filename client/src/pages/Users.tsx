@@ -143,11 +143,14 @@ export default function Users() {
                         disabled={u.id === currentUser?.id}
                         onChange={(e) => handleRoleChange(u, e.target.value as Role)}
                       >
-                        {(Object.keys(ROLE_LABEL) as Role[]).map((r) => (
-                          <option key={r} value={r}>
-                            {ROLE_LABEL[r]}
-                          </option>
-                        ))}
+                        {(Object.keys(ROLE_LABEL) as Role[])
+                          .filter((r) => r !== "SUPERADMIN")
+                          .map((r) => (
+                            <option key={r} value={r}>
+                              {ROLE_LABEL[r]}
+                            </option>
+                          ))}
+
                       </Select>
                     </TD>
                     <TD>
