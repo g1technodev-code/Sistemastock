@@ -21,6 +21,7 @@ enum LocalStatus {
 }
 
 enum PlanType {
+  TRIAL
   BASICO
   PRO
 }
@@ -30,11 +31,13 @@ model Local {
   name         String
   ownerEmail   String
   plan         PlanType    @default(BASICO)
+  isTrial      Boolean     @default(false)
   status       LocalStatus @default(ACTIVE)
   dueDate      DateTime
   monthlyPrice Decimal     @default(24900) @db.Decimal(12, 2)
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @updatedAt
+
 
   users            User[]
   categories       Category[]
