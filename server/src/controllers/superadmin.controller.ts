@@ -19,3 +19,9 @@ export const createLocal = catchAsync(async (req: Request, res: Response) => {
   res.status(201).json(result);
 });
 
+export const updateStatus = catchAsync(async (req: Request, res: Response) => {
+  const { status } = req.body as { status: "ACTIVE" | "SUSPENDED" | "DUE_SOON" };
+  const updated = await superadminAction.updateLocalStatus(req.params.id, status);
+  res.json(updated);
+});
+
