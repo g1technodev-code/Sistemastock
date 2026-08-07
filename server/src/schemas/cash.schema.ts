@@ -28,14 +28,17 @@ export const listCashMovementsQuerySchema = z.object({
   page: z.coerce.number().optional(),
   limit: z.coerce.number().optional(),
   type: z.enum(["SALE_IN", "WITHDRAWAL", "ADJUSTMENT"]).optional(),
+  userId: z.string().optional(),
   from: z.string().optional(),
   to: z.string().optional(),
 });
 
 export const cashSummaryQuerySchema = z.object({
+  date: z.string().optional(),
   from: z.string().optional(),
   to: z.string().optional(),
 });
+
 
 export type OpenShiftInput = z.infer<typeof openShiftSchema>;
 export type CloseShiftInput = z.infer<typeof closeShiftSchema>;

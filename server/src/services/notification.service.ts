@@ -3,13 +3,16 @@ import { prisma } from "../config/prisma";
 import { parsePagination, paginatedResponse } from "../utils/pagination";
 
 export async function createNotification(
+  localId: string | null | undefined,
   type: NotificationType,
   title: string,
   message: string,
   metadata?: Record<string, unknown>,
 ) {
+  if (!localId) return null;
   return prisma.notification.create({
     data: {
+      localId,
       type,
       title,
       message,
@@ -18,9 +21,11 @@ export async function createNotification(
   });
 }
 
-export async function listNotifications(query: { page?: number; limit?: number; unreadOnly?: boolean }) {
+export async function listNotifications(localId: string | null | undefined, query: { page?: number; limit?: number; unreadOnly?: boolean }) {
   const pagination = parsePagination(query);
-  const where: Prisma.NotificationWhereInput = {};
+  const where: Prisma.NotificationWhereInput = {
+    ...(localId ? { localId } : {}),
+  };
   if (query.unreadOnly) {
     where.isRead = false;
   }
@@ -33,7 +38,7 @@ export async function listNotifications(query: { page?: number; limit?: number; 
       take: pagination.limit,
     }),
     prisma.notification.count({ where }),
-    prisma.notification.count({ where: { isRead: false } }),
+    prisma.notification.count({ where: { ...(localId ? { localId } : {}), isRead: false } }),
   ]);
 
   return {
@@ -41,6 +46,7 @@ export async function listNotifications(query: { page?: number; limit?: number; 
     unreadCount,
   };
 }
+
 
 export async function markAsRead(id?: string) {
   if (id) {

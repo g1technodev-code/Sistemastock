@@ -5,9 +5,11 @@ import type { Role } from "@prisma/client";
 
 export type AccessTokenPayload = {
   sub: string;
+  localId?: string | null;
   email: string;
   role: Role;
 };
+
 
 export function signAccessToken(payload: AccessTokenPayload): string {
   const options: jwt.SignOptions = { expiresIn: env.jwt.accessExpiresIn as jwt.SignOptions["expiresIn"] };

@@ -1,27 +1,32 @@
 import type { Role } from "./types";
 
-export const ROLE_LABEL: Record<Role, string> = { ADMIN: "Administrador", MANAGER: "Gestor", EMPLOYEE: "Empleado" };
+export const ROLE_LABEL: Record<Role, string> = {
+  SUPERADMIN: "SuperAdmin SaaS",
+  ADMIN: "Administrador",
+  MANAGER: "Gestor",
+  EMPLOYEE: "Empleado",
+};
 
 /** Mirrors the server-side RBAC matrix in server/src/middlewares/auth.middleware.ts usage across routes. */
 export const permissions = {
-  // Catalog management: Admins can do anything. Employees can see products, but maybe not manage categories/suppliers
-  canManageCatalog: (role: Role) => role === "ADMIN",
-  canViewReports: (role: Role) => role === "ADMIN",
-  canManageUsers: (role: Role) => role === "ADMIN",
-  canManageSettings: (role: Role) => role === "ADMIN",
+  canManageCatalog: (role: Role) => role === "ADMIN" || role === "SUPERADMIN",
+  canViewReports: (role: Role) => role === "ADMIN" || role === "SUPERADMIN",
+  canManageUsers: (role: Role) => role === "ADMIN" || role === "SUPERADMIN",
+  canManageSettings: (role: Role) => role === "ADMIN" || role === "SUPERADMIN",
   canRegisterMovements: (_role: Role) => true,
-  canManageCash: (role: Role) => true, // Employees can manage cash registers since they need to use "Caja"
-  canViewCashLedger: (role: Role) => role === "ADMIN",
+  canManageCash: (_role: Role) => true,
+  canViewCashLedger: (role: Role) => role === "ADMIN" || role === "SUPERADMIN",
   
-  // Specific menu visibility permissions
-  canViewDashboard: (role: Role) => role === "ADMIN",
-  canViewProducts: (role: Role) => role === "ADMIN" || role === "EMPLOYEE",
-  canViewCategories: (role: Role) => role === "ADMIN",
-  canViewSuppliers: (role: Role) => role === "ADMIN",
-  canViewStockMovements: (role: Role) => role === "ADMIN" || role === "EMPLOYEE",
-  canViewPhysicalInventory: (role: Role) => role === "ADMIN" || role === "EMPLOYEE",
-  canViewSales: (role: Role) => role === "ADMIN" || role === "EMPLOYEE",
-  canViewPurchases: (role: Role) => role === "ADMIN" || role === "EMPLOYEE",
-  canViewCash: (role: Role) => role === "ADMIN" || role === "EMPLOYEE",
+  canViewDashboard: (role: Role) => role === "ADMIN" || role === "SUPERADMIN",
+  canViewProducts: (role: Role) => role === "ADMIN" || role === "EMPLOYEE" || role === "SUPERADMIN",
+  canViewCategories: (role: Role) => role === "ADMIN" || role === "SUPERADMIN",
+  canViewSuppliers: (role: Role) => role === "ADMIN" || role === "SUPERADMIN",
+  canViewStockMovements: (role: Role) => role === "ADMIN" || role === "EMPLOYEE" || role === "SUPERADMIN",
+  canViewPhysicalInventory: (role: Role) => role === "ADMIN" || role === "EMPLOYEE" || role === "SUPERADMIN",
+  canViewSales: (role: Role) => role === "ADMIN" || role === "EMPLOYEE" || role === "SUPERADMIN",
+  canViewPurchases: (role: Role) => role === "ADMIN" || role === "EMPLOYEE" || role === "SUPERADMIN",
+  canViewCash: (role: Role) => role === "ADMIN" || role === "EMPLOYEE" || role === "SUPERADMIN",
   canViewCustomers: (_role: Role) => true,
+  canViewSuperAdmin: (role: Role) => role === "SUPERADMIN",
 };
+

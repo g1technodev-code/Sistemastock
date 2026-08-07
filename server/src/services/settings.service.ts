@@ -1,18 +1,23 @@
 import { prisma } from "../config/prisma";
+import { ApiError } from "../utils/apiError";
 import type { UpdateSettingsInput } from "../schemas/settings.schema";
+
 
 const SETTINGS_ID = "singleton";
 
-export async function getSettings() {
-  const settings = await prisma.businessSettings.findUnique({ where: { id: SETTINGS_ID } });
+export async function getSettings(localId: string | null | undefined) {
+  if (!localId) return null;
+  const settings = await prisma.businessSettings.findUnique({ where: { localId } });
   if (settings) return settings;
-  return prisma.businessSettings.create({ data: { id: SETTINGS_ID } });
+  return prisma.businessSettings.create({ data: { localId } });
 }
 
-export async function updateSettings(input: UpdateSettingsInput) {
+export async function updateSettings(localId: string | null | undefined, input: UpdateSettingsInput) {
+  if (!localId) throw ApiError.badRequest("Debe estar asociado a un local");
   return prisma.businessSettings.upsert({
-    where: { id: SETTINGS_ID },
+    where: { localId },
     update: { ...input, email: input.email || null },
-    create: { id: SETTINGS_ID, ...input, email: input.email || null },
+    create: { localId, ...input, email: input.email || null },
   });
 }
+

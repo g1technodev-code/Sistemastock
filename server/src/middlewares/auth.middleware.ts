@@ -5,6 +5,7 @@ import { ApiError } from "../utils/apiError";
 
 export type AuthUser = {
   id: string;
+  localId?: string | null;
   email: string;
   role: Role;
 };
@@ -27,12 +28,13 @@ export function authenticate(req: Request, _res: Response, next: NextFunction) {
   const token = header.slice("Bearer ".length);
   try {
     const payload = verifyAccessToken(token);
-    req.user = { id: payload.sub, email: payload.email, role: payload.role };
+    req.user = { id: payload.sub, localId: payload.localId, email: payload.email, role: payload.role };
     next();
   } catch {
     next(ApiError.unauthorized("Token de acceso inválido o expirado"));
   }
 }
+
 
 export function authorize(...roles: Role[]) {
   return (req: Request, _res: Response, next: NextFunction) => {

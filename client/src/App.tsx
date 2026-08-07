@@ -23,7 +23,14 @@ const Rentabilidad = lazy(() => import("./pages/Rentabilidad"));
 const Users = lazy(() => import("./pages/Users"));
 const Settings = lazy(() => import("./pages/Settings"));
 const Customers = lazy(() => import("./pages/Customers"));
+const Plans = lazy(() => import("./pages/Plans"));
 const NotFound = lazy(() => import("./pages/NotFound"));
+
+
+const SuperAdminDashboard = lazy(() => import("./features/admin/components/SuperAdminDashboard"));
+const SuperAdminPagos = lazy(() => import("./pages/superadmin/Pagos"));
+const SuperAdminAnuncios = lazy(() => import("./pages/superadmin/Anuncios"));
+const SuperAdminPlanes = lazy(() => import("./pages/superadmin/Planes"));
 
 // Precargar todas las rutas en segundo plano para eliminar pantallas de carga al navegar
 export function preloadAllPages() {
@@ -54,9 +61,11 @@ function PageLoader() {
 function RootRedirect() {
   const { user } = useAuth();
   if (!user) return <Navigate to="/login" replace />;
+  if (user.role === "SUPERADMIN") return <Navigate to="/superadmin" replace />;
   if (user.role === "ADMIN") return <Navigate to="/dashboard" replace />;
   return <Navigate to="/ventas" replace />;
 }
+
 
 export default function App() {
   return (
@@ -73,7 +82,12 @@ export default function App() {
         >
           <Route path="/" element={<RootRedirect />} />
           
+          <Route path="/superadmin" element={<ProtectedRoute allowedRoles={["SUPERADMIN"]}><SuperAdminDashboard /></ProtectedRoute>} />
+          <Route path="/superadmin/pagos" element={<ProtectedRoute allowedRoles={["SUPERADMIN"]}><SuperAdminPagos /></ProtectedRoute>} />
+          <Route path="/superadmin/anuncios" element={<ProtectedRoute allowedRoles={["SUPERADMIN"]}><SuperAdminAnuncios /></ProtectedRoute>} />
+          <Route path="/superadmin/planes" element={<ProtectedRoute allowedRoles={["SUPERADMIN"]}><SuperAdminPlanes /></ProtectedRoute>} />
           <Route path="/dashboard" element={<ProtectedRoute allowedRoles={["ADMIN"]}><Dashboard /></ProtectedRoute>} />
+
           <Route path="/categories" element={<ProtectedRoute allowedRoles={["ADMIN"]}><Categories /></ProtectedRoute>} />
           <Route path="/suppliers" element={<ProtectedRoute allowedRoles={["ADMIN"]}><Suppliers /></ProtectedRoute>} />
           <Route path="/inventario-fisico" element={<InventarioFisico />} />
@@ -86,8 +100,10 @@ export default function App() {
           <Route path="/compras" element={<Compras />} />
           <Route path="/caja" element={<Caja />} />
           <Route path="/customers" element={<Customers />} />
+          <Route path="/plans" element={<Plans />} />
 
           <Route
+
             path="/reports"
             element={
               <ProtectedRoute allowedRoles={["ADMIN"]}>

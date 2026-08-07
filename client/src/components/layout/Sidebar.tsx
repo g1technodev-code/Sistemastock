@@ -20,14 +20,37 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   LogOut,
+  CreditCard,
+  ShieldCheck,
+  DollarSign,
+  Megaphone,
+  Sliders,
 } from "lucide-react";
+
 import { useAuth } from "../../context/AuthContext";
 import { permissions } from "../../lib/permissions";
 import { cn } from "../../lib/utils";
 
 const COLLAPSE_STORAGE_KEY = "stockflow-sidebar-collapsed";
 
-const NAV_ITEMS = [
+type NavItem = {
+
+  to: string;
+  label: string;
+  icon: any;
+  show: (role: any) => boolean;
+  shortcut?: string;
+};
+
+const SUPERADMIN_NAV_ITEMS: NavItem[] = [
+  { to: "/superadmin", label: "Panel Global", icon: ShieldCheck, show: () => true },
+  { to: "/superadmin/pagos", label: "Pagos e Ingresos", icon: DollarSign, show: () => true },
+  { to: "/superadmin/anuncios", label: "Anuncios Globales", icon: Megaphone, show: () => true },
+  { to: "/superadmin/planes", label: "Configuración de Planes", icon: Sliders, show: () => true },
+];
+
+const TENANT_NAV_ITEMS: NavItem[] = [
+
   { to: "/dashboard", label: "Panel", icon: LayoutDashboard, show: permissions.canViewDashboard },
   { to: "/products", label: "Productos", icon: Package, show: permissions.canViewProducts },
   { to: "/categories", label: "Categorías", icon: Tags, show: permissions.canViewCategories },
@@ -38,12 +61,15 @@ const NAV_ITEMS = [
   { to: "/compras", label: "Compras", icon: ShoppingBag, show: permissions.canViewPurchases, shortcut: "⇧X" },
   { to: "/caja", label: "Caja", icon: Wallet, show: permissions.canViewCash, shortcut: "⇧C" },
   { to: "/customers", label: "Clientes", icon: Users, show: permissions.canViewCustomers },
+  { to: "/plans", label: "Suscripciones", icon: CreditCard, show: () => true },
   { to: "/reports", label: "Reportes", icon: BarChart3, show: permissions.canViewReports },
   { to: "/estadisticas", label: "Estadísticas", icon: LineChart, show: permissions.canViewReports },
   { to: "/rentabilidad", label: "Rentabilidad", icon: Percent, show: permissions.canViewReports },
   { to: "/users", label: "Usuarios", icon: Users, show: permissions.canManageUsers },
   { to: "/settings", label: "Configuración", icon: Settings, show: permissions.canManageSettings },
 ];
+
+
 
 function getInitialCollapsed(): boolean {
   if (typeof window === "undefined") return false;
@@ -60,7 +86,9 @@ export function Sidebar({ mobileOpen, onCloseMobile }: { mobileOpen: boolean; on
 
   if (!user) return null;
 
-  const items = NAV_ITEMS.filter((item) => item.show(user.role));
+  const rawItems = user.role === "SUPERADMIN" ? SUPERADMIN_NAV_ITEMS : TENANT_NAV_ITEMS;
+  const items = rawItems.filter((item) => item.show(user.role));
+
 
   function renderContent(isCollapsed: boolean) {
     return (

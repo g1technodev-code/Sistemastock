@@ -8,10 +8,52 @@ datasource db {
 }
 
 enum Role {
+  SUPERADMIN
   ADMIN
   MANAGER
   EMPLOYEE
 }
+
+enum LocalStatus {
+  ACTIVE
+  DUE_SOON
+  SUSPENDED
+}
+
+enum PlanType {
+  BASICO
+  PRO
+}
+
+model Local {
+  id           String      @id @default(cuid())
+  name         String
+  ownerEmail   String
+  plan         PlanType    @default(BASICO)
+  status       LocalStatus @default(ACTIVE)
+  dueDate      DateTime
+  monthlyPrice Decimal     @default(24900) @db.Decimal(12, 2)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  users            User[]
+  categories       Category[]
+  suppliers        Supplier[]
+  products         Product[]
+  sales            Sale[]
+  purchases        Purchase[]
+  inventoryCounts  InventoryCount[]
+  cashRegisters    CashRegister[]
+  cashMovements    CashMovement[]
+  cashShifts       CashShift[]
+  businessSettings BusinessSettings?
+  customers        Customer[]
+  notifications    Notification[]
+  stockMovements   StockMovement[]
+
+  @@map("locales")
+}
+
 
 enum MovementType {
   IN
@@ -66,6 +108,8 @@ enum InventoryCountStatus {
 
 model User {
   id           String   @id @default(cuid())
+  localId      String?
+  local        Local?   @relation(fields: [localId], references: [id], onDelete: Cascade)
   name         String
   email        String   @unique
   passwordHash String
@@ -74,20 +118,21 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  movements         StockMovement[]
-  refreshTokens     RefreshToken[]
-  sales             Sale[]          @relation("SaleCreatedBy")
-  voidedSales       Sale[]          @relation("SaleVoidedBy")
-  cashMovements     CashMovement[]  @relation("CashMovementBy")
-  shiftsOpened      CashShift[]     @relation("ShiftOpenedBy")
-  shiftsClosed      CashShift[]     @relation("ShiftClosedBy")
-  purchasesCreated  Purchase[]      @relation("PurchaseCreatedBy")
-  purchasesReceived Purchase[]      @relation("PurchaseReceivedBy")
-  purchasesCancelled Purchase[]     @relation("PurchaseCancelledBy")
-  inventoryCountsStarted   InventoryCount[] @relation("InventoryCountStartedBy")
-  inventoryCountsCompleted InventoryCount[] @relation("InventoryCountCompletedBy")
+  movements                StockMovement[]
+  refreshTokens            RefreshToken[]
+  sales                    Sale[]             @relation("SaleCreatedBy")
+  voidedSales              Sale[]             @relation("SaleVoidedBy")
+  cashMovements            CashMovement[]     @relation("CashMovementBy")
+  shiftsOpened             CashShift[]        @relation("ShiftOpenedBy")
+  shiftsClosed             CashShift[]        @relation("ShiftClosedBy")
+  purchasesCreated         Purchase[]         @relation("PurchaseCreatedBy")
+  purchasesReceived        Purchase[]         @relation("PurchaseReceivedBy")
+  purchasesCancelled       Purchase[]         @relation("PurchaseCancelledBy")
+  inventoryCountsStarted   InventoryCount[]   @relation("InventoryCountStartedBy")
+  inventoryCountsCompleted InventoryCount[]   @relation("InventoryCountCompletedBy")
   customerMovements        CustomerMovement[] @relation("CustomerMovementUser")
 
+  @@index([localId])
   @@map("users")
 }
 
@@ -106,7 +151,9 @@ model RefreshToken {
 
 model Category {
   id          String   @id @default(cuid())
-  name        String   @unique
+  localId     String
+  local       Local    @relation(fields: [localId], references: [id], onDelete: Cascade)
+  name        String
   description String?
   color       String?
   isActive    Boolean  @default(true)
@@ -115,11 +162,15 @@ model Category {
 
   products Product[]
 
+  @@unique([localId, name])
+  @@index([localId])
   @@map("categories")
 }
 
 model Supplier {
   id          String   @id @default(cuid())
+  localId     String
+  local       Local    @relation(fields: [localId], references: [id], onDelete: Cascade)
   name        String
   contactName String?
   email       String?
@@ -134,12 +185,15 @@ model Supplier {
   products  Product[]
   purchases Purchase[]
 
+  @@index([localId])
   @@map("suppliers")
 }
 
 model Product {
   id           String   @id @default(cuid())
-  sku          String   @unique
+  localId      String
+  local        Local    @relation(fields: [localId], references: [id], onDelete: Cascade)
+  sku          String
   barcode      String?
   name         String
   description  String?
@@ -159,18 +213,23 @@ model Product {
   supplierId String?
   supplier   Supplier? @relation(fields: [supplierId], references: [id], onDelete: SetNull)
 
-  movements          StockMovement[]
-  saleItems          SaleItem[]
-  purchaseItems      PurchaseItem[]
+  movements           StockMovement[]
+  saleItems           SaleItem[]
+  purchaseItems       PurchaseItem[]
   inventoryCountItems InventoryCountItem[]
 
+  @@unique([localId, sku])
+  @@index([localId])
   @@index([categoryId])
   @@index([supplierId])
   @@map("products")
 }
 
+
 model StockMovement {
   id             String       @id @default(cuid())
+  localId        String
+  local          Local        @relation(fields: [localId], references: [id], onDelete: Cascade)
   productId      String
   product        Product      @relation(fields: [productId], references: [id])
   type           MovementType
@@ -184,6 +243,7 @@ model StockMovement {
   user           User         @relation(fields: [userId], references: [id])
   createdAt      DateTime     @default(now())
 
+  @@index([localId])
   @@index([productId, createdAt])
   @@index([createdAt])
   @@map("stock_movements")
@@ -191,6 +251,8 @@ model StockMovement {
 
 model Sale {
   id            String        @id @default(cuid())
+  localId       String
+  local         Local         @relation(fields: [localId], references: [id], onDelete: Cascade)
   total         Decimal       @db.Decimal(12, 2)
   paymentMethod PaymentMethod
   status        SaleStatus    @default(COMPLETED)
@@ -209,6 +271,7 @@ model Sale {
   cashMovements     CashMovement[]
   customerMovements CustomerMovement[]
 
+  @@index([localId])
   @@index([createdAt])
   @@index([userId, createdAt])
   @@index([customerId])
@@ -232,6 +295,8 @@ model SaleItem {
 
 model Purchase {
   id            String         @id @default(cuid())
+  localId       String
+  local         Local          @relation(fields: [localId], references: [id], onDelete: Cascade)
   supplierId    String
   supplier      Supplier       @relation(fields: [supplierId], references: [id])
   status        PurchaseStatus @default(PENDING)
@@ -250,6 +315,7 @@ model Purchase {
 
   items PurchaseItem[]
 
+  @@index([localId])
   @@index([supplierId])
   @@index([createdAt])
   @@index([status])
@@ -273,6 +339,8 @@ model PurchaseItem {
 
 model InventoryCount {
   id            String                @id @default(cuid())
+  localId       String
+  local         Local                 @relation(fields: [localId], references: [id], onDelete: Cascade)
   status        InventoryCountStatus  @default(OPEN)
   note          String?
   startedById   String
@@ -284,6 +352,7 @@ model InventoryCount {
 
   items InventoryCountItem[]
 
+  @@index([localId])
   @@index([startedById])
   @@index([status])
   @@map("inventory_counts")
@@ -308,14 +377,19 @@ model InventoryCountItem {
 
 model CashRegister {
   id             String   @id @default(cuid())
+  localId        String   @unique
+  local          Local    @relation(fields: [localId], references: [id], onDelete: Cascade)
   currentBalance Decimal  @default(0) @db.Decimal(12, 2)
   updatedAt      DateTime @updatedAt
 
+  @@index([localId])
   @@map("cash_register")
 }
 
 model CashMovement {
   id            String           @id @default(cuid())
+  localId       String
+  local         Local            @relation(fields: [localId], references: [id], onDelete: Cascade)
   type          CashMovementType
   amount        Decimal          @db.Decimal(12, 2)
   balanceBefore Decimal          @db.Decimal(12, 2)
@@ -327,6 +401,7 @@ model CashMovement {
   note          String?
   createdAt     DateTime         @default(now())
 
+  @@index([localId])
   @@index([createdAt])
   @@index([type, createdAt])
   @@map("cash_movements")
@@ -334,6 +409,8 @@ model CashMovement {
 
 model CashShift {
   id                 String          @id @default(cuid())
+  localId            String
+  local              Local           @relation(fields: [localId], references: [id], onDelete: Cascade)
   openedById         String
   openedBy           User            @relation("ShiftOpenedBy", fields: [openedById], references: [id])
   openedAt           DateTime        @default(now())
@@ -349,6 +426,7 @@ model CashShift {
   status             CashShiftStatus @default(OPEN)
   note               String?
 
+  @@index([localId])
   @@index([openedAt])
   @@index([openedById, status])
   @@map("cash_shifts")
@@ -356,6 +434,8 @@ model CashShift {
 
 model BusinessSettings {
   id           String   @id @default(cuid())
+  localId      String   @unique
+  local        Local    @relation(fields: [localId], references: [id], onDelete: Cascade)
   businessName String   @default("Mi Negocio")
   taxId        String?
   address      String?
@@ -369,6 +449,8 @@ model BusinessSettings {
 
 model Customer {
   id             String   @id @default(cuid())
+  localId        String
+  local          Local    @relation(fields: [localId], references: [id], onDelete: Cascade)
   name           String
   taxId          String?
   email          String?
@@ -383,6 +465,7 @@ model Customer {
   sales     Sale[]
   movements CustomerMovement[]
 
+  @@index([localId])
   @@map("customers")
 }
 
@@ -408,6 +491,8 @@ model CustomerMovement {
 
 model Notification {
   id        String           @id @default(cuid())
+  localId   String
+  local     Local            @relation(fields: [localId], references: [id], onDelete: Cascade)
   type      NotificationType
   title     String
   message   String
@@ -415,7 +500,9 @@ model Notification {
   isRead    Boolean          @default(false)
   createdAt DateTime         @default(now())
 
+  @@index([localId])
   @@index([createdAt])
   @@index([isRead])
   @@map("notifications")
 }
+

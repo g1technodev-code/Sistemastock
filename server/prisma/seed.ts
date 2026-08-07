@@ -1,5 +1,5 @@
 import "dotenv/config";
-import { PrismaClient, Role, MovementType } from "@prisma/client";
+import { PrismaClient, Role, MovementType, LocalStatus, PlanType } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
@@ -13,11 +13,11 @@ const CATEGORY_DATA = [
 ];
 
 const SUPPLIER_DATA = [
-  { name: "Distribuidora Andina S.A.", contactName: "Carla Rojas", email: "ventas@andina.com", phone: "+51 987 111 222", address: "Av. Industrial 450, Lima", taxId: "20501234567" },
-  { name: "TecnoImport Perú", contactName: "Jorge Medina", email: "contacto@tecnoimport.pe", phone: "+51 987 222 333", address: "Jr. Comercio 120, Lima", taxId: "20509876543" },
-  { name: "Suministros del Norte", contactName: "Ana Flores", email: "info@suministrosnorte.com", phone: "+51 987 333 444", address: "Av. Chiclayo 88, Chiclayo", taxId: "20512345678" },
-  { name: "Global Office Supplies", contactName: "Marco Vidal", email: "sales@globaloffice.com", phone: "+51 987 444 555", address: "Av. Larco 200, Lima", taxId: "20518765432" },
-  { name: "AgroFoods S.R.L.", contactName: "Lucía Chávez", email: "pedidos@agrofoods.pe", phone: "+51 987 555 666", address: "Av. La Marina 900, Lima", taxId: "20523456789" },
+  { name: "Distribuidora Andina S.A.", contactName: "Carla Rojas", email: "ventas@andina.com", phone: "+54 11 4444 1111", address: "Av. Corrientes 1234, Buenos Aires", taxId: "30-50123456-7" },
+  { name: "TecnoImport Argentina", contactName: "Jorge Medina", email: "contacto@tecnoimport.ar", phone: "+54 11 4444 2222", address: "Av. Cabildo 500, Buenos Aires", taxId: "30-50987654-3" },
+  { name: "Suministros del Sur", contactName: "Ana Flores", email: "info@suministros-sur.com", phone: "+54 11 4444 3333", address: "Av. Belgrano 88, Rosario", taxId: "30-51234567-8" },
+  { name: "Global Office Supplies", contactName: "Marco Vidal", email: "sales@globaloffice.ar", phone: "+54 11 4444 4444", address: "Av. Santa Fe 200, Córdoba", taxId: "30-51876543-2" },
+  { name: "AgroFoods Argentina", contactName: "Lucía Chávez", email: "pedidos@agrofoods.ar", phone: "+54 11 4444 5555", address: "Av. Rivadavia 900, Mendoza", taxId: "30-52345678-9" },
 ];
 
 type SeedProduct = {
@@ -33,79 +33,187 @@ type SeedProduct = {
 };
 
 const PRODUCT_DATA: SeedProduct[] = [
-  { sku: "ELE-001", name: "Mouse inalámbrico", categoryIndex: 0, supplierIndex: 1, unit: "unidad", costPrice: 18, sellPrice: 32, currentStock: 42, minStock: 15 },
-  { sku: "ELE-002", name: "Teclado mecánico", categoryIndex: 0, supplierIndex: 1, unit: "unidad", costPrice: 55, sellPrice: 95, currentStock: 8, minStock: 10 },
-  { sku: "ELE-003", name: "Monitor LED 24\"", categoryIndex: 0, supplierIndex: 1, unit: "unidad", costPrice: 320, sellPrice: 480, currentStock: 5, minStock: 6 },
-  { sku: "ELE-004", name: "Cable HDMI 2m", categoryIndex: 0, supplierIndex: 1, unit: "unidad", costPrice: 6, sellPrice: 15, currentStock: 120, minStock: 30 },
-  { sku: "OFI-001", name: "Resma papel bond A4", categoryIndex: 1, supplierIndex: 3, unit: "paquete", costPrice: 12, sellPrice: 19, currentStock: 60, minStock: 20 },
-  { sku: "OFI-002", name: "Archivador de palanca", categoryIndex: 1, supplierIndex: 3, unit: "unidad", costPrice: 4, sellPrice: 8, currentStock: 3, minStock: 15 },
-  { sku: "OFI-003", name: "Set de lapiceros (12u)", categoryIndex: 1, supplierIndex: 3, unit: "caja", costPrice: 9, sellPrice: 16, currentStock: 34, minStock: 10 },
-  { sku: "OFI-004", name: "Grapadora industrial", categoryIndex: 1, supplierIndex: 3, unit: "unidad", costPrice: 22, sellPrice: 38, currentStock: 12, minStock: 8 },
-  { sku: "LIM-001", name: "Detergente líquido 5L", categoryIndex: 2, supplierIndex: 2, unit: "bidón", costPrice: 15, sellPrice: 26, currentStock: 25, minStock: 10 },
-  { sku: "LIM-002", name: "Guantes de látex (caja 100u)", categoryIndex: 2, supplierIndex: 2, unit: "caja", costPrice: 8, sellPrice: 14, currentStock: 4, minStock: 12 },
-  { sku: "LIM-003", name: "Desinfectante en spray", categoryIndex: 2, supplierIndex: 2, unit: "unidad", costPrice: 5, sellPrice: 11, currentStock: 48, minStock: 15 },
-  { sku: "ALI-001", name: "Café molido 500g", categoryIndex: 3, supplierIndex: 4, unit: "paquete", costPrice: 10, sellPrice: 18, currentStock: 30, minStock: 12 },
-  { sku: "ALI-002", name: "Azúcar rubia 1kg", categoryIndex: 3, supplierIndex: 4, unit: "paquete", costPrice: 3, sellPrice: 6, currentStock: 2, minStock: 20 },
-  { sku: "ALI-003", name: "Agua mineral (paquete 12u)", categoryIndex: 3, supplierIndex: 4, unit: "paquete", costPrice: 9, sellPrice: 15, currentStock: 55, minStock: 20 },
-  { sku: "FER-001", name: "Taladro percutor 650W", categoryIndex: 4, supplierIndex: 0, unit: "unidad", costPrice: 140, sellPrice: 210, currentStock: 7, minStock: 5 },
-  { sku: "FER-002", name: "Juego de destornilladores", categoryIndex: 4, supplierIndex: 0, unit: "set", costPrice: 20, sellPrice: 35, currentStock: 18, minStock: 8 },
-  { sku: "FER-003", name: "Cinta métrica 5m", categoryIndex: 4, supplierIndex: 0, unit: "unidad", costPrice: 4, sellPrice: 9, currentStock: 40, minStock: 15 },
-  { sku: "FER-004", name: "Guantes de trabajo", categoryIndex: 4, supplierIndex: 0, unit: "par", costPrice: 6, sellPrice: 12, currentStock: 1, minStock: 10 },
+  { sku: "ELE-001", name: "Mouse inalámbrico Logitech", categoryIndex: 0, supplierIndex: 1, unit: "unidad", costPrice: 15000, sellPrice: 28000, currentStock: 42, minStock: 15 },
+  { sku: "ELE-002", name: "Teclado mecánico RGB", categoryIndex: 0, supplierIndex: 1, unit: "unidad", costPrice: 45000, sellPrice: 78000, currentStock: 8, minStock: 10 },
+  { sku: "ELE-003", name: "Monitor LED 24 Full HD", categoryIndex: 0, supplierIndex: 1, unit: "unidad", costPrice: 180000, sellPrice: 270000, currentStock: 5, minStock: 6 },
+  { sku: "ELE-004", name: "Cable HDMI 2m Trenzado", categoryIndex: 0, supplierIndex: 1, unit: "unidad", costPrice: 4500, sellPrice: 9500, currentStock: 120, minStock: 30 },
+  { sku: "OFI-001", name: "Resma papel bond A4 75g", categoryIndex: 1, supplierIndex: 3, unit: "paquete", costPrice: 5200, sellPrice: 8900, currentStock: 60, minStock: 20 },
+  { sku: "OFI-002", name: "Archivador de palanca Oficio", categoryIndex: 1, supplierIndex: 3, unit: "unidad", costPrice: 2400, sellPrice: 4800, currentStock: 3, minStock: 15 },
+  { sku: "OFI-003", name: "Set de lapiceros Bic (12u)", categoryIndex: 1, supplierIndex: 3, unit: "caja", costPrice: 3800, sellPrice: 6500, currentStock: 34, minStock: 10 },
+  { sku: "OFI-004", name: "Abrochadora industrial", categoryIndex: 1, supplierIndex: 3, unit: "unidad", costPrice: 12000, sellPrice: 21000, currentStock: 12, minStock: 8 },
+  { sku: "LIM-001", name: "Detergente líquido 5L", categoryIndex: 2, supplierIndex: 2, unit: "bidón", costPrice: 8500, sellPrice: 14500, currentStock: 25, minStock: 10 },
+  { sku: "LIM-002", name: "Guantes de látex (caja 100u)", categoryIndex: 2, supplierIndex: 2, unit: "caja", costPrice: 4500, sellPrice: 7900, currentStock: 4, minStock: 12 },
+  { sku: "LIM-003", name: "Desinfectante en spray 400ml", categoryIndex: 2, supplierIndex: 2, unit: "unidad", costPrice: 2800, sellPrice: 4900, currentStock: 48, minStock: 15 },
+  { sku: "ALI-001", name: "Café molido gourmet 500g", categoryIndex: 3, supplierIndex: 4, unit: "paquete", costPrice: 6500, sellPrice: 11200, currentStock: 30, minStock: 12 },
+  { sku: "ALI-002", name: "Azúcar paquete 1kg", categoryIndex: 3, supplierIndex: 4, unit: "paquete", costPrice: 1200, sellPrice: 2100, currentStock: 2, minStock: 20 },
+  { sku: "ALI-003", name: "Agua mineral (pack 12u)", categoryIndex: 3, supplierIndex: 4, unit: "pack", costPrice: 5800, sellPrice: 9800, currentStock: 55, minStock: 20 },
+  { sku: "FER-001", name: "Taladro percutor 650W", categoryIndex: 4, supplierIndex: 0, unit: "unidad", costPrice: 65000, sellPrice: 110000, currentStock: 7, minStock: 5 },
+  { sku: "FER-002", name: "Juego destornilladores (6u)", categoryIndex: 4, supplierIndex: 0, unit: "set", costPrice: 12000, sellPrice: 22000, currentStock: 18, minStock: 8 },
+  { sku: "FER-003", name: "Cinta métrica 5m Stanley", categoryIndex: 4, supplierIndex: 0, unit: "unidad", costPrice: 3500, sellPrice: 6800, currentStock: 40, minStock: 15 },
+  { sku: "FER-004", name: "Guantes de trabajo reforzados", categoryIndex: 4, supplierIndex: 0, unit: "par", costPrice: 2500, sellPrice: 4900, currentStock: 1, minStock: 10 },
 ];
 
 async function main() {
-  console.log("Seeding StockFlow database...");
+  console.log("Seeding Kipo SaaS Multi-tenant database...");
 
   const passwordHash = await bcrypt.hash("Stockflow2026!", 10);
+  const superadminPassword = await bcrypt.hash("KipoSuperadmin2026!", 10);
 
+  // 1. Create SuperAdmin User
+  await prisma.user.upsert({
+    where: { email: "superadmin@kipo.com" },
+    update: {},
+    create: {
+      name: "SuperAdmin Kipo",
+      email: "superadmin@kipo.com",
+      passwordHash: superadminPassword,
+      role: Role.SUPERADMIN,
+    },
+  });
+
+  // 2. Create Demo Local (ID 1 / demo-local-1)
+  const demoDueDate = new Date();
+  demoDueDate.setDate(demoDueDate.getDate() + 30);
+
+  const localDemo = await prisma.local.upsert({
+    where: { id: "demo-local-1" },
+    update: {
+      status: LocalStatus.ACTIVE,
+      dueDate: demoDueDate,
+    },
+    create: {
+      id: "demo-local-1",
+      name: "Kipo Demo Store (Local 1)",
+      ownerEmail: "admin@stockflow.com",
+      plan: PlanType.PRO,
+      status: LocalStatus.ACTIVE,
+      dueDate: demoDueDate,
+      monthlyPrice: 39900,
+    },
+  });
+
+  // 3. Create Additional Sample Locales for SuperAdmin view
+  const local2DueDate = new Date();
+  local2DueDate.setDate(local2DueDate.getDate() + 15);
+  await prisma.local.upsert({
+    where: { id: "local-2-nordelta" },
+    update: {},
+    create: {
+      id: "local-2-nordelta",
+      name: "Ferretería Nordelta",
+      ownerEmail: "contacto@nordeltaferro.com",
+      plan: PlanType.BASICO,
+      status: LocalStatus.ACTIVE,
+      dueDate: local2DueDate,
+      monthlyPrice: 24900,
+    },
+  });
+
+  const local3DueDate = new Date();
+  local3DueDate.setDate(local3DueDate.getDate() - 2);
+  await prisma.local.upsert({
+    where: { id: "local-3-cordoba" },
+    update: {},
+    create: {
+      id: "local-3-cordoba",
+      name: "Market Córdoba Centro",
+      ownerEmail: "gerencia@marketcordoba.com",
+      plan: PlanType.PRO,
+      status: LocalStatus.SUSPENDED,
+      dueDate: local3DueDate,
+      monthlyPrice: 39900,
+    },
+  });
+
+  // 4. Create Users for Local 1
   const admin = await prisma.user.upsert({
     where: { email: "admin@stockflow.com" },
-    update: {},
-    create: { name: "Admin Principal", email: "admin@stockflow.com", passwordHash, role: Role.ADMIN },
+    update: { localId: localDemo.id },
+    create: {
+      localId: localDemo.id,
+      name: "Admin Principal (Local 1)",
+      email: "admin@stockflow.com",
+      passwordHash,
+      role: Role.ADMIN,
+    },
   });
 
   const manager = await prisma.user.upsert({
     where: { email: "manager@stockflow.com" },
-    update: {},
-    create: { name: "Gestora de Inventario", email: "manager@stockflow.com", passwordHash, role: Role.MANAGER },
+    update: { localId: localDemo.id },
+    create: {
+      localId: localDemo.id,
+      name: "Gestora de Inventario",
+      email: "manager@stockflow.com",
+      passwordHash,
+      role: Role.MANAGER,
+    },
   });
 
   const employee = await prisma.user.upsert({
     where: { email: "empleado@stockflow.com" },
-    update: {},
-    create: { name: "Empleado de Almacén", email: "empleado@stockflow.com", passwordHash, role: Role.EMPLOYEE },
-  });
-
-  const categories = [];
-  for (const c of CATEGORY_DATA) {
-    categories.push(await prisma.category.upsert({ where: { name: c.name }, update: {}, create: c }));
-  }
-
-  const suppliers = [];
-  for (const s of SUPPLIER_DATA) {
-    const existing = await prisma.supplier.findFirst({ where: { name: s.name } });
-    suppliers.push(existing ?? (await prisma.supplier.create({ data: s })));
-  }
-
-  await prisma.businessSettings.upsert({
-    where: { id: "singleton" },
-    update: {},
+    update: { localId: localDemo.id },
     create: {
-      id: "singleton",
-      businessName: "StockFlow Demo S.A.C.",
-      taxId: "20600112233",
-      address: "Av. Principal 123, Lima, Perú",
-      phone: "+51 987 000 111",
-      email: "contacto@stockflowdemo.com",
+      localId: localDemo.id,
+      name: "Empleado de Almacén",
+      email: "empleado@stockflow.com",
+      passwordHash,
+      role: Role.EMPLOYEE,
     },
   });
 
+  // 5. Create Categories for Local 1
+  const categories = [];
+  for (const c of CATEGORY_DATA) {
+    const cat = await prisma.category.upsert({
+      where: { localId_name: { localId: localDemo.id, name: c.name } },
+      update: {},
+      create: { ...c, localId: localDemo.id },
+    });
+    categories.push(cat);
+  }
+
+  // 6. Create Suppliers for Local 1
+  const suppliers = [];
+  for (const s of SUPPLIER_DATA) {
+    const existing = await prisma.supplier.findFirst({
+      where: { localId: localDemo.id, name: s.name },
+    });
+    suppliers.push(existing ?? (await prisma.supplier.create({ data: { ...s, localId: localDemo.id } })));
+  }
+
+  // 7. Create BusinessSettings for Local 1
+  await prisma.businessSettings.upsert({
+    where: { localId: localDemo.id },
+    update: {},
+    create: {
+      localId: localDemo.id,
+      businessName: "Kipo Demo Store S.A.S.",
+      taxId: "30-71600112-9",
+      address: "Av. Santa Fe 1500, Buenos Aires, Argentina",
+      phone: "+54 11 5555 1234",
+      email: "contacto@kipo.com.ar",
+    },
+  });
+
+  // 8. Create CashRegister for Local 1
+  await prisma.cashRegister.upsert({
+    where: { localId: localDemo.id },
+    update: {},
+    create: {
+      localId: localDemo.id,
+      currentBalance: 125000,
+    },
+  });
+
+  // 9. Create Products for Local 1
   const products = [];
   for (const p of PRODUCT_DATA) {
     const product = await prisma.product.upsert({
-      where: { sku: p.sku },
+      where: { localId_sku: { localId: localDemo.id, sku: p.sku } },
       update: {},
       create: {
+        localId: localDemo.id,
         sku: p.sku,
         name: p.name,
         unit: p.unit,
@@ -120,9 +228,10 @@ async function main() {
     products.push(product);
   }
 
-  const existingMovements = await prisma.stockMovement.count();
+  // 10. Generate Fake 30-Day Movement History & Sales for Local 1
+  const existingMovements = await prisma.stockMovement.count({ where: { localId: localDemo.id } });
   if (existingMovements === 0) {
-    console.log("Generating 30-day movement history...");
+    console.log("Generating 30-day movement & sales history for Local 1...");
     const authors = [admin.id, manager.id, employee.id];
     const now = Date.now();
 
@@ -134,7 +243,7 @@ async function main() {
         const daysAgo = Math.floor((i / numMovements) * 29) + Math.floor(Math.random() * 2);
         const createdAt = new Date(now - daysAgo * 24 * 60 * 60 * 1000);
         const isLast = i === 1;
-        const type: MovementType = isLast ? MovementType.IN : (Math.random() > 0.35 ? MovementType.IN : MovementType.OUT);
+        const type: MovementType = isLast ? MovementType.IN : Math.random() > 0.35 ? MovementType.IN : MovementType.OUT;
 
         let quantity = 3 + Math.floor(Math.random() * 15);
         if (type === MovementType.OUT) {
@@ -147,42 +256,30 @@ async function main() {
 
         await prisma.stockMovement.create({
           data: {
+            localId: localDemo.id,
             productId: product.id,
             type,
             quantity,
             quantityBefore,
             quantityAfter,
             unitCost: type === MovementType.IN ? product.costPrice : null,
-            reason: type === MovementType.IN ? "Reposición de stock" : "Venta / consumo interno",
+            reason: type === MovementType.IN ? "Reposición de stock" : "Venta registrada",
             reference: `REF-${Math.floor(1000 + Math.random() * 9000)}`,
             userId: authors[Math.floor(Math.random() * authors.length)],
             createdAt,
           },
         });
       }
-
-      // Reconcile final stock to the product's declared currentStock via an adjustment if needed.
-      if (runningStock !== product.currentStock) {
-        const diff = product.currentStock - runningStock;
-        await prisma.stockMovement.create({
-          data: {
-            productId: product.id,
-            type: MovementType.ADJUSTMENT,
-            quantity: Math.abs(diff),
-            quantityBefore: runningStock,
-            quantityAfter: product.currentStock,
-            reason: "Ajuste de inventario inicial (seed)",
-            userId: admin.id,
-            createdAt: new Date(now - 12 * 60 * 60 * 1000),
-          },
-        });
-      }
     }
   }
 
-  console.log("Seed completed.");
-  console.log("Login de prueba -> admin@stockflow.com / manager@stockflow.com / empleado@stockflow.com");
-  console.log("Password (todos): Stockflow2026!");
+  console.log("Seed completed successfully!");
+  console.log("-----------------------------------------");
+  console.log("SuperAdmin -> superadmin@kipo.com / KipoSuperadmin2026!");
+  console.log("Local 1 Admin -> admin@stockflow.com / Stockflow2026!");
+  console.log("Local 1 Manager -> manager@stockflow.com / Stockflow2026!");
+  console.log("Local 1 Employee -> empleado@stockflow.com / Stockflow2026!");
+  console.log("-----------------------------------------");
 }
 
 main()

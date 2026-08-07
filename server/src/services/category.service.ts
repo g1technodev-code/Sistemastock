@@ -2,19 +2,26 @@ import { prisma } from "../config/prisma";
 import { ApiError } from "../utils/apiError";
 import type { UpsertCategoryInput } from "../schemas/category.schema";
 
-export async function listCategories(includeInactive = true) {
+export async function listCategories(localId: string | null | undefined, includeInactive = true) {
   return prisma.category.findMany({
-    where: includeInactive ? {} : { isActive: true },
+    where: {
+      ...(localId ? { localId } : {}),
+      ...(includeInactive ? {} : { isActive: true }),
+    },
     include: { _count: { select: { products: true } } },
     orderBy: { name: "asc" },
   });
 }
 
-export async function createCategory(input: UpsertCategoryInput) {
-  const existing = await prisma.category.findUnique({ where: { name: input.name } });
-  if (existing) throw ApiError.conflict("Ya existe una categoría con ese nombre");
-  return prisma.category.create({ data: input });
+export async function createCategory(localId: string | null | undefined, input: UpsertCategoryInput) {
+  if (!localId) throw ApiError.badRequest("Debe estar asociado a un local");
+  const existing = await prisma.category.findUnique({
+    where: { localId_name: { localId, name: input.name } },
+  });
+  if (existing) throw ApiError.conflict("Ya existe una categoría con ese nombre en tu negocio");
+  return prisma.category.create({ data: { ...input, localId } });
 }
+
 
 export async function updateCategory(id: string, input: UpsertCategoryInput) {
   const category = await prisma.category.findUnique({ where: { id } });

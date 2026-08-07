@@ -30,9 +30,14 @@ export default function Login() {
   } = useForm<FormValues>({ resolver: zodResolver(schema) });
 
   if (user) {
-    const from = (location.state as { from?: Location })?.from?.pathname ?? "/dashboard";
-    return <Navigate to={from} replace />;
+    if (user.role === "SUPERADMIN") {
+      return <Navigate to="/superadmin" replace />;
+    }
+    const from = (location.state as { from?: Location })?.from?.pathname;
+    const defaultRoute = user.role === "ADMIN" ? "/dashboard" : "/ventas";
+    return <Navigate to={from || defaultRoute} replace />;
   }
+
 
   const onSubmit = async (values: FormValues) => {
     setServerError(null);

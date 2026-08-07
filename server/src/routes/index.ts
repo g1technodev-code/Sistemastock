@@ -15,10 +15,13 @@ import searchRoutes from "./search.routes";
 import settingsRoutes from "./settings.routes";
 import customerRoutes from "./customer.routes";
 import notificationRoutes from "./notification.routes";
+import mercadopagoRoutes from "./mercadopago.routes";
+import superadminRoutes from "./superadmin.routes";
 
 const router = Router();
 
 router.use("/auth", authRoutes);
+router.use("/superadmin", superadminRoutes);
 router.use("/users", userRoutes);
 router.use("/categories", categoryRoutes);
 router.use("/suppliers", supplierRoutes);
@@ -34,5 +37,8 @@ router.use("/search", searchRoutes);
 router.use("/settings", settingsRoutes);
 router.use("/customers", customerRoutes);
 router.use("/notifications", notificationRoutes);
+router.use("/mercadopago", mercadopagoRoutes);
 
 export default router;
+
+

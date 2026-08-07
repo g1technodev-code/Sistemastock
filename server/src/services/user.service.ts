@@ -1,8 +1,10 @@
+import { Role } from "@prisma/client";
 import { prisma } from "../config/prisma";
 import { ApiError } from "../utils/apiError";
 import { hashPassword, generateTempPassword } from "../utils/password";
 import { revokeAllSessionsForUser } from "./auth.service";
 import type { CreateUserInput, UpdateUserInput } from "../schemas/user.schema";
+
 import { parsePagination, paginatedResponse } from "../utils/pagination";
 
 const SELECT_FIELDS = {
@@ -15,16 +17,19 @@ const SELECT_FIELDS = {
   updatedAt: true,
 };
 
-export async function listUsers(query: { page?: number; limit?: number; q?: string }) {
+export async function listUsers(localId: string | null | undefined, query: { page?: number; limit?: number; q?: string }) {
   const pagination = parsePagination(query);
-  const where = query.q
-    ? {
-        OR: [
-          { name: { contains: query.q, mode: "insensitive" as const } },
-          { email: { contains: query.q, mode: "insensitive" as const } },
-        ],
-      }
-    : {};
+  const where = {
+    ...(localId ? { localId } : {}),
+    ...(query.q
+      ? {
+          OR: [
+            { name: { contains: query.q, mode: "insensitive" as const } },
+            { email: { contains: query.q, mode: "insensitive" as const } },
+          ],
+        }
+      : {}),
+  };
 
   const [items, total] = await Promise.all([
     prisma.user.findMany({
@@ -40,18 +45,32 @@ export async function listUsers(query: { page?: number; limit?: number; q?: stri
   return paginatedResponse(items, total, pagination);
 }
 
-export async function createUser(input: CreateUserInput) {
+export async function createUser(creatorLocalId: string | null | undefined, input: CreateUserInput, actingUserRole?: Role) {
+  if (input.role === "SUPERADMIN" && actingUserRole !== "SUPERADMIN") {
+    throw ApiError.forbidden("No tienes permisos para asignar el rol SuperAdmin");
+  }
+
   const existing = await prisma.user.findUnique({ where: { email: input.email } });
   if (existing) throw ApiError.conflict("Ya existe un usuario con ese email");
 
   const passwordHash = await hashPassword(input.password);
   return prisma.user.create({
-    data: { name: input.name, email: input.email, passwordHash, role: input.role },
+    data: {
+      localId: creatorLocalId || null,
+      name: input.name,
+      email: input.email,
+      passwordHash,
+      role: input.role,
+    },
     select: SELECT_FIELDS,
   });
 }
 
-export async function updateUser(id: string, input: UpdateUserInput, actingUserId: string) {
+export async function updateUser(id: string, input: UpdateUserInput, actingUserId: string, actingUserRole?: Role) {
+  if (input.role === "SUPERADMIN" && actingUserRole !== "SUPERADMIN") {
+    throw ApiError.forbidden("No tienes permisos para asignar el rol SuperAdmin");
+  }
+
   const target = await prisma.user.findUnique({ where: { id } });
   if (!target) throw ApiError.notFound("Usuario no encontrado");
 
@@ -64,6 +83,7 @@ export async function updateUser(id: string, input: UpdateUserInput, actingUserI
     data: input,
     select: SELECT_FIELDS,
   });
+
 
   if (input.isActive === false || (input.role && input.role !== target.role)) {
     await revokeAllSessionsForUser(id);

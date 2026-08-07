@@ -9,8 +9,10 @@ const PRODUCT_INCLUDE = {
   supplier: { select: { id: true, name: true } },
 };
 
-function buildWhere(query: ListProductsQuery): Prisma.ProductWhereInput {
-  const where: Prisma.ProductWhereInput = {};
+function buildWhere(localId: string | null | undefined, query: ListProductsQuery): Prisma.ProductWhereInput {
+  const where: Prisma.ProductWhereInput = {
+    ...(localId ? { localId } : {}),
+  };
 
   if (query.q) {
     where.OR = [
@@ -26,12 +28,9 @@ function buildWhere(query: ListProductsQuery): Prisma.ProductWhereInput {
   return where;
 }
 
-export async function listProducts(query: ListProductsQuery) {
-  const where = buildWhere(query);
+export async function listProducts(localId: string | null | undefined, query: ListProductsQuery) {
+  const where = buildWhere(localId, query);
 
-  // Prisma cannot compare two columns of the same row in a `where` clause, so the
-  // low-stock filter (currentStock <= minStock) is applied in-memory after fetching
-  // the filtered set. Fine at SME scale (hundreds/low-thousands of products).
   if (query.lowStock) {
     const all = await prisma.product.findMany({ where, include: PRODUCT_INCLUDE, orderBy: { name: "asc" } });
     const filtered = all.filter((p) => p.currentStock <= p.minStock);
@@ -55,18 +54,24 @@ export async function listProducts(query: ListProductsQuery) {
   return paginatedResponse(items, total, pagination);
 }
 
-export async function getProduct(id: string) {
-  const product = await prisma.product.findUnique({ where: { id }, include: PRODUCT_INCLUDE });
+export async function getProduct(localId: string | null | undefined, id: string) {
+  const where = { id, ...(localId ? { localId } : {}) };
+  const product = await prisma.product.findFirst({ where, include: PRODUCT_INCLUDE });
   if (!product) throw ApiError.notFound("Producto no encontrado");
   return product;
 }
 
-export async function createProduct(input: UpsertProductInput) {
-  const existing = await prisma.product.findUnique({ where: { sku: input.sku } });
-  if (existing) throw ApiError.conflict("Ya existe un producto con ese SKU");
+export async function createProduct(localId: string | null | undefined, input: UpsertProductInput) {
+  if (!localId) throw ApiError.badRequest("Debe estar asociado a un local para crear productos");
+
+  const existing = await prisma.product.findUnique({
+    where: { localId_sku: { localId, sku: input.sku } },
+  });
+  if (existing) throw ApiError.conflict("Ya existe un producto con ese SKU en tu negocio");
 
   return prisma.product.create({
     data: {
+      localId,
       sku: input.sku,
       barcode: input.barcode || null,
       name: input.name,
@@ -83,14 +88,18 @@ export async function createProduct(input: UpsertProductInput) {
   });
 }
 
+
 export async function updateProduct(id: string, input: UpsertProductInput) {
   const product = await prisma.product.findUnique({ where: { id } });
   if (!product) throw ApiError.notFound("Producto no encontrado");
 
   if (input.sku !== product.sku) {
-    const skuTaken = await prisma.product.findUnique({ where: { sku: input.sku } });
-    if (skuTaken) throw ApiError.conflict("Ya existe un producto con ese SKU");
+    const skuTaken = await prisma.product.findUnique({
+      where: { localId_sku: { localId: product.localId, sku: input.sku } },
+    });
+    if (skuTaken) throw ApiError.conflict("Ya existe un producto con ese SKU en tu negocio");
   }
+
 
   return prisma.product.update({
     where: { id },

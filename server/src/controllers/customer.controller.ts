@@ -22,9 +22,10 @@ export const getOne = catchAsync(async (req: Request, res: Response) => {
 
 export const create = catchAsync(async (req: Request, res: Response) => {
   const input = createCustomerSchema.parse(req.body);
-  const customer = await customerService.createCustomer(input);
+  const customer = await customerService.createCustomer(req.user?.localId, input);
   res.status(201).json(serializeDecimals(customer));
 });
+
 
 export const update = catchAsync(async (req: Request, res: Response) => {
   const input = updateCustomerSchema.parse(req.body);

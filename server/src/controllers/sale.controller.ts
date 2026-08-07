@@ -7,9 +7,10 @@ import { ApiError } from "../utils/apiError";
 
 export const createSale = catchAsync(async (req: Request, res: Response) => {
   const input = createSaleSchema.parse(req.body);
-  const sale = await saleService.createSale(input, req.user!.id);
+  const sale = await saleService.createSale(req.user?.localId, input, req.user!.id);
   res.status(201).json({ sale: serializeDecimals(sale) });
 });
+
 
 export const listSales = catchAsync(async (req: Request, res: Response) => {
   const query = listSalesQuerySchema.parse(req.query);
