@@ -152,13 +152,78 @@ export async function listLocales(query: { page?: number; limit?: number; q?: st
   return paginatedResponse(items, total, pagination);
 }
 
+export async function enforceLocalPlanQuota(localId: string) {
+  const local = await prisma.local.findUnique({ where: { id: localId } });
+  if (!local) return;
+
+  const isPro = local.plan === "PRO";
+  const maxAdmins = isPro ? 2 : 1;
+  const maxEmployees = isPro ? 6 : 3;
+
+  const admins = await prisma.user.findMany({
+    where: { localId, role: { in: ["ADMIN", "MANAGER"] } },
+    orderBy: { createdAt: "asc" },
+  });
+
+  const employees = await prisma.user.findMany({
+    where: { localId, role: "EMPLOYEE" },
+    orderBy: { createdAt: "asc" },
+  });
+
+  for (let i = 0; i < admins.length; i++) {
+    const shouldBeActive = i < maxAdmins;
+    if (admins[i].isActive !== shouldBeActive) {
+      await prisma.user.update({
+        where: { id: admins[i].id },
+        data: { isActive: shouldBeActive },
+      });
+    }
+  }
+
+  for (let i = 0; i < employees.length; i++) {
+    const shouldBeActive = i < maxEmployees;
+    if (employees[i].isActive !== shouldBeActive) {
+      await prisma.user.update({
+        where: { id: employees[i].id },
+        data: { isActive: shouldBeActive },
+      });
+    }
+  }
+}
+
+export async function updateLocalPlan(id: string, plan: PlanType) {
+  const local = await prisma.local.findUnique({ where: { id } });
+  if (!local) throw ApiError.notFound("Local no encontrado");
+
+  const isTrial = plan === "TRIAL";
+  const monthlyPrice = plan === "PRO" ? 39900 : plan === "BASICO" ? 24900 : 0;
+
+  const updated = await prisma.local.update({
+    where: { id },
+    data: {
+      plan,
+      isTrial,
+      monthlyPrice,
+    },
+  });
+
+  await enforceLocalPlanQuota(id);
+  return updated;
+}
+
 export async function updateLocalStatus(id: string, status: "ACTIVE" | "SUSPENDED" | "DUE_SOON") {
   const local = await prisma.local.findUnique({ where: { id } });
   if (!local) throw ApiError.notFound("Local no encontrado");
 
-  return prisma.local.update({
+  const updated = await prisma.local.update({
     where: { id },
     data: { status },
   });
+
+  if (status === "ACTIVE") {
+    await enforceLocalPlanQuota(id);
+  }
+  return updated;
 }
+
 

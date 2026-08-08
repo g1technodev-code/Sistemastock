@@ -3,9 +3,10 @@ import type { Role } from "./types";
 export const ROLE_LABEL: Record<Role, string> = {
   SUPERADMIN: "SuperAdmin SaaS",
   ADMIN: "Administrador",
-  MANAGER: "Gestor",
+  MANAGER: "Administrador",
   EMPLOYEE: "Empleado",
 };
+
 
 /** Mirrors the server-side RBAC matrix in server/src/middlewares/auth.middleware.ts usage across routes. */
 export const permissions = {

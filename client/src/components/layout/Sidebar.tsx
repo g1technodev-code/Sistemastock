@@ -31,6 +31,8 @@ import { useAuth } from "../../context/AuthContext";
 import { permissions } from "../../lib/permissions";
 import { cn } from "../../lib/utils";
 import type { Role } from "../../lib/types";
+import { PWAInstallPrompt } from "../PWAInstallPrompt";
+
 
 
 const COLLAPSE_STORAGE_KEY = "stockflow-sidebar-collapsed";
@@ -140,7 +142,14 @@ export function Sidebar({ mobileOpen, onCloseMobile }: { mobileOpen: boolean; on
               )}
             </NavLink>
           ))}
+          {!isCollapsed && (
+            <div className="py-2 px-1">
+              <PWAInstallPrompt />
+            </div>
+          )}
+
           <div className="pt-2">
+
             <button
               onClick={() => {
                 onCloseMobile();

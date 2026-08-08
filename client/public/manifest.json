@@ -1,0 +1,21 @@
+{
+  "short_name": "Kipo",
+  "name": "Kipo — Gestor de Inventario & SaaS",
+  "icons": [
+    {
+      "src": "/kipo-logo.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "/kipo-logo.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#0a0a0a",
+  "theme_color": "#0a0a0a",
+  "display": "standalone",
+  "orientation": "portrait"
+}
