@@ -144,13 +144,12 @@ export default function Users() {
                         onChange={(e) => handleRoleChange(u, e.target.value as Role)}
                       >
                         {(Object.keys(ROLE_LABEL) as Role[])
-                          .filter((r) => r !== "SUPERADMIN")
+                          .filter((r) => r === "ADMIN" || r === "EMPLOYEE")
                           .map((r) => (
                             <option key={r} value={r}>
                               {ROLE_LABEL[r]}
                             </option>
                           ))}
-
                       </Select>
                     </TD>
                     <TD>
@@ -182,9 +181,9 @@ export default function Users() {
           <Input label="Contraseña temporal" type="text" required error={errors.password?.message} {...register("password")} />
           <Select label="Rol" required {...register("role")}>
             <option value="EMPLOYEE">Empleado</option>
-            <option value="MANAGER">Gestor</option>
             <option value="ADMIN">Administrador</option>
           </Select>
+
           <div className="mt-2 flex justify-end gap-2">
             <Button type="button" variant="outline" onClick={() => setFormOpen(false)}>
               Cancelar

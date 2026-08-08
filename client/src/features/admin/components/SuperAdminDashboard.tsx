@@ -340,9 +340,10 @@ export default function SuperAdminDashboard() {
             value={plan}
             onChange={(e) => setPlan(e.target.value as PlanType)}
           >
-            <option value="TRIAL">Prueba Gratis (7 Días)</option>
-            <option value="BASICO">Plan Básico ($24.900 ARS/mes - máx 3 usuarios)</option>
-            <option value="PRO">Plan Pro ($39.900 ARS/mes - usuarios ilimitados)</option>
+            <option value="TRIAL">Prueba Gratis (7 Días - 1 Admin y 3 Empleados)</option>
+            <option value="BASICO">Plan Básico ($24.900 ARS/mes - 1 Admin y 3 Empleados)</option>
+            <option value="PRO">Plan Pro ($39.900 ARS/mes - 2 Admins y 6 Empleados)</option>
+
           </Select>
 
           <div className="flex justify-end gap-3 pt-4">

@@ -35,6 +35,7 @@ const PLANS: PlanDefinition[] = [
     targetAudience: "Pequeños negocios o emprendedores que están iniciando.",
     recommended: false,
     features: [
+      { text: "Incluye 1 Administrador y 3 Empleados", included: true, highlight: true },
       { text: "Gestor de Productos y Categorías", included: true },
       { text: "Registro de Proveedores", included: true },
       { text: "Movimientos de stock básicos (Entradas/Salidas)", included: true },
@@ -56,17 +57,19 @@ const PLANS: PlanDefinition[] = [
     targetAudience: "Negocios en crecimiento que necesitan control financiero avanzado y gestión de equipo.",
     recommended: true,
     features: [
-      { text: "Todo lo incluido en Kipo Básico", included: true, highlight: true },
+      { text: "Incluye 2 Administradores y 6 Empleados", included: true, highlight: true },
+      { text: "Todo lo incluido en Kipo Básico", included: true },
       { text: "Control de Inventario Físico (Auditorías y conteo rápido)", included: true, highlight: true },
       { text: "Gestión y control de Caja diaria", included: true, highlight: true },
       { text: "Módulo completo de Reportes e Historial", included: true },
       { text: "Estadísticas avanzadas de rendimiento", included: true },
       { text: "Análisis de Rentabilidad (Márgenes de ganancia e indicadores clave)", included: true, highlight: true },
-      { text: "Gestión multiusuario y roles (Admin, Gestor, Empleado)", included: true },
+      { text: "Gestión multiusuario y asignación de roles", included: true },
       { text: "Soporte prioritario 24/7", included: true },
     ],
   },
 ];
+
 
 export default function Plans() {
   const [searchParams] = useSearchParams();
