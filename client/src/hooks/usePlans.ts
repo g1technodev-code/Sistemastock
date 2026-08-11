@@ -1,6 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import * as plansApi from "../api/superadminPlans";
+import * as publicPlansApi from "../api/plans";
 import type { PlanInput } from "../api/superadminPlans";
+
 
 export function usePlans(includeInactive = true) {
   return useQuery({ queryKey: ["plans", includeInactive], queryFn: () => plansApi.listPlans(includeInactive) });
@@ -25,3 +27,12 @@ export function usePlanMutations() {
 
   return { create, update, remove };
 }
+
+export function useMySubscription() {
+  return useQuery({
+    queryKey: ["my-subscription"],
+    queryFn: () => publicPlansApi.getMySubscription(),
+  });
+}
+
+

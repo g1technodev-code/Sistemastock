@@ -1,13 +1,15 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
-import { Check, Crown, Zap, ExternalLink, HelpCircle, ShieldCheck } from "lucide-react";
+import { Check, Crown, Zap, ExternalLink, HelpCircle, ShieldCheck, Clock, CheckCircle2 } from "lucide-react";
 import { Button } from "../components/ui/Button";
 import { Badge } from "../components/ui/Badge";
 import { FullPageSpinner } from "../components/ui/Spinner";
 import { createCheckout, listPublicPlans, type PlanId } from "../api/plans";
+import { useMySubscription } from "../hooks/usePlans";
 import { useToast } from "../context/ToastContext";
 import { extractErrorMessage } from "../api/client";
+import { formatDate } from "../lib/formatters";
 
 export default function Plans() {
   const [searchParams] = useSearchParams();
@@ -15,7 +17,8 @@ export default function Plans() {
   const { showSuccess, showError } = useToast();
   const [loadingPlan, setLoadingPlan] = useState<PlanId | null>(null);
 
-  const { data: plans, isLoading } = useQuery({ queryKey: ["public-plans"], queryFn: listPublicPlans });
+  const { data: plans, isLoading: plansLoading } = useQuery({ queryKey: ["public-plans"], queryFn: listPublicPlans });
+  const { data: subscription, isLoading: subLoading } = useMySubscription();
 
   const handleSubscribe = async (planId: PlanId) => {
     setLoadingPlan(planId);
@@ -33,6 +36,8 @@ export default function Plans() {
     }
   };
 
+  const isLoading = plansLoading || subLoading;
+
   return (
     <div className="mx-auto max-w-6xl space-y-8 pb-12 animate-in fade-in duration-500">
       {/* Notifications */}
@@ -43,6 +48,26 @@ export default function Plans() {
             <p className="font-semibold text-sm">¡Pago procesado con éxito!</p>
             <p className="text-xs text-neutral-300">Tu suscripción ha sido registrada correctamente en Mercado Pago.</p>
           </div>
+        </div>
+      )}
+
+      {/* Trial Banner Notification */}
+      {subscription?.isTrial && (
+        <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-5 text-amber-900 dark:text-amber-200 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-xl bg-amber-500/20 text-amber-600 dark:text-amber-400 shrink-0">
+              <Clock className="h-6 w-6" />
+            </div>
+            <div>
+              <h3 className="font-extrabold text-base">Estás en tu período de Prueba Gratuita (7 días)</h3>
+              <p className="text-xs opacity-90 leading-relaxed mt-0.5">
+                Te quedan <strong className="font-bold underline">{subscription.daysLeft} días restantes</strong> de prueba (Vencimiento: {formatDate(subscription.dueDate)}). Elige un plan para continuar con el servicio activado sin interrupciones.
+              </p>
+            </div>
+          </div>
+          <Badge tone="warning" className="px-3 py-1.5 text-xs font-bold uppercase tracking-wider shrink-0">
+            {subscription.daysLeft} días restantes
+          </Badge>
         </div>
       )}
 
@@ -64,82 +89,102 @@ export default function Plans() {
         <FullPageSpinner />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch max-w-5xl mx-auto">
-          {(plans ?? []).map((plan) => (
-            <div
-              key={plan.id}
-              className={`relative rounded-3xl flex flex-col justify-between border transition-all duration-300 ${
-                plan.isRecommended
-                  ? "bg-neutral-900 border-primary-500/50 shadow-2xl shadow-primary-500/10 ring-1 ring-primary-500/30"
-                  : "bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800 hover:border-neutral-300 dark:hover:border-neutral-700"
-              }`}
-            >
-              {plan.isRecommended && (
-                <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-primary-600 px-4 py-1 text-xs font-bold text-white shadow-lg uppercase tracking-wider">
-                    <Crown className="h-3.5 w-3.5" /> Recomendado / Más Popular
-                  </span>
-                </div>
-              )}
+          {(plans ?? []).map((plan) => {
+            const isCurrentPlan = !subscription?.isTrial && subscription?.planId === plan.id;
 
-              <div className="p-8 space-y-6">
-                {/* Header section */}
-                <div>
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-2xl font-bold text-neutral-900 dark:text-white flex items-center gap-2">
-                      {plan.name}
-                      {plan.isRecommended ? <Zap className="h-5 w-5 text-amber-400 fill-amber-400" /> : null}
-                    </h3>
-                  </div>
-                  <p className="mt-2 text-xs text-neutral-500 dark:text-neutral-400 font-medium">
-                    {plan.maxAdmins} Administrador(es) y {plan.maxEmployees} Empleados
-                  </p>
-                </div>
-
-                {/* Price section */}
-                <div className="border-y border-neutral-100 dark:border-neutral-800/80 py-4">
-                  <div className="flex items-baseline gap-1">
-                    <span className="text-4xl font-black text-neutral-900 dark:text-white">
-                      ${plan.monthlyPrice.toLocaleString("es-AR")}
+            return (
+              <div
+                key={plan.id}
+                className={`relative rounded-3xl flex flex-col justify-between border transition-all duration-300 ${
+                  plan.isRecommended
+                    ? "bg-primary-50/50 dark:bg-neutral-900 border-primary-500/60 dark:border-primary-500/50 shadow-xl shadow-primary-500/10 ring-2 ring-primary-500/20"
+                    : "bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800 hover:border-neutral-300 dark:hover:border-neutral-700"
+                }`}
+              >
+                {plan.isRecommended && (
+                  <div className="absolute -top-4 left-1/2 -translate-x-1/2">
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-primary-600 px-4 py-1 text-xs font-bold text-white shadow-lg uppercase tracking-wider">
+                      <Crown className="h-3.5 w-3.5" /> Recomendado / Más Popular
                     </span>
-                    <span className="text-sm font-semibold text-neutral-500 dark:text-neutral-400">ARS / mes</span>
                   </div>
-                  {plan.description && (
-                    <p className="mt-2 text-xs text-neutral-600 dark:text-neutral-400 leading-relaxed">{plan.description}</p>
+                )}
+
+                <div className="p-8 space-y-6">
+                  {/* Header section */}
+                  <div>
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-2xl font-bold text-neutral-900 dark:text-white flex items-center gap-2">
+                        {plan.name}
+                        {plan.isRecommended ? <Zap className="h-5 w-5 text-amber-500 dark:text-amber-400 fill-amber-500 dark:fill-amber-400" /> : null}
+                      </h3>
+                      {isCurrentPlan && (
+                        <Badge tone="success" className="text-xs font-bold px-2.5 py-1">
+                          Plan Actual
+                        </Badge>
+                      )}
+                    </div>
+                    <p className="mt-2 text-xs text-neutral-600 dark:text-neutral-400 font-medium">
+                      {plan.maxAdmins} Administrador(es) y {plan.maxEmployees} Empleados
+                    </p>
+                  </div>
+
+                  {/* Price section */}
+                  <div className="border-y border-neutral-200/80 dark:border-neutral-800/80 py-4">
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-4xl font-black text-neutral-900 dark:text-white">
+                        ${plan.monthlyPrice.toLocaleString("es-AR")}
+                      </span>
+                      <span className="text-sm font-semibold text-neutral-600 dark:text-neutral-400">ARS / mes</span>
+                    </div>
+                    {plan.description && (
+                      <p className="mt-2 text-xs text-neutral-600 dark:text-neutral-400 leading-relaxed">{plan.description}</p>
+                    )}
+                  </div>
+
+                  {/* Features List */}
+                  <div className="space-y-3">
+                    <p className="text-xs font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">Funcionalidades incluidas:</p>
+                    <ul className="space-y-2.5">
+                      {plan.features.map((feature, idx) => (
+                        <li key={idx} className="flex items-start gap-2.5 text-xs sm:text-sm">
+                          <Check className="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-500 mt-0.5" />
+                          <span className="text-neutral-700 dark:text-neutral-300 font-medium">{feature}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+
+                {/* Action button footer */}
+                <div className="p-8 pt-0">
+                  {isCurrentPlan ? (
+                    <Button
+                      disabled
+                      className="w-full py-3.5 justify-center text-sm font-bold rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 cursor-default"
+                    >
+                      <CheckCircle2 className="h-4 w-4 mr-1.5" /> Tu Plan Actual
+                    </Button>
+                  ) : (
+                    <Button
+                      onClick={() => handleSubscribe(plan.id)}
+                      isLoading={loadingPlan === plan.id}
+                      className={`w-full py-3.5 justify-center text-sm font-bold rounded-2xl shadow-lg transition-all ${
+                        plan.isRecommended
+                          ? "bg-primary-600 hover:bg-primary-500 text-white shadow-primary-600/25"
+                          : "bg-neutral-900 hover:bg-neutral-800 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-white"
+                      }`}
+                    >
+                      {subscription?.isTrial ? "Elegir este Plan" : "Suscribirme con Mercado Pago"}{" "}
+                      <ExternalLink className="h-4 w-4 ml-1" />
+                    </Button>
                   )}
                 </div>
-
-                {/* Features List */}
-                <div className="space-y-3">
-                  <p className="text-xs font-bold uppercase tracking-wider text-neutral-400">Funcionalidades incluidas:</p>
-                  <ul className="space-y-2.5">
-                    {plan.features.map((feature, idx) => (
-                      <li key={idx} className="flex items-start gap-2.5 text-xs sm:text-sm">
-                        <Check className="h-4 w-4 shrink-0 text-emerald-500 mt-0.5" />
-                        <span className="text-neutral-700 dark:text-neutral-300">{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
               </div>
-
-              {/* Action button footer */}
-              <div className="p-8 pt-0">
-                <Button
-                  onClick={() => handleSubscribe(plan.id)}
-                  isLoading={loadingPlan === plan.id}
-                  className={`w-full py-3.5 justify-center text-sm font-bold rounded-2xl shadow-lg transition-all ${
-                    plan.isRecommended
-                      ? "bg-primary-600 hover:bg-primary-500 text-white shadow-primary-600/25"
-                      : "bg-neutral-900 hover:bg-neutral-800 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-white"
-                  }`}
-                >
-                  Suscribirme con Mercado Pago <ExternalLink className="h-4 w-4 ml-1" />
-                </Button>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
+
 
       {/* Trust & FAQ Footer */}
       <div className="mt-12 rounded-2xl bg-neutral-100 dark:bg-neutral-900/60 border border-neutral-200 dark:border-neutral-800 p-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">

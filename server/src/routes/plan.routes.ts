@@ -6,5 +6,7 @@ const router = Router();
 
 router.use(authenticate);
 router.get("/", planController.listPublic);
+router.get("/my-subscription", planController.getMySubscription);
 
 export default router;
+

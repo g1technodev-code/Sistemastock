@@ -31,3 +31,14 @@ export const remove = catchAsync(async (req: Request, res: Response) => {
   await planService.deletePlan(req.params.id);
   res.status(204).send();
 });
+
+export const getMySubscription = catchAsync(async (req: Request, res: Response) => {
+  const localId = req.user?.localId;
+  if (!localId) {
+    res.status(400).json({ message: "No hay local asociado al usuario" });
+    return;
+  }
+  const subscription = await planService.getMySubscription(localId);
+  res.json({ subscription: serializeDecimals(subscription) });
+});
+
