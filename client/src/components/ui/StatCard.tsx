@@ -50,11 +50,6 @@ export function StatCard({
       </div>
       <div className="relative z-10 mt-4 flex items-end justify-between">
         <span className="text-4xl font-black tracking-tight text-neutral-900 dark:text-white">{value}</span>
-        {onClick && (
-          <span className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5">
-            Ver detalle &rarr;
-          </span>
-        )}
       </div>
       {delta && (
         <div className="relative z-10 mt-3 flex items-center gap-1.5">
