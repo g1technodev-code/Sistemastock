@@ -1,10 +1,10 @@
 import { Router } from "express";
 import * as purchaseController from "../controllers/purchase.controller";
-import { authenticate, authorize } from "../middlewares/auth.middleware";
+import { authenticate, authorize, requireFeature } from "../middlewares/auth.middleware";
 
 const router = Router();
 
-router.use(authenticate);
+router.use(authenticate, requireFeature("PURCHASES"));
 
 router.get("/", purchaseController.listPurchases);
 router.get("/:id", purchaseController.getPurchase);

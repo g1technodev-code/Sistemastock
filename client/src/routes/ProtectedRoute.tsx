@@ -3,8 +3,17 @@ import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { FullPageSpinner } from "../components/ui/Spinner";
 import type { Role } from "../lib/types";
+import { hasFeature, type PlanFeature } from "../lib/features";
 
-export function ProtectedRoute({ children, allowedRoles }: { children: ReactNode; allowedRoles?: Role[] }) {
+export function ProtectedRoute({
+  children,
+  allowedRoles,
+  requiredFeature,
+}: {
+  children: ReactNode;
+  allowedRoles?: Role[];
+  requiredFeature?: PlanFeature;
+}) {
   const { user, isLoading } = useAuth();
   const location = useLocation();
 
@@ -16,6 +25,10 @@ export function ProtectedRoute({ children, allowedRoles }: { children: ReactNode
 
   if (allowedRoles && !allowedRoles.includes(user.role)) {
     return <Navigate to="/" replace />;
+  }
+
+  if (requiredFeature && !hasFeature(user, requiredFeature)) {
+    return <Navigate to={user.role === "ADMIN" ? "/plans" : "/"} replace />;
   }
 
   return <>{children}</>;

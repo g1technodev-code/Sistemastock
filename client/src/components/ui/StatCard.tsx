@@ -9,12 +9,14 @@ export function StatCard({
   icon: Icon,
   delta,
   tone = "neutral",
+  onClick,
 }: {
   label: string;
   value: string;
   icon: LucideIcon;
   delta?: { value: string; direction: "up" | "down"; isGood: boolean };
   tone?: "neutral" | "warning" | "danger";
+  onClick?: () => void;
 }) {
   const iconToneClass =
     tone === "warning"
@@ -24,10 +26,25 @@ export function StatCard({
         : "bg-indigo-50 text-indigo-600 dark:bg-indigo-950 dark:text-indigo-400";
 
   return (
-    <Card className="px-6 py-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-float dark:hover:shadow-primary-900/20 group relative overflow-hidden">
+    <Card
+      onClick={onClick}
+      className={cn(
+        "px-6 py-5 transition-all duration-300 group relative overflow-hidden",
+        onClick
+          ? "cursor-pointer hover:-translate-y-1 hover:shadow-lg dark:hover:shadow-indigo-900/20 active:scale-[0.99]"
+          : ""
+      )}
+    >
       <div className="relative z-10 flex items-center justify-between">
-        <span className="text-sm font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">{label}</span>
-        <div className={cn("rounded-xl p-2.5 shadow-sm ring-1 ring-black/5 dark:ring-white/10 transition-transform group-hover:scale-110 duration-300", iconToneClass)}>
+        <span className="text-sm font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
+          {label}
+        </span>
+        <div
+          className={cn(
+            "rounded-xl p-2.5 shadow-sm ring-1 ring-black/5 dark:ring-white/10 transition-transform group-hover:scale-110 duration-300",
+            iconToneClass
+          )}
+        >
           <Icon className="h-5 w-5" strokeWidth={2.5} />
         </div>
       </div>

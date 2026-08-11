@@ -13,6 +13,7 @@ export type PlanInput = {
   isActive?: boolean;
   sortOrder?: number;
   features?: string[];
+  enabledFeatures?: string[];
 };
 
 export async function listPlans(includeInactive = true): Promise<Plan[]> {

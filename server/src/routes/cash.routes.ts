@@ -1,10 +1,10 @@
 import { Router } from "express";
 import * as cashController from "../controllers/cash.controller";
-import { authenticate, authorize } from "../middlewares/auth.middleware";
+import { authenticate, authorize, requireFeature } from "../middlewares/auth.middleware";
 
 const router = Router();
 
-router.use(authenticate);
+router.use(authenticate, requireFeature("CASH_REGISTER"));
 
 router.get("/status", cashController.getStatus);
 router.get("/summary", cashController.getSummary);
