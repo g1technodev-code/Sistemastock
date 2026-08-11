@@ -1,4 +1,5 @@
-import { forwardRef, type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes, type TextareaHTMLAttributes } from "react";
+import { forwardRef, useState, type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes, type TextareaHTMLAttributes } from "react";
+import { Eye, EyeOff } from "lucide-react";
 import { cn } from "../../lib/utils";
 
 const fieldBase =
@@ -35,11 +36,41 @@ export function FieldWrapper({
 
 type InputProps = InputHTMLAttributes<HTMLInputElement> & { label?: string; error?: string; hint?: string };
 
-export const Input = forwardRef<HTMLInputElement, InputProps>(({ label, error, hint, className, id, required, ...props }, ref) => (
-  <FieldWrapper label={label} htmlFor={id} error={error} hint={hint} required={required}>
-    <input ref={ref} id={id} className={cn(fieldBase, className)} {...props} />
-  </FieldWrapper>
-));
+export const Input = forwardRef<HTMLInputElement, InputProps>(({ label, error, hint, className, id, required, type, ...props }, ref) => {
+  const [showPassword, setShowPassword] = useState(false);
+  const isPassword = type === "password";
+
+  if (!isPassword) {
+    return (
+      <FieldWrapper label={label} htmlFor={id} error={error} hint={hint} required={required}>
+        <input ref={ref} id={id} type={type} className={cn(fieldBase, className)} {...props} />
+      </FieldWrapper>
+    );
+  }
+
+  return (
+    <FieldWrapper label={label} htmlFor={id} error={error} hint={hint} required={required}>
+      <div className="relative">
+        <input
+          ref={ref}
+          id={id}
+          type={showPassword ? "text" : "password"}
+          className={cn(fieldBase, "pr-10", className)}
+          {...props}
+        />
+        <button
+          type="button"
+          tabIndex={-1}
+          onClick={() => setShowPassword((prev) => !prev)}
+          className="absolute inset-y-0 right-0 flex items-center px-3 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300"
+          aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+        >
+          {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+        </button>
+      </div>
+    </FieldWrapper>
+  );
+});
 Input.displayName = "Input";
 
 type TextareaProps = TextareaHTMLAttributes<HTMLTextAreaElement> & { label?: string; error?: string; hint?: string };
