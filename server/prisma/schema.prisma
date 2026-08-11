@@ -20,17 +20,33 @@ enum LocalStatus {
   SUSPENDED
 }
 
-enum PlanType {
-  TRIAL
-  BASICO
-  PRO
+model Plan {
+  id            String   @id @default(cuid())
+  name          String
+  description   String?
+  monthlyPrice  Decimal  @default(0) @db.Decimal(12, 2)
+  maxAdmins     Int      @default(1)
+  maxEmployees  Int      @default(3)
+  isTrial       Boolean  @default(false)
+  trialDays     Int?
+  isRecommended Boolean  @default(false)
+  isActive      Boolean  @default(true)
+  sortOrder     Int      @default(0)
+  features      String[] @default([])
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  locales Local[]
+
+  @@map("plans")
 }
 
 model Local {
   id           String      @id @default(cuid())
   name         String
   ownerEmail   String
-  plan         PlanType    @default(BASICO)
+  planId       String
+  plan         Plan        @relation(fields: [planId], references: [id])
   isTrial      Boolean     @default(false)
   status       LocalStatus @default(ACTIVE)
   dueDate      DateTime
@@ -54,6 +70,7 @@ model Local {
   notifications    Notification[]
   stockMovements   StockMovement[]
 
+  @@index([planId])
   @@map("locales")
 }
 

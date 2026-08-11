@@ -24,8 +24,10 @@ CREATE TYPE "LocalStatus" AS ENUM ('ACTIVE', 'DUE_SOON', 'SUSPENDED');
 -- CreateEnum
 CREATE TYPE "PlanType" AS ENUM ('BASICO', 'PRO');
 
--- AlterEnum
-ALTER TYPE "Role" ADD VALUE 'SUPERADMIN';
+-- 'SUPERADMIN' is added to the "Role" enum by the preceding
+-- 20260807215000_add_role_superadmin_value migration, in its own transaction
+-- (Postgres forbids adding an enum value and using it in the same transaction,
+-- and this migration's backfill below filters on 'SUPERADMIN').
 
 -- CreateTable
 CREATE TABLE "locales" (

@@ -17,11 +17,13 @@ import customerRoutes from "./customer.routes";
 import notificationRoutes from "./notification.routes";
 import mercadopagoRoutes from "./mercadopago.routes";
 import superadminRoutes from "./superadmin.routes";
+import planRoutes from "./plan.routes";
 
 const router = Router();
 
 router.use("/auth", authRoutes);
 router.use("/superadmin", superadminRoutes);
+router.use("/plans", planRoutes);
 router.use("/users", userRoutes);
 router.use("/categories", categoryRoutes);
 router.use("/suppliers", supplierRoutes);

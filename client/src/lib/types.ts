@@ -10,13 +10,29 @@ export type CustomerMovementType = "CHARGE" | "PAYMENT";
 export type NotificationType = "LOW_STOCK" | "SHIFT_OPEN" | "SHIFT_CLOSE";
 
 export type LocalStatus = "ACTIVE" | "DUE_SOON" | "SUSPENDED";
-export type PlanType = "TRIAL" | "BASICO" | "PRO";
+
+export type Plan = {
+  id: string;
+  name: string;
+  description: string | null;
+  monthlyPrice: number;
+  maxAdmins: number;
+  maxEmployees: number;
+  isTrial: boolean;
+  trialDays: number | null;
+  isRecommended: boolean;
+  isActive: boolean;
+  sortOrder: number;
+  features: string[];
+  createdAt: string;
+  updatedAt: string;
+};
 
 export type LocalItem = {
   id: string;
   name: string;
   ownerEmail: string;
-  plan: PlanType;
+  plan: Plan;
   isTrial?: boolean;
   status: LocalStatus;
   dueDate: string;
@@ -29,7 +45,7 @@ export type ConversionAlert = {
   localId: string;
   name: string;
   ownerEmail: string;
-  plan: PlanType;
+  plan: Plan;
   isTrial: boolean;
   status: LocalStatus;
   dueDate: string;

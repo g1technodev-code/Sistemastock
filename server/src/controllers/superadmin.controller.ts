@@ -14,14 +14,20 @@ export const listLocales = catchAsync(async (req: Request, res: Response) => {
 });
 
 export const createLocal = catchAsync(async (req: Request, res: Response) => {
-  const { name, ownerEmail, adminPassword, plan } = req.body;
-  const result = await superadminAction.createLocal({ name, ownerEmail, adminPassword, plan });
+  const { name, ownerEmail, adminPassword, planId } = req.body;
+  const result = await superadminAction.createLocal({ name, ownerEmail, adminPassword, planId });
   res.status(201).json(result);
 });
 
 export const updateStatus = catchAsync(async (req: Request, res: Response) => {
   const { status } = req.body as { status: "ACTIVE" | "SUSPENDED" | "DUE_SOON" };
   const updated = await superadminAction.updateLocalStatus(req.params.id, status);
+  res.json(updated);
+});
+
+export const updatePlan = catchAsync(async (req: Request, res: Response) => {
+  const { planId } = req.body as { planId: string };
+  const updated = await superadminAction.updateLocalPlan(req.params.id, planId);
   res.json(updated);
 });
 

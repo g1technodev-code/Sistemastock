@@ -12,7 +12,7 @@ export type CreateLocalParams = {
   name: string;
   ownerEmail: string;
   adminPassword: string;
-  plan: "TRIAL" | "BASICO" | "PRO";
+  planId: string;
 };
 
 export async function getSuperAdminMetrics(): Promise<{ metrics: SuperAdminMetrics; conversionAlerts: ConversionAlert[] }> {
@@ -32,6 +32,11 @@ export async function createLocal(params: CreateLocalParams): Promise<{ local: L
 
 export async function updateLocalStatus(id: string, status: "ACTIVE" | "SUSPENDED" | "DUE_SOON"): Promise<{ local: LocalItem }> {
   const { data } = await api.patch(`/superadmin/locales/${id}/status`, { status });
+  return data;
+}
+
+export async function updateLocalPlan(id: string, planId: string): Promise<LocalItem> {
+  const { data } = await api.patch(`/superadmin/locales/${id}/plan`, { planId });
   return data;
 }
 

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Building2, ShieldAlert, CheckCircle, DollarSign, Search, Power, AlertCircle, Sparkles, Plus, Clock, UserCheck } from "lucide-react";
-import { getSuperAdminMetrics, listLocales, updateLocalStatus, createLocal } from "../actions/superadmin.api";
+import { Building2, ShieldAlert, CheckCircle, DollarSign, Search, Power, AlertCircle, Sparkles, Plus, Clock, UserCheck, RefreshCw } from "lucide-react";
+import { getSuperAdminMetrics, listLocales, updateLocalStatus, createLocal, updateLocalPlan } from "../actions/superadmin.api";
 import { Card, CardHeader, CardBody } from "../../../components/ui/Card";
 import { StatCard } from "../../../components/ui/StatCard";
 import { Badge } from "../../../components/ui/Badge";
@@ -11,8 +11,9 @@ import { Modal } from "../../../components/ui/Modal";
 import { DataTable, type DataTableColumn } from "../../../components/ui/DataTable";
 import { FullPageSpinner } from "../../../components/ui/Spinner";
 import { useToast } from "../../../context/ToastContext";
+import { usePlans } from "../../../hooks/usePlans";
 import { formatCurrency, formatDate } from "../../../lib/formatters";
-import type { LocalItem, LocalStatus, PlanType } from "../../../lib/types";
+import type { LocalItem, LocalStatus } from "../../../lib/types";
 
 const STATUS_TONE: Record<LocalStatus, "success" | "danger" | "warning"> = {
   ACTIVE: "success",
@@ -34,10 +35,15 @@ export default function SuperAdminDashboard() {
   const [name, setName] = useState("");
   const [ownerEmail, setOwnerEmail] = useState("");
   const [adminPassword, setAdminPassword] = useState("");
-  const [plan, setPlan] = useState<PlanType>("TRIAL");
+  const [planId, setPlanId] = useState("");
+  const [changePlanTarget, setChangePlanTarget] = useState<LocalItem | null>(null);
+  const [changePlanId, setChangePlanId] = useState("");
 
   const { showSuccess, showError } = useToast();
   const queryClient = useQueryClient();
+
+  const { data: plansData } = usePlans(false);
+  const activePlans = plansData ?? [];
 
   const { data: metricsData, isLoading: metricsLoading } = useQuery({
     queryKey: ["superadmin-metrics"],
@@ -57,7 +63,7 @@ export default function SuperAdminDashboard() {
       setName("");
       setOwnerEmail("");
       setAdminPassword("");
-      setPlan("TRIAL");
+      setPlanId("");
       queryClient.invalidateQueries({ queryKey: ["superadmin-metrics"] });
       queryClient.invalidateQueries({ queryKey: ["superadmin-locales"] });
     },
@@ -78,6 +84,19 @@ export default function SuperAdminDashboard() {
     },
   });
 
+  const changePlanMutation = useMutation({
+    mutationFn: ({ id, planId }: { id: string; planId: string }) => updateLocalPlan(id, planId),
+    onSuccess: () => {
+      showSuccess("Plan del local actualizado correctamente");
+      setChangePlanTarget(null);
+      queryClient.invalidateQueries({ queryKey: ["superadmin-metrics"] });
+      queryClient.invalidateQueries({ queryKey: ["superadmin-locales"] });
+    },
+    onError: (err: any) => {
+      showError(err?.response?.data?.message || "No se pudo cambiar el plan del local");
+    },
+  });
+
   if (metricsLoading || localesLoading || !metricsData || !localesData) {
     return <FullPageSpinner />;
   }
@@ -86,11 +105,17 @@ export default function SuperAdminDashboard() {
 
   const handleCreateSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name || !ownerEmail || !adminPassword) {
+    const selectedPlanId = planId || activePlans[0]?.id;
+    if (!name || !ownerEmail || !adminPassword || !selectedPlanId) {
       showError("Completa todos los campos obligatorios");
       return;
     }
-    createMutation.mutate({ name, ownerEmail, adminPassword, plan });
+    createMutation.mutate({ name, ownerEmail, adminPassword, planId: selectedPlanId });
+  };
+
+  const openChangePlan = (item: LocalItem) => {
+    setChangePlanTarget(item);
+    setChangePlanId(item.plan.id);
   };
 
   const columns: DataTableColumn<LocalItem>[] = [
@@ -115,9 +140,11 @@ export default function SuperAdminDashboard() {
       key: "plan",
       header: "Plan Actual",
       render: (item) => (
-        <Badge tone={item.plan === "PRO" ? "success" : item.plan === "TRIAL" ? "warning" : "neutral"} className="font-semibold">
-          {item.plan === "TRIAL" ? "Prueba (7 días)" : `Kipo ${item.plan}`}
-        </Badge>
+        <button onClick={() => openChangePlan(item)} className="text-left">
+          <Badge tone={item.isTrial ? "warning" : "success"} className="font-semibold">
+            {item.isTrial ? `Prueba (${item.plan.trialDays ?? "-"} días)` : item.plan.name}
+          </Badge>
+        </button>
       ),
     },
     {
@@ -243,7 +270,7 @@ export default function SuperAdminDashboard() {
                     </div>
                     {alert.alertStatus === "CONVERTED" ? (
                       <Badge tone="success" className="text-[10px]">
-                        <UserCheck className="h-3 w-3 mr-1 inline" /> Convertido ({alert.plan})
+                        <UserCheck className="h-3 w-3 mr-1 inline" /> Convertido ({alert.plan.name})
                       </Badge>
                     ) : alert.alertStatus === "SUSPENDED_EXPIRED" ? (
                       <Badge tone="danger" className="text-[10px]">
@@ -257,7 +284,7 @@ export default function SuperAdminDashboard() {
                   </div>
                   <div className="flex items-center justify-between text-xs text-neutral-400 pt-2 border-t border-neutral-800">
                     <span>Vence: {formatDate(alert.dueDate)}</span>
-                    <span className="font-semibold text-neutral-300">Plan: {alert.plan}</span>
+                    <span className="font-semibold text-neutral-300">Plan: {alert.plan.name}</span>
                   </div>
                 </div>
               ))}
@@ -337,13 +364,16 @@ export default function SuperAdminDashboard() {
           />
           <Select
             label="Plan Inicial"
-            value={plan}
-            onChange={(e) => setPlan(e.target.value as PlanType)}
+            value={planId || activePlans[0]?.id || ""}
+            onChange={(e) => setPlanId(e.target.value)}
           >
-            <option value="TRIAL">Prueba Gratis (7 Días - 1 Admin y 3 Empleados)</option>
-            <option value="BASICO">Plan Básico ($24.900 ARS/mes - 1 Admin y 3 Empleados)</option>
-            <option value="PRO">Plan Pro ($39.900 ARS/mes - 2 Admins y 6 Empleados)</option>
-
+            {activePlans.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.isTrial
+                  ? `${p.name} (${p.trialDays ?? "-"} Días - ${p.maxAdmins} Admin y ${p.maxEmployees} Empleados)`
+                  : `${p.name} (${formatCurrency(p.monthlyPrice)} ARS/mes - ${p.maxAdmins} Admin(es) y ${p.maxEmployees} Empleados)`}
+              </option>
+            ))}
           </Select>
 
           <div className="flex justify-end gap-3 pt-4">
@@ -362,6 +392,36 @@ export default function SuperAdminDashboard() {
             </Button>
           </div>
         </form>
+      </Modal>
+
+      {/* Modal Cambiar Plan */}
+      <Modal
+        open={!!changePlanTarget}
+        onClose={() => setChangePlanTarget(null)}
+        title={`Cambiar plan de ${changePlanTarget?.name ?? ""}`}
+        size="sm"
+      >
+        <div className="space-y-4">
+          <Select label="Nuevo plan" value={changePlanId} onChange={(e) => setChangePlanId(e.target.value)}>
+            {activePlans.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.isTrial ? `${p.name} (${p.trialDays ?? "-"} Días)` : `${p.name} (${formatCurrency(p.monthlyPrice)} ARS/mes)`}
+              </option>
+            ))}
+          </Select>
+          <div className="flex justify-end gap-3 pt-2">
+            <Button type="button" variant="outline" onClick={() => setChangePlanTarget(null)}>
+              Cancelar
+            </Button>
+            <Button
+              type="button"
+              isLoading={changePlanMutation.isPending}
+              onClick={() => changePlanTarget && changePlanMutation.mutate({ id: changePlanTarget.id, planId: changePlanId })}
+            >
+              <RefreshCw className="h-4 w-4 mr-1.5" /> Cambiar Plan
+            </Button>
+          </div>
+        </div>
       </Modal>
     </div>
   );

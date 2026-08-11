@@ -1,30 +1,13 @@
 import { MercadoPagoConfig, Preference } from "mercadopago";
-import { env } from "../config/env";
+import { prisma } from "../config/prisma";
 import { ApiError } from "../utils/apiError";
 
 const mpAccessToken = process.env.MP_ACCESS_TOKEN || "TEST-ACCESS-TOKEN";
 const client = new MercadoPagoConfig({ accessToken: mpAccessToken });
 
-export type PlanType = "BASICO" | "PRO";
-
-export const PLAN_DETAILS: Record<PlanType, { id: PlanType; name: string; price: number; description: string }> = {
-  BASICO: {
-    id: "BASICO",
-    name: "Kipo Básico",
-    price: 24900,
-    description: "Plan mensual Kipo Básico - Gestión de stock, compras y ventas",
-  },
-  PRO: {
-    id: "PRO",
-    name: "Kipo Pro",
-    price: 39900,
-    description: "Plan mensual Kipo Pro - Solución completa con Caja, Auditorías y Rentabilidad",
-  },
-};
-
-export async function createSubscriptionPreference(userEmail: string, planType: PlanType) {
-  const plan = PLAN_DETAILS[planType];
-  if (!plan) {
+export async function createSubscriptionPreference(userEmail: string, planId: string) {
+  const plan = await prisma.plan.findUnique({ where: { id: planId } });
+  if (!plan || !plan.isActive || plan.isTrial) {
     throw ApiError.badRequest("Plan no válido");
   }
 
@@ -38,9 +21,9 @@ export async function createSubscriptionPreference(userEmail: string, planType: 
         {
           id: plan.id,
           title: plan.name,
-          description: plan.description,
+          description: plan.description ?? plan.name,
           quantity: 1,
-          unit_price: plan.price,
+          unit_price: Number(plan.monthlyPrice),
           currency_id: "ARS",
         },
       ],

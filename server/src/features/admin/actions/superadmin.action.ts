@@ -2,14 +2,14 @@ import { prisma } from "../../../config/prisma";
 import { ApiError } from "../../../utils/apiError";
 import { parsePagination, paginatedResponse } from "../../../utils/pagination";
 import { hashPassword } from "../../../utils/password";
-import { PlanType, Role } from "@prisma/client";
+import { Role } from "@prisma/client";
 
 
 export type CreateLocalInput = {
   name: string;
   ownerEmail: string;
   adminPassword: string;
-  plan: "TRIAL" | "BASICO" | "PRO";
+  planId: string;
 };
 
 export async function createLocal(input: CreateLocalInput) {
@@ -18,15 +18,12 @@ export async function createLocal(input: CreateLocalInput) {
     throw ApiError.conflict("Ya existe un usuario registrado con ese email");
   }
 
-  const isTrial = input.plan === "TRIAL";
-  const dueDate = new Date();
-  if (isTrial) {
-    dueDate.setDate(dueDate.getDate() + 7);
-  } else {
-    dueDate.setDate(dueDate.getDate() + 30);
-  }
+  const plan = await prisma.plan.findUnique({ where: { id: input.planId } });
+  if (!plan) throw ApiError.badRequest("Plan no válido");
 
-  const monthlyPrice = input.plan === "PRO" ? 39900 : input.plan === "BASICO" ? 24900 : 0;
+  const dueDate = new Date();
+  dueDate.setDate(dueDate.getDate() + (plan.isTrial ? plan.trialDays ?? 7 : 30));
+
   const passwordHash = await hashPassword(input.adminPassword);
 
   return prisma.$transaction(async (tx) => {
@@ -34,11 +31,11 @@ export async function createLocal(input: CreateLocalInput) {
       data: {
         name: input.name,
         ownerEmail: input.ownerEmail,
-        plan: input.plan as PlanType,
-        isTrial,
+        planId: plan.id,
+        isTrial: plan.isTrial,
         status: "ACTIVE",
         dueDate,
-        monthlyPrice,
+        monthlyPrice: plan.monthlyPrice,
       },
     });
 
@@ -86,14 +83,14 @@ export async function getSuperAdminMetrics() {
 
   const now = new Date();
   const conversionAlerts = locales
-    .filter((l) => l.isTrial || l.plan === "TRIAL" || l.dueDate < now)
+    .filter((l) => l.isTrial || l.dueDate < now)
     .map((l) => {
       const isExpired = l.dueDate < now;
       let alertStatus: "TRIAL_ACTIVE" | "CONVERTED" | "SUSPENDED_EXPIRED" = "TRIAL_ACTIVE";
 
       if (l.status === "SUSPENDED") {
         alertStatus = "SUSPENDED_EXPIRED";
-      } else if (!l.isTrial && l.plan !== "TRIAL") {
+      } else if (!l.isTrial) {
         alertStatus = "CONVERTED";
       } else if (isExpired) {
         alertStatus = "SUSPENDED_EXPIRED";
@@ -142,6 +139,7 @@ export async function listLocales(query: { page?: number; limit?: number; q?: st
   const [items, total] = await Promise.all([
     prisma.local.findMany({
       where,
+      include: { plan: true },
       orderBy: { createdAt: "desc" },
       skip: pagination.skip,
       take: pagination.limit,
@@ -153,12 +151,11 @@ export async function listLocales(query: { page?: number; limit?: number; q?: st
 }
 
 export async function enforceLocalPlanQuota(localId: string) {
-  const local = await prisma.local.findUnique({ where: { id: localId } });
+  const local = await prisma.local.findUnique({ where: { id: localId }, include: { plan: true } });
   if (!local) return;
 
-  const isPro = local.plan === "PRO";
-  const maxAdmins = isPro ? 2 : 1;
-  const maxEmployees = isPro ? 6 : 3;
+  const maxAdmins = local.plan.maxAdmins;
+  const maxEmployees = local.plan.maxEmployees;
 
   const admins = await prisma.user.findMany({
     where: { localId, role: { in: ["ADMIN", "MANAGER"] } },
@@ -191,20 +188,21 @@ export async function enforceLocalPlanQuota(localId: string) {
   }
 }
 
-export async function updateLocalPlan(id: string, plan: PlanType) {
+export async function updateLocalPlan(id: string, planId: string) {
   const local = await prisma.local.findUnique({ where: { id } });
   if (!local) throw ApiError.notFound("Local no encontrado");
 
-  const isTrial = plan === "TRIAL";
-  const monthlyPrice = plan === "PRO" ? 39900 : plan === "BASICO" ? 24900 : 0;
+  const plan = await prisma.plan.findUnique({ where: { id: planId } });
+  if (!plan) throw ApiError.badRequest("Plan no válido");
 
   const updated = await prisma.local.update({
     where: { id },
     data: {
-      plan,
-      isTrial,
-      monthlyPrice,
+      planId: plan.id,
+      isTrial: plan.isTrial,
+      monthlyPrice: plan.monthlyPrice,
     },
+    include: { plan: true },
   });
 
   await enforceLocalPlanQuota(id);

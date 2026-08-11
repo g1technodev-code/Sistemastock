@@ -51,11 +51,10 @@ export async function createUser(creatorLocalId: string | null | undefined, inpu
   }
 
   if (creatorLocalId) {
-    const local = await prisma.local.findUnique({ where: { id: creatorLocalId } });
+    const local = await prisma.local.findUnique({ where: { id: creatorLocalId }, include: { plan: true } });
     if (local) {
-      const isPro = local.plan === "PRO";
-      const maxAdmins = isPro ? 2 : 1;
-      const maxEmployees = isPro ? 6 : 3;
+      const maxAdmins = local.plan.maxAdmins;
+      const maxEmployees = local.plan.maxEmployees;
 
       if (input.role === "ADMIN" || input.role === "MANAGER") {
         const currentAdmins = await prisma.user.count({
@@ -63,7 +62,7 @@ export async function createUser(creatorLocalId: string | null | undefined, inpu
         });
         if (currentAdmins >= maxAdmins) {
           throw ApiError.forbidden(
-            `Tu plan ${local.plan} permite un máximo de ${maxAdmins} Administrador(es). ${!isPro ? "Actualiza a Plan PRO para hasta 2 Administradores." : ""}`,
+            `Tu plan ${local.plan.name} permite un máximo de ${maxAdmins} Administrador(es). Actualiza tu plan para agregar más.`,
           );
         }
       } else if (input.role === "EMPLOYEE") {
@@ -72,7 +71,7 @@ export async function createUser(creatorLocalId: string | null | undefined, inpu
         });
         if (currentEmployees >= maxEmployees) {
           throw ApiError.forbidden(
-            `Tu plan ${local.plan} permite un máximo de ${maxEmployees} Empleado(s). ${!isPro ? "Actualiza a Plan PRO para hasta 6 Empleados." : ""}`,
+            `Tu plan ${local.plan.name} permite un máximo de ${maxEmployees} Empleado(s). Actualiza tu plan para agregar más.`,
           );
         }
       }

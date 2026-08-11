@@ -1,5 +1,5 @@
 import "dotenv/config";
-import { PrismaClient, Role, MovementType, LocalStatus, PlanType } from "@prisma/client";
+import { PrismaClient, Role, MovementType, LocalStatus } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
@@ -71,7 +71,72 @@ async function main() {
     },
   });
 
-  // 2. Create Demo Local (ID 1 / demo-local-1)
+  // 2. Seed base Plans (same fixed ids the "dynamic_plans" migration backfills onto)
+  await prisma.plan.upsert({
+    where: { id: "plan-trial" },
+    update: {},
+    create: {
+      id: "plan-trial",
+      name: "Prueba Gratis",
+      description: "Prueba gratuita de 7 días con acceso completo a las funciones básicas.",
+      monthlyPrice: 0,
+      maxAdmins: 1,
+      maxEmployees: 3,
+      isTrial: true,
+      trialDays: 7,
+      sortOrder: 0,
+      features: ["Acceso completo por 7 días", "1 Administrador y 3 Empleados", "Sin necesidad de tarjeta de crédito"],
+    },
+  });
+  const planBasico = await prisma.plan.upsert({
+    where: { id: "plan-basico" },
+    update: {},
+    create: {
+      id: "plan-basico",
+      name: "Kipo Básico",
+      description: "Ideal para gestionar el inventario del día a día y tener control claro de tus entradas y salidas.",
+      monthlyPrice: 24900,
+      maxAdmins: 1,
+      maxEmployees: 3,
+      sortOrder: 1,
+      features: [
+        "Incluye 1 Administrador y 3 Empleados",
+        "Gestor de Productos y Categorías",
+        "Registro de Proveedores",
+        "Movimientos de stock básicos (Entradas/Salidas)",
+        "Registro de Ventas y Compras",
+        "Gestión básica de Clientes",
+        "Soporte estándar por Email",
+      ],
+    },
+  });
+  const planPro = await prisma.plan.upsert({
+    where: { id: "plan-pro" },
+    update: {},
+    create: {
+      id: "plan-pro",
+      name: "Kipo Pro",
+      description: "La solución completa para maximizar ganancias, auditar caja y tomar decisiones basadas en datos reales.",
+      monthlyPrice: 39900,
+      maxAdmins: 2,
+      maxEmployees: 6,
+      isRecommended: true,
+      sortOrder: 2,
+      features: [
+        "Incluye 2 Administradores y 6 Empleados",
+        "Todo lo incluido en Kipo Básico",
+        "Control de Inventario Físico (Auditorías y conteo rápido)",
+        "Gestión y control de Caja diaria",
+        "Módulo completo de Reportes e Historial",
+        "Estadísticas avanzadas de rendimiento",
+        "Análisis de Rentabilidad (Márgenes de ganancia e indicadores clave)",
+        "Gestión multiusuario y asignación de roles",
+        "Soporte prioritario 24/7",
+      ],
+    },
+  });
+
+  // 3. Create Demo Local (ID 1 / demo-local-1)
   const demoDueDate = new Date();
   demoDueDate.setDate(demoDueDate.getDate() + 30);
 
@@ -85,14 +150,14 @@ async function main() {
       id: "demo-local-1",
       name: "Kipo Demo Store (Local 1)",
       ownerEmail: "admin@stockflow.com",
-      plan: PlanType.PRO,
+      planId: planPro.id,
       status: LocalStatus.ACTIVE,
       dueDate: demoDueDate,
       monthlyPrice: 39900,
     },
   });
 
-  // 3. Create Additional Sample Locales for SuperAdmin view
+  // 4. Create Additional Sample Locales for SuperAdmin view
   const local2DueDate = new Date();
   local2DueDate.setDate(local2DueDate.getDate() + 15);
   await prisma.local.upsert({
@@ -102,7 +167,7 @@ async function main() {
       id: "local-2-nordelta",
       name: "Ferretería Nordelta",
       ownerEmail: "contacto@nordeltaferro.com",
-      plan: PlanType.BASICO,
+      planId: planBasico.id,
       status: LocalStatus.ACTIVE,
       dueDate: local2DueDate,
       monthlyPrice: 24900,
@@ -118,7 +183,7 @@ async function main() {
       id: "local-3-cordoba",
       name: "Market Córdoba Centro",
       ownerEmail: "gerencia@marketcordoba.com",
-      plan: PlanType.PRO,
+      planId: planPro.id,
       status: LocalStatus.SUSPENDED,
       dueDate: local3DueDate,
       monthlyPrice: 39900,
