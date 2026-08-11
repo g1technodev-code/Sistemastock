@@ -1,10 +1,10 @@
 import { Router } from "express";
 import * as reportController from "../controllers/report.controller";
-import { authenticate, authorize } from "../middlewares/auth.middleware";
+import { authenticate, authorize, requireFeature } from "../middlewares/auth.middleware";
 
 const router = Router();
 
-router.use(authenticate, authorize("ADMIN", "MANAGER"));
+router.use(authenticate, authorize("ADMIN", "MANAGER"), requireFeature("REPORTS"));
 
 router.get("/stock-valuation", reportController.stockValuation);
 router.get("/movements", reportController.movements);

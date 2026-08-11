@@ -16,6 +16,7 @@ import { usePlans, usePlanMutations } from "../../hooks/usePlans";
 import { useToast } from "../../context/ToastContext";
 import { formatCurrency } from "../../lib/formatters";
 import { extractErrorMessage } from "../../api/client";
+import { PLAN_FEATURES, PLAN_FEATURE_LABELS } from "../../lib/features";
 import type { Plan } from "../../lib/types";
 
 const schema = z.object({
@@ -28,6 +29,7 @@ const schema = z.object({
   trialDays: z.coerce.number().int().min(1).optional(),
   isRecommended: z.boolean().optional(),
   featuresText: z.string().optional(),
+  enabledFeatures: z.array(z.string()).optional(),
 });
 type FormInput = z.input<typeof schema>;
 type FormValues = z.output<typeof schema>;
@@ -42,6 +44,7 @@ const emptyValues: FormInput = {
   trialDays: undefined,
   isRecommended: false,
   featuresText: "",
+  enabledFeatures: [],
 };
 
 export default function SuperAdminPlanes() {
@@ -81,6 +84,7 @@ export default function SuperAdminPlanes() {
       trialDays: plan.trialDays ?? undefined,
       isRecommended: plan.isRecommended,
       featuresText: plan.features.join("\n"),
+      enabledFeatures: plan.enabledFeatures,
     });
     setFormOpen(true);
   };
@@ -99,6 +103,7 @@ export default function SuperAdminPlanes() {
         .split("\n")
         .map((line) => line.trim())
         .filter(Boolean),
+      enabledFeatures: values.enabledFeatures ?? [],
     };
 
     try {
@@ -130,6 +135,7 @@ export default function SuperAdminPlanes() {
           isRecommended: plan.isRecommended,
           isActive: !plan.isActive,
           features: plan.features,
+          enabledFeatures: plan.enabledFeatures,
         },
       });
       showSuccess(plan.isActive ? "Plan desactivado" : "Plan activado");
@@ -247,8 +253,23 @@ export default function SuperAdminPlanes() {
             Marcar como "Recomendado" en la página de precios
           </label>
 
+          <div>
+            <p className="text-sm font-semibold text-neutral-200 mb-1">Módulos habilitados</p>
+            <p className="text-xs text-neutral-500 mb-2">
+              Esto controla el acceso real a la app (a diferencia del texto de abajo, que es solo marketing).
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {PLAN_FEATURES.map((code) => (
+                <label key={code} className="flex items-center gap-2 text-sm text-neutral-300">
+                  <input type="checkbox" value={code} {...register("enabledFeatures")} />
+                  {PLAN_FEATURE_LABELS[code]}
+                </label>
+              ))}
+            </div>
+          </div>
+
           <Textarea
-            label="Funcionalidades incluidas (una por línea)"
+            label="Texto de marketing (una por línea, solo visual)"
             rows={5}
             placeholder={"Incluye 1 Administrador y 3 Empleados\nGestor de Productos y Categorías"}
             {...register("featuresText")}

@@ -1,10 +1,10 @@
 import { Router } from "express";
 import * as inventoryCountController from "../controllers/inventoryCount.controller";
-import { authenticate } from "../middlewares/auth.middleware";
+import { authenticate, requireFeature } from "../middlewares/auth.middleware";
 
 const router = Router();
 
-router.use(authenticate);
+router.use(authenticate, requireFeature("PHYSICAL_INVENTORY"));
 
 router.post("/", inventoryCountController.createSession);
 router.get("/", inventoryCountController.listSessions);
