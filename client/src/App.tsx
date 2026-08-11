@@ -90,16 +90,16 @@ export default function App() {
 
           <Route path="/categories" element={<ProtectedRoute allowedRoles={["ADMIN"]}><Categories /></ProtectedRoute>} />
           <Route path="/suppliers" element={<ProtectedRoute allowedRoles={["ADMIN"]}><Suppliers /></ProtectedRoute>} />
-          <Route path="/inventario-fisico" element={<InventarioFisico />} />
+          <Route path="/inventario-fisico" element={<ProtectedRoute requiredFeature="PHYSICAL_INVENTORY"><InventarioFisico /></ProtectedRoute>} />
 
           {/* Both Admin and Employee */}
           <Route path="/products" element={<Products />} />
           <Route path="/products/:id" element={<ProductDetail />} />
           <Route path="/stock" element={<Stock />} />
           <Route path="/ventas" element={<Ventas />} />
-          <Route path="/compras" element={<Compras />} />
-          <Route path="/caja" element={<Caja />} />
-          <Route path="/customers" element={<Customers />} />
+          <Route path="/compras" element={<ProtectedRoute requiredFeature="PURCHASES"><Compras /></ProtectedRoute>} />
+          <Route path="/caja" element={<ProtectedRoute requiredFeature="CASH_REGISTER"><Caja /></ProtectedRoute>} />
+          <Route path="/customers" element={<ProtectedRoute requiredFeature="CUSTOMERS"><Customers /></ProtectedRoute>} />
           <Route path="/plans" element={<ProtectedRoute allowedRoles={["ADMIN"]}><Plans /></ProtectedRoute>} />
 
 
@@ -107,7 +107,7 @@ export default function App() {
 
             path="/reports"
             element={
-              <ProtectedRoute allowedRoles={["ADMIN"]}>
+              <ProtectedRoute allowedRoles={["ADMIN"]} requiredFeature="REPORTS">
                 <Reports />
               </ProtectedRoute>
             }
@@ -115,7 +115,7 @@ export default function App() {
           <Route
             path="/estadisticas"
             element={
-              <ProtectedRoute allowedRoles={["ADMIN"]}>
+              <ProtectedRoute allowedRoles={["ADMIN"]} requiredFeature="REPORTS">
                 <Estadisticas />
               </ProtectedRoute>
             }
@@ -123,7 +123,7 @@ export default function App() {
           <Route
             path="/rentabilidad"
             element={
-              <ProtectedRoute allowedRoles={["ADMIN"]}>
+              <ProtectedRoute allowedRoles={["ADMIN"]} requiredFeature="REPORTS">
                 <Rentabilidad />
               </ProtectedRoute>
             }

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { PLAN_FEATURES } from "../constants/planFeatures";
 
 export const upsertPlanSchema = z.object({
   name: z.string().min(2, "El nombre es muy corto"),
@@ -12,6 +13,7 @@ export const upsertPlanSchema = z.object({
   isActive: z.boolean().optional(),
   sortOrder: z.number().int().optional(),
   features: z.array(z.string()).optional(),
+  enabledFeatures: z.array(z.enum(PLAN_FEATURES)).optional(),
 });
 
 export type UpsertPlanInput = z.infer<typeof upsertPlanSchema>;

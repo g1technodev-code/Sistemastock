@@ -86,6 +86,7 @@ async function main() {
       trialDays: 7,
       sortOrder: 0,
       features: ["Acceso completo por 7 días", "1 Administrador y 3 Empleados", "Sin necesidad de tarjeta de crédito"],
+      enabledFeatures: ["CASH_REGISTER", "PURCHASES", "PHYSICAL_INVENTORY", "REPORTS", "CUSTOMERS"],
     },
   });
   const planBasico = await prisma.plan.upsert({
@@ -108,6 +109,7 @@ async function main() {
         "Gestión básica de Clientes",
         "Soporte estándar por Email",
       ],
+      enabledFeatures: ["PURCHASES", "CUSTOMERS"],
     },
   });
   const planPro = await prisma.plan.upsert({
@@ -133,6 +135,7 @@ async function main() {
         "Gestión multiusuario y asignación de roles",
         "Soporte prioritario 24/7",
       ],
+      enabledFeatures: ["CASH_REGISTER", "PURCHASES", "PHYSICAL_INVENTORY", "REPORTS", "CUSTOMERS"],
     },
   });
 

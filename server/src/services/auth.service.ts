@@ -9,8 +9,20 @@ import {
 } from "../utils/jwt";
 import type { AuthUser } from "../middlewares/auth.middleware";
 
-async function issueTokenPair(user: { id: string; localId?: string | null; email: string; role: AuthUser["role"] }) {
-  const accessToken = signAccessToken({ sub: user.id, localId: user.localId, email: user.email, role: user.role });
+async function issueTokenPair(user: {
+  id: string;
+  localId?: string | null;
+  email: string;
+  role: AuthUser["role"];
+  planFeatures?: string[];
+}) {
+  const accessToken = signAccessToken({
+    sub: user.id,
+    localId: user.localId,
+    email: user.email,
+    role: user.role,
+    planFeatures: user.planFeatures,
+  });
 
   const refreshTokenValue = generateRefreshTokenValue();
   await prisma.refreshToken.create({
@@ -25,7 +37,7 @@ async function issueTokenPair(user: { id: string; localId?: string | null; email
 }
 
 export async function login(email: string, password: string) {
-  const user = await prisma.user.findUnique({ where: { email }, include: { local: true } });
+  const user = await prisma.user.findUnique({ where: { email }, include: { local: { include: { plan: true } } } });
   if (!user || !user.isActive) {
     throw ApiError.unauthorized("Credenciales inválidas");
   }
@@ -39,10 +51,11 @@ export async function login(email: string, password: string) {
     throw ApiError.forbidden("Tu cuenta está suspendida. Contactá al administrador.");
   }
 
-  const tokens = await issueTokenPair(user);
+  const planFeatures = user.local?.plan.enabledFeatures ?? [];
+  const tokens = await issueTokenPair({ ...user, planFeatures });
   return {
     ...tokens,
-    user: { id: user.id, localId: user.localId, name: user.name, email: user.email, role: user.role },
+    user: { id: user.id, localId: user.localId, name: user.name, email: user.email, role: user.role, planFeatures },
   };
 }
 
@@ -50,7 +63,7 @@ export async function refresh(refreshTokenValue: string) {
   const tokenHash = hashRefreshToken(refreshTokenValue);
   const stored = await prisma.refreshToken.findUnique({
     where: { tokenHash },
-    include: { user: { include: { local: true } } },
+    include: { user: { include: { local: { include: { plan: true } } } } },
   });
 
   if (!stored) {
@@ -78,10 +91,18 @@ export async function refresh(refreshTokenValue: string) {
     data: { revokedAt: new Date() },
   });
 
-  const tokens = await issueTokenPair(stored.user);
+  const planFeatures = stored.user.local?.plan.enabledFeatures ?? [];
+  const tokens = await issueTokenPair({ ...stored.user, planFeatures });
   return {
     ...tokens,
-    user: { id: stored.user.id, localId: stored.user.localId, name: stored.user.name, email: stored.user.email, role: stored.user.role },
+    user: {
+      id: stored.user.id,
+      localId: stored.user.localId,
+      name: stored.user.name,
+      email: stored.user.email,
+      role: stored.user.role,
+      planFeatures,
+    },
   };
 }
 
@@ -102,8 +123,15 @@ export async function revokeAllSessionsForUser(userId: string) {
 }
 
 export async function getMe(userId: string) {
-  const user = await prisma.user.findUnique({ where: { id: userId } });
+  const user = await prisma.user.findUnique({ where: { id: userId }, include: { local: { include: { plan: true } } } });
   if (!user) throw ApiError.notFound("Usuario no encontrado");
-  return { id: user.id, localId: user.localId, name: user.name, email: user.email, role: user.role };
+  return {
+    id: user.id,
+    localId: user.localId,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+    planFeatures: user.local?.plan.enabledFeatures ?? [],
+  };
 }
 

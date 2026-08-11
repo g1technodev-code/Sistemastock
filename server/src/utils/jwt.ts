@@ -8,6 +8,7 @@ export type AccessTokenPayload = {
   localId?: string | null;
   email: string;
   role: Role;
+  planFeatures?: string[];
 };
 
 
