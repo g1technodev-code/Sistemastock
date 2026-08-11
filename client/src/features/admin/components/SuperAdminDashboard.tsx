@@ -88,31 +88,33 @@ export default function SuperAdminDashboard() {
     },
   });
 
-<<<<<<< Updated upstream
   const changePlanMutation = useMutation({
     mutationFn: ({ id, planId }: { id: string; planId: string }) => updateLocalPlan(id, planId),
     onSuccess: () => {
       showSuccess("Plan del local actualizado correctamente");
       setChangePlanTarget(null);
-=======
+      queryClient.invalidateQueries({ queryKey: ["superadmin-metrics"] });
+      queryClient.invalidateQueries({ queryKey: ["superadmin-locales"] });
+    },
+    onError: (err: any) => {
+      showError(err?.response?.data?.message || "No se pudo cambiar el plan del local");
+    },
+  });
+
   const deleteMutation = useMutation({
     mutationFn: (id: string) => deleteLocal(id),
     onSuccess: () => {
       showSuccess("Local y todos sus datos asociados fueron eliminados permanentemente");
       setDeleteTarget(null);
       setConfirmName("");
->>>>>>> Stashed changes
       queryClient.invalidateQueries({ queryKey: ["superadmin-metrics"] });
       queryClient.invalidateQueries({ queryKey: ["superadmin-locales"] });
     },
     onError: (err: any) => {
-<<<<<<< Updated upstream
-      showError(err?.response?.data?.message || "No se pudo cambiar el plan del local");
-=======
       showError(err?.response?.data?.message || "No se pudo eliminar el local");
->>>>>>> Stashed changes
     },
   });
+
 
   if (metricsLoading || localesLoading || !metricsData || !localesData) {
     return <FullPageSpinner />;
@@ -323,11 +325,8 @@ export default function SuperAdminDashboard() {
                   </div>
                   <div className="flex items-center justify-between text-xs text-neutral-500 dark:text-neutral-400 pt-2 border-t border-neutral-200 dark:border-neutral-800">
                     <span>Vence: {formatDate(alert.dueDate)}</span>
-<<<<<<< Updated upstream
-                    <span className="font-semibold text-neutral-300">Plan: {alert.plan.name}</span>
-=======
-                    <span className="font-semibold text-neutral-700 dark:text-neutral-300">Plan: {alert.plan}</span>
->>>>>>> Stashed changes
+                    <span className="font-semibold text-neutral-700 dark:text-neutral-300">Plan: {alert.plan.name}</span>
+
                   </div>
                 </div>
               ))}
@@ -438,7 +437,6 @@ export default function SuperAdminDashboard() {
         </form>
       </Modal>
 
-<<<<<<< Updated upstream
       {/* Modal Cambiar Plan */}
       <Modal
         open={!!changePlanTarget}
@@ -467,7 +465,8 @@ export default function SuperAdminDashboard() {
             </Button>
           </div>
         </div>
-=======
+      </Modal>
+
       {/* Modal Confirmación de Eliminación Estricta */}
       <Modal
         open={!!deleteTarget}
@@ -516,10 +515,10 @@ export default function SuperAdminDashboard() {
             </Button>
           </div>
         </form>
->>>>>>> Stashed changes
       </Modal>
     </div>
   );
 }
+
 
 

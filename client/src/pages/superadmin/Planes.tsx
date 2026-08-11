@@ -151,21 +151,13 @@ export default function SuperAdminPlanes() {
 
   return (
     <div className="mx-auto max-w-[1400px] space-y-6 animate-in fade-in duration-500">
-<<<<<<< Updated upstream
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-neutral-800 pb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-neutral-200 dark:border-neutral-800 pb-6">
         <div className="flex items-center gap-3">
           <Sliders className="h-7 w-7 text-primary-500" />
           <div>
-            <h1 className="text-2xl font-black text-white tracking-tight">Configuración de Planes</h1>
-            <p className="text-sm text-neutral-400">Precio, límites y beneficios de cada plan de suscripción</p>
+            <h1 className="text-2xl font-black text-neutral-900 dark:text-white tracking-tight">Configuración de Planes</h1>
+            <p className="text-sm text-neutral-600 dark:text-neutral-400">Precio, límites y beneficios de cada plan de suscripción</p>
           </div>
-=======
-      <div className="flex items-center gap-3 border-b border-neutral-200 dark:border-neutral-800 pb-6">
-        <Sliders className="h-7 w-7 text-primary-500" />
-        <div>
-          <h1 className="text-2xl font-black text-neutral-900 dark:text-white tracking-tight">Configuración de Planes</h1>
-          <p className="text-sm text-neutral-600 dark:text-neutral-400">Ajuste de precios, características y ofertas de los planes Básico y Pro</p>
->>>>>>> Stashed changes
         </div>
         <Button onClick={openCreate}>
           <Plus className="h-4 w-4 mr-1.5" /> Nuevo Plan
@@ -175,7 +167,6 @@ export default function SuperAdminPlanes() {
       <Card>
         <CardHeader title="Planes de Kipo" description="Se muestran en el alta de nuevos locales y en la página pública de precios" />
         <CardBody>
-<<<<<<< Updated upstream
           {isLoading ? (
             <FullPageSpinner />
           ) : !data || data.length === 0 ? (
@@ -196,14 +187,14 @@ export default function SuperAdminPlanes() {
                 {data.map((plan) => (
                   <TR key={plan.id}>
                     <TD>
-                      <div className="flex items-center gap-2 font-bold text-neutral-100">
+                      <div className="flex items-center gap-2 font-bold text-neutral-900 dark:text-neutral-100">
                         {plan.name}
                         {plan.isRecommended && <Star className="h-3.5 w-3.5 text-amber-400 fill-amber-400" />}
                       </div>
-                      {plan.description && <p className="text-xs text-neutral-400 mt-0.5">{plan.description}</p>}
+                      {plan.description && <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">{plan.description}</p>}
                     </TD>
                     <TD className="font-semibold">{formatCurrency(plan.monthlyPrice)}</TD>
-                    <TD className="text-xs text-neutral-400">
+                    <TD className="text-xs text-neutral-500 dark:text-neutral-400">
                       {plan.maxAdmins} Admin(es) · {plan.maxEmployees} Empleado(s)
                     </TD>
                     <TD>
@@ -231,13 +222,9 @@ export default function SuperAdminPlanes() {
               </TBody>
             </Table>
           )}
-=======
-          <div className="rounded-lg border border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-900/50 p-8 text-center text-neutral-600 dark:text-neutral-400">
-            <p className="text-base font-medium">Módulo de Configuración de Planes listo para desarrollo.</p>
-          </div>
->>>>>>> Stashed changes
         </CardBody>
       </Card>
+
 
       <Modal open={formOpen} onClose={() => setFormOpen(false)} title={editing ? "Editar plan" : "Nuevo plan"} size="md">
         <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
