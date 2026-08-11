@@ -526,3 +526,21 @@ model Notification {
   @@map("notifications")
 }
 
+enum AnnouncementType {
+  INFO
+  WARNING
+  MAINTENANCE
+}
+
+model Announcement {
+  id        String           @id @default(cuid())
+  title     String
+  message   String
+  type      AnnouncementType @default(INFO)
+  createdAt DateTime         @default(now())
+
+  @@index([createdAt])
+  @@map("announcements")
+}
+
+

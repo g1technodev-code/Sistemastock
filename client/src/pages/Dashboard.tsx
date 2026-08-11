@@ -23,6 +23,8 @@ import { EmptyState } from "../components/ui/EmptyState";
 import { FullPageSpinner } from "../components/ui/Spinner";
 import { formatCurrency, formatDateTime, formatNumber } from "../lib/formatters";
 
+import { GlobalAnnouncementBanner } from "../components/GlobalAnnouncementBanner";
+
 const MOVEMENT_TYPE_LABEL: Record<string, string> = { IN: "Entrada", OUT: "Salida", ADJUSTMENT: "Ajuste" };
 const MOVEMENT_TYPE_TONE: Record<string, "success" | "danger" | "warning"> = {
   IN: "success",
@@ -40,9 +42,11 @@ export default function Dashboard() {
 
   return (
     <div className="mx-auto flex max-w-[1400px] flex-col gap-8">
+      <GlobalAnnouncementBanner />
       <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
         <h1 className="text-3xl font-black tracking-tight text-neutral-900 dark:text-white">Panel general</h1>
         <p className="mt-1 text-base text-neutral-500 dark:text-neutral-400">Resumen de tu inventario en tiempo real.</p>
+
       </div>
 
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 animate-in fade-in slide-in-from-bottom-4 duration-700">

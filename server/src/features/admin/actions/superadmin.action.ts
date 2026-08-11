@@ -224,4 +224,43 @@ export async function updateLocalStatus(id: string, status: "ACTIVE" | "SUSPENDE
   return updated;
 }
 
+export async function deleteLocal(id: string) {
+  const local = await prisma.local.findUnique({ where: { id } });
+  if (!local) throw ApiError.notFound("Local no encontrado");
+
+  return prisma.local.delete({ where: { id } });
+}
+
+export async function createAnnouncement(input: { title: string; message: string; type?: "INFO" | "WARNING" | "MAINTENANCE" }) {
+  if (!input.title || !input.message) {
+    throw ApiError.badRequest("El título y mensaje son requeridos");
+  }
+  return prisma.announcement.create({
+    data: {
+      title: input.title,
+      message: input.message,
+      type: input.type || "INFO",
+    },
+  });
+}
+
+export async function listAnnouncements() {
+  return prisma.announcement.findMany({
+    orderBy: { createdAt: "desc" },
+  });
+}
+
+export async function deleteAnnouncement(id: string) {
+  const item = await prisma.announcement.findUnique({ where: { id } });
+  if (!item) throw ApiError.notFound("Anuncio no encontrado");
+  return prisma.announcement.delete({ where: { id } });
+}
+
+export async function getLatestAnnouncement() {
+  return prisma.announcement.findFirst({
+    orderBy: { createdAt: "desc" },
+  });
+}
+
+
 
