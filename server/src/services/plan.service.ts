@@ -39,3 +39,31 @@ export async function deletePlan(id: string) {
 
   await prisma.plan.delete({ where: { id } });
 }
+
+export async function getMySubscription(localId: string) {
+  const local = await prisma.local.findUnique({
+    where: { id: localId },
+    include: { plan: true },
+  });
+
+  if (!local) throw ApiError.notFound("Local no encontrado");
+
+  const now = new Date();
+  const dueDate = new Date(local.dueDate);
+  const diffTime = dueDate.getTime() - now.getTime();
+  const daysLeft = Math.max(0, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
+
+  return {
+    localId: local.id,
+    localName: local.name,
+    planId: local.planId,
+    planName: local.plan.name,
+    isTrial: local.isTrial,
+    status: local.status,
+    dueDate: local.dueDate.toISOString(),
+    monthlyPrice: Number(local.monthlyPrice),
+    daysLeft,
+    plan: local.plan,
+  };
+}
+

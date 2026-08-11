@@ -31,3 +31,28 @@ export const updatePlan = catchAsync(async (req: Request, res: Response) => {
   res.json(updated);
 });
 
+export const removeLocal = catchAsync(async (req: Request, res: Response) => {
+  const result = await superadminAction.deleteLocal(req.params.id);
+  res.json({ message: "Local eliminado correctamente", local: result });
+});
+
+export const createAnnouncement = catchAsync(async (req: Request, res: Response) => {
+  const result = await superadminAction.createAnnouncement(req.body);
+  res.status(201).json(result);
+});
+
+export const listAnnouncements = catchAsync(async (_req: Request, res: Response) => {
+  const items = await superadminAction.listAnnouncements();
+  res.json({ items });
+});
+
+export const removeAnnouncement = catchAsync(async (req: Request, res: Response) => {
+  const result = await superadminAction.deleteAnnouncement(req.params.id);
+  res.json({ message: "Anuncio eliminado correctamente", announcement: result });
+});
+
+export const getLatestAnnouncement = catchAsync(async (_req: Request, res: Response) => {
+  const announcement = await superadminAction.getLatestAnnouncement();
+  res.json({ announcement });
+});
+

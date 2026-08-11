@@ -28,6 +28,8 @@ import { Modal } from "../components/ui/Modal";
 import { Button } from "../components/ui/Button";
 import { formatCurrency, formatDateTime, formatNumber } from "../lib/formatters";
 
+import { GlobalAnnouncementBanner } from "../components/GlobalAnnouncementBanner";
+
 const MOVEMENT_TYPE_LABEL: Record<string, string> = { IN: "Entrada", OUT: "Salida", ADJUSTMENT: "Ajuste" };
 const MOVEMENT_TYPE_TONE: Record<string, "success" | "danger" | "warning"> = {
   IN: "success",
@@ -251,6 +253,7 @@ export default function Dashboard() {
 
   return (
     <div className="mx-auto flex max-w-[1400px] flex-col gap-8">
+      <GlobalAnnouncementBanner />
       <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
         <h1 className="text-3xl font-black tracking-tight text-neutral-900 dark:text-white">Panel general</h1>
         <p className="mt-1 text-base text-neutral-500 dark:text-neutral-400">Resumen de tu inventario en tiempo real. Haz clic en cualquier tarjeta para ver su detalle.</p>

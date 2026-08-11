@@ -10,7 +10,6 @@ export type CustomerMovementType = "CHARGE" | "PAYMENT";
 export type NotificationType = "LOW_STOCK" | "SHIFT_OPEN" | "SHIFT_CLOSE";
 
 export type LocalStatus = "ACTIVE" | "DUE_SOON" | "SUSPENDED";
-
 export type Plan = {
   id: string;
   name: string;
@@ -28,6 +27,33 @@ export type Plan = {
   createdAt: string;
   updatedAt: string;
 };
+
+export type LocalSubscription = {
+
+  localId: string;
+  localName: string;
+  planId: string;
+  planName: string;
+  isTrial: boolean;
+  status: LocalStatus;
+  dueDate: string;
+  monthlyPrice: number;
+  daysLeft: number;
+  plan: Plan;
+};
+
+export type PlanType = "TRIAL" | "BASICO" | "PRO";
+
+export type AnnouncementType = "INFO" | "WARNING" | "MAINTENANCE";
+
+export type Announcement = {
+  id: string;
+  title: string;
+  message: string;
+  type: AnnouncementType;
+  createdAt: string;
+};
+
 
 export type LocalItem = {
   id: string;

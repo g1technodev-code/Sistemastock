@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Building2, ShieldAlert, CheckCircle, DollarSign, Search, Power, AlertCircle, Sparkles, Plus, Clock, UserCheck, RefreshCw } from "lucide-react";
-import { getSuperAdminMetrics, listLocales, updateLocalStatus, createLocal, updateLocalPlan } from "../actions/superadmin.api";
+import { Building2, ShieldAlert, CheckCircle, DollarSign, Search, Power, AlertCircle, Sparkles, Plus, Clock, UserCheck, RefreshCw, Trash2 } from "lucide-react";
+import { getSuperAdminMetrics, listLocales, updateLocalStatus, createLocal, updateLocalPlan, deleteLocal } from "../actions/superadmin.api";
+
 import { Card, CardHeader, CardBody } from "../../../components/ui/Card";
 import { StatCard } from "../../../components/ui/StatCard";
 import { Badge } from "../../../components/ui/Badge";
@@ -32,6 +33,9 @@ export default function SuperAdminDashboard() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<LocalItem | null>(null);
+  const [confirmName, setConfirmName] = useState("");
+
   const [name, setName] = useState("");
   const [ownerEmail, setOwnerEmail] = useState("");
   const [adminPassword, setAdminPassword] = useState("");
@@ -97,6 +101,21 @@ export default function SuperAdminDashboard() {
     },
   });
 
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => deleteLocal(id),
+    onSuccess: () => {
+      showSuccess("Local y todos sus datos asociados fueron eliminados permanentemente");
+      setDeleteTarget(null);
+      setConfirmName("");
+      queryClient.invalidateQueries({ queryKey: ["superadmin-metrics"] });
+      queryClient.invalidateQueries({ queryKey: ["superadmin-locales"] });
+    },
+    onError: (err: any) => {
+      showError(err?.response?.data?.message || "No se pudo eliminar el local");
+    },
+  });
+
+
   if (metricsLoading || localesLoading || !metricsData || !localesData) {
     return <FullPageSpinner />;
   }
@@ -118,12 +137,22 @@ export default function SuperAdminDashboard() {
     setChangePlanId(item.plan.id);
   };
 
+  const handleDeleteSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!deleteTarget) return;
+    if (confirmName.trim() !== deleteTarget.name.trim()) {
+      showError("El nombre ingresado no coincide con el nombre del local");
+      return;
+    }
+    deleteMutation.mutate(deleteTarget.id);
+  };
+
   const columns: DataTableColumn<LocalItem>[] = [
     {
       key: "id",
       header: "ID Local",
       render: (item) => (
-        <span className="font-mono text-xs font-semibold text-neutral-400">{item.id}</span>
+        <span className="font-mono text-xs font-semibold text-neutral-500 dark:text-neutral-400">{item.id}</span>
       ),
     },
     {
@@ -132,7 +161,7 @@ export default function SuperAdminDashboard() {
       render: (item) => (
         <div>
           <p className="font-bold text-neutral-900 dark:text-white">{item.name}</p>
-          <p className="text-xs text-neutral-400">{item.ownerEmail}</p>
+          <p className="text-xs text-neutral-500 dark:text-neutral-400">{item.ownerEmail}</p>
         </div>
       ),
     },
@@ -160,7 +189,7 @@ export default function SuperAdminDashboard() {
       key: "dueDate",
       header: "Vencimiento",
       render: (item) => (
-        <span className="text-xs font-medium text-neutral-300">
+        <span className="text-xs font-medium text-neutral-700 dark:text-neutral-300">
           {formatDate(item.dueDate)}
         </span>
       ),
@@ -175,7 +204,7 @@ export default function SuperAdminDashboard() {
             <Button
               size="sm"
               variant="outline"
-              className="text-red-400 border-red-500/30 hover:bg-red-500/10"
+              className="text-red-600 border-red-500/30 hover:bg-red-500/10 dark:text-red-400"
               isLoading={statusMutation.isPending}
               onClick={() => statusMutation.mutate({ id: item.id, status: "SUSPENDED" })}
             >
@@ -185,13 +214,25 @@ export default function SuperAdminDashboard() {
             <Button
               size="sm"
               variant="outline"
-              className="text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/10"
+              className="text-emerald-600 border-emerald-500/30 hover:bg-emerald-500/10 dark:text-emerald-400"
               isLoading={statusMutation.isPending}
               onClick={() => statusMutation.mutate({ id: item.id, status: "ACTIVE" })}
             >
               <CheckCircle className="h-3.5 w-3.5 mr-1" /> Activar
             </Button>
           )}
+
+          <Button
+            size="sm"
+            variant="outline"
+            className="text-neutral-600 border-neutral-300 hover:bg-red-500/10 hover:border-red-500/40 hover:text-red-600 dark:text-neutral-400 dark:border-neutral-800 dark:hover:text-red-400"
+            onClick={() => {
+              setDeleteTarget(item);
+              setConfirmName("");
+            }}
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </Button>
         </div>
       ),
     },
@@ -200,7 +241,7 @@ export default function SuperAdminDashboard() {
   return (
     <div className="mx-auto max-w-[1400px] space-y-8 animate-in fade-in duration-500">
       {/* SuperAdmin Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-neutral-800 pb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-neutral-200 dark:border-neutral-800 pb-6">
         <div>
           <div className="flex items-center gap-2">
             <Sparkles className="h-6 w-6 text-primary-500" />
@@ -208,7 +249,7 @@ export default function SuperAdminDashboard() {
               Control Global SaaS — SuperAdmin
             </h1>
           </div>
-          <p className="mt-1 text-sm text-neutral-400">
+          <p className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
             Administración centralizada de todos los locales registrados en Kipo.
           </p>
         </div>
@@ -261,12 +302,12 @@ export default function SuperAdminDashboard() {
               {conversionAlerts.map((alert) => (
                 <div
                   key={alert.localId}
-                  className="rounded-xl border border-neutral-800 bg-neutral-900/60 p-4 flex flex-col justify-between space-y-3"
+                  className="rounded-xl border border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-900/60 p-4 flex flex-col justify-between space-y-3"
                 >
                   <div className="flex items-start justify-between">
                     <div>
-                      <h4 className="font-bold text-white text-sm">{alert.name}</h4>
-                      <p className="text-xs text-neutral-400">{alert.ownerEmail}</p>
+                      <h4 className="font-bold text-neutral-900 dark:text-white text-sm">{alert.name}</h4>
+                      <p className="text-xs text-neutral-500 dark:text-neutral-400">{alert.ownerEmail}</p>
                     </div>
                     {alert.alertStatus === "CONVERTED" ? (
                       <Badge tone="success" className="text-[10px]">
@@ -282,9 +323,10 @@ export default function SuperAdminDashboard() {
                       </Badge>
                     )}
                   </div>
-                  <div className="flex items-center justify-between text-xs text-neutral-400 pt-2 border-t border-neutral-800">
+                  <div className="flex items-center justify-between text-xs text-neutral-500 dark:text-neutral-400 pt-2 border-t border-neutral-200 dark:border-neutral-800">
                     <span>Vence: {formatDate(alert.dueDate)}</span>
-                    <span className="font-semibold text-neutral-300">Plan: {alert.plan.name}</span>
+                    <span className="font-semibold text-neutral-700 dark:text-neutral-300">Plan: {alert.plan.name}</span>
+
                   </div>
                 </div>
               ))}
@@ -292,6 +334,7 @@ export default function SuperAdminDashboard() {
           </CardBody>
         </Card>
       )}
+
 
       {/* Locales List */}
       <Card>
@@ -423,7 +466,59 @@ export default function SuperAdminDashboard() {
           </div>
         </div>
       </Modal>
+
+      {/* Modal Confirmación de Eliminación Estricta */}
+      <Modal
+        open={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        title="⚠️ Eliminar Local Permanentemente"
+        size="md"
+      >
+        <form onSubmit={handleDeleteSubmit} className="space-y-4">
+          <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-red-600 dark:text-red-400 space-y-2">
+            <p className="text-sm font-bold">¡ADVERTENCIA DE ACCIÓN IRREVERSIBLE!</p>
+            <p className="text-xs leading-relaxed text-neutral-700 dark:text-neutral-300">
+              Estás a punto de eliminar el local <strong className="text-neutral-900 dark:text-white font-mono">{deleteTarget?.name}</strong> (ID: {deleteTarget?.id}).
+            </p>
+            <p className="text-xs text-red-600 dark:text-red-400 font-semibold">
+              Esta acción eliminará de forma PERMANENTE todos los productos, ventas, categorías, clientes, caja e historiales asociados a este negocio.
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-1">
+              Para confirmar, escribe exactamente el nombre del local: <span className="font-mono font-bold text-neutral-900 dark:text-white">{deleteTarget?.name}</span>
+            </label>
+            <Input
+              value={confirmName}
+              onChange={(e) => setConfirmName(e.target.value)}
+              placeholder={deleteTarget?.name}
+              required
+            />
+          </div>
+
+          <div className="flex justify-end gap-3 pt-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setDeleteTarget(null)}
+            >
+              Cancelar
+            </Button>
+            <Button
+              type="submit"
+              variant="danger"
+              isLoading={deleteMutation.isPending}
+              disabled={confirmName.trim() !== deleteTarget?.name.trim()}
+            >
+              Eliminar Definitivamente
+            </Button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 }
+
+
 
