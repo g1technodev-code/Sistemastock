@@ -24,11 +24,11 @@ export const create = catchAsync(async (req: Request, res: Response) => {
 
 export const update = catchAsync(async (req: Request, res: Response) => {
   const input = upsertProductSchema.parse(req.body);
-  const product = await productService.updateProduct(req.params.id, input);
+  const product = await productService.updateProduct(req.user?.localId, req.params.id, input);
   res.json({ product: serializeDecimals(product) });
 });
 
 export const remove = catchAsync(async (req: Request, res: Response) => {
-  const result = await productService.deleteProduct(req.params.id);
+  const result = await productService.deleteProduct(req.user?.localId, req.params.id);
   res.json(result);
 });

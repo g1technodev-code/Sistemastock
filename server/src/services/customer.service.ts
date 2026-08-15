@@ -15,18 +15,21 @@ const MOVEMENT_INCLUDE = {
   sale: { select: { id: true, total: true, createdAt: true } },
 };
 
-export async function listCustomers(query: ListCustomersQuery) {
+export async function listCustomers(localId: string | null | undefined, query: ListCustomersQuery) {
   const pagination = parsePagination(query);
-  const where: Prisma.CustomerWhereInput = query.q
-    ? {
-        OR: [
-          { name: { contains: query.q, mode: "insensitive" } },
-          { taxId: { contains: query.q, mode: "insensitive" } },
-          { phone: { contains: query.q, mode: "insensitive" } },
-          { email: { contains: query.q, mode: "insensitive" } },
-        ],
-      }
-    : {};
+  const where: Prisma.CustomerWhereInput = {
+    ...(localId ? { localId } : {}),
+    ...(query.q
+      ? {
+          OR: [
+            { name: { contains: query.q, mode: "insensitive" } },
+            { taxId: { contains: query.q, mode: "insensitive" } },
+            { phone: { contains: query.q, mode: "insensitive" } },
+            { email: { contains: query.q, mode: "insensitive" } },
+          ],
+        }
+      : {}),
+  };
 
   const [items, total] = await Promise.all([
     prisma.customer.findMany({
@@ -41,9 +44,9 @@ export async function listCustomers(query: ListCustomersQuery) {
   return paginatedResponse(items, total, pagination);
 }
 
-export async function getCustomer(id: string) {
-  const customer = await prisma.customer.findUnique({
-    where: { id },
+export async function getCustomer(localId: string | null | undefined, id: string) {
+  const customer = await prisma.customer.findFirst({
+    where: { id, ...(localId ? { localId } : {}) },
     include: {
       movements: {
         include: MOVEMENT_INCLUDE,
@@ -72,12 +75,14 @@ export async function createCustomer(localId: string | null | undefined, input: 
 }
 
 
-export async function updateCustomer(id: string, input: UpdateCustomerInput) {
-  const customer = await prisma.customer.findUnique({ where: { id } });
+export async function updateCustomer(localId: string | null | undefined, id: string, input: UpdateCustomerInput) {
+  const customer = await prisma.customer.findFirst({
+    where: { id, ...(localId ? { localId } : {}) },
+  });
   if (!customer) throw ApiError.notFound("Cliente no encontrado");
 
   return prisma.customer.update({
-    where: { id },
+    where: { id: customer.id },
     data: {
       ...(input.name ? { name: input.name.trim() } : {}),
       ...(input.taxId !== undefined ? { taxId: input.taxId?.trim() || null } : {}),
@@ -90,20 +95,23 @@ export async function updateCustomer(id: string, input: UpdateCustomerInput) {
   });
 }
 
-export async function registerPayment(customerId: string, input: RegisterPaymentInput, userId: string) {
+export async function registerPayment(localId: string | null | undefined, customerId: string, input: RegisterPaymentInput, userId: string) {
   return prisma.$transaction(async (tx) => {
-    const customer = await tx.customer.findUnique({ where: { id: customerId } });
+    const customer = await tx.customer.findFirst({
+      where: { id: customerId, ...(localId ? { localId } : {}) },
+    });
     if (!customer) throw ApiError.notFound("Cliente no encontrado");
     if (!customer.isActive) throw ApiError.badRequest("El cliente está inactivo");
 
-    const balanceBefore = Number(customer.currentBalance);
-    const balanceAfter = balanceBefore - input.amount;
-
-    // Actualizamos el saldo del cliente
+    // Actualizamos atómicamente el saldo del cliente para evitar condiciones de carrera
     await tx.customer.update({
       where: { id: customerId },
-      data: { currentBalance: balanceAfter },
+      data: { currentBalance: { decrement: input.amount } },
     });
+
+    const freshCustomer = await tx.customer.findUnique({ where: { id: customerId } });
+    const balanceAfter = Number(freshCustomer!.currentBalance);
+    const balanceBefore = balanceAfter + input.amount;
 
     // Registramos el movimiento de pago
     const customerMovement = await tx.customerMovement.create({

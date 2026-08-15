@@ -96,13 +96,23 @@ export async function createUser(creatorLocalId: string | null | undefined, inpu
 }
 
 
-export async function updateUser(id: string, input: UpdateUserInput, actingUserId: string, actingUserRole?: Role) {
+export async function updateUser(
+  creatorLocalId: string | null | undefined,
+  id: string,
+  input: UpdateUserInput,
+  actingUserId: string,
+  actingUserRole?: Role,
+) {
   if (input.role === "SUPERADMIN" && actingUserRole !== "SUPERADMIN") {
     throw ApiError.forbidden("No tienes permisos para asignar el rol SuperAdmin");
   }
 
   const target = await prisma.user.findUnique({ where: { id } });
   if (!target) throw ApiError.notFound("Usuario no encontrado");
+
+  if (actingUserRole !== Role.SUPERADMIN && creatorLocalId && target.localId !== creatorLocalId) {
+    throw ApiError.notFound("Usuario no encontrado");
+  }
 
   if (id === actingUserId && (input.isActive === false || (input.role && input.role !== target.role))) {
     throw ApiError.badRequest("No puedes cambiar tu propio rol o desactivar tu propia cuenta");
@@ -122,9 +132,18 @@ export async function updateUser(id: string, input: UpdateUserInput, actingUserI
   return updated;
 }
 
-export async function resetUserPassword(id: string, newPassword?: string) {
+export async function resetUserPassword(
+  creatorLocalId: string | null | undefined,
+  id: string,
+  newPassword?: string,
+  actingUserRole?: Role,
+) {
   const user = await prisma.user.findUnique({ where: { id } });
   if (!user) throw ApiError.notFound("Usuario no encontrado");
+
+  if (actingUserRole !== Role.SUPERADMIN && creatorLocalId && user.localId !== creatorLocalId) {
+    throw ApiError.notFound("Usuario no encontrado");
+  }
 
   const finalPassword = newPassword ?? generateTempPassword();
   const passwordHash = await hashPassword(finalPassword);

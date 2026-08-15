@@ -18,11 +18,11 @@ export const list = catchAsync(async (req: Request, res: Response) => {
 
 export const markRead = catchAsync(async (req: Request, res: Response) => {
   const id = req.params.id;
-  await notificationService.markAsRead(id);
+  await notificationService.markAsRead(req.user?.localId, id);
   res.json({ success: true });
 });
 
-export const markAllRead = catchAsync(async (_req: Request, res: Response) => {
-  await notificationService.markAsRead();
+export const markAllRead = catchAsync(async (req: Request, res: Response) => {
+  await notificationService.markAsRead(req.user?.localId);
   res.json({ success: true });
 });

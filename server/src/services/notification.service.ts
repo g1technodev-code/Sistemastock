@@ -48,16 +48,20 @@ export async function listNotifications(localId: string | null | undefined, quer
 }
 
 
-export async function markAsRead(id?: string) {
+export async function markAsRead(localId: string | null | undefined, id?: string) {
   if (id) {
+    const existing = await prisma.notification.findFirst({
+      where: { id, ...(localId ? { localId } : {}) },
+    });
+    if (!existing) return null;
     return prisma.notification.update({
-      where: { id },
+      where: { id: existing.id },
       data: { isRead: true },
     });
   }
 
   return prisma.notification.updateMany({
-    where: { isRead: false },
+    where: { isRead: false, ...(localId ? { localId } : {}) },
     data: { isRead: true },
   });
 }

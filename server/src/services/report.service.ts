@@ -11,9 +11,9 @@ function startOfDay(date: Date): Date {
   return d;
 }
 
-export async function getStockValuationReport() {
+export async function getStockValuationReport(localId: string | null | undefined) {
   const products = await prisma.product.findMany({
-    where: { isActive: true },
+    where: { isActive: true, ...(localId ? { localId } : {}) },
     include: { category: { select: { name: true } } },
     orderBy: { name: "asc" },
   });
@@ -41,12 +41,12 @@ export async function getStockValuationReport() {
   return { rows, totals };
 }
 
-export async function getMovementsReport(days = 30) {
+export async function getMovementsReport(localId: string | null | undefined, days = 30) {
   const from = new Date(Date.now() - (days - 1) * 24 * 60 * 60 * 1000);
   from.setHours(0, 0, 0, 0);
 
   const movements = await prisma.stockMovement.findMany({
-    where: { createdAt: { gte: from } },
+    where: { createdAt: { gte: from }, ...(localId ? { localId } : {}) },
     include: {
       product: { select: { name: true, sku: true } },
       user: { select: { name: true } },
@@ -72,18 +72,18 @@ export async function getMovementsReport(days = 30) {
   return { series: Array.from(seriesMap.values()), movements };
 }
 
-export async function getTopProductsReport(days = 30, limit = 10) {
+export async function getTopProductsReport(localId: string | null | undefined, days = 30, limit = 10) {
   const from = new Date(Date.now() - (days - 1) * 24 * 60 * 60 * 1000);
 
   const grouped = await prisma.stockMovement.groupBy({
     by: ["productId", "type"],
-    where: { createdAt: { gte: from } },
+    where: { createdAt: { gte: from }, ...(localId ? { localId } : {}) },
     _sum: { quantity: true },
   });
 
   const productIds = Array.from(new Set(grouped.map((g) => g.productId)));
   const products = await prisma.product.findMany({
-    where: { id: { in: productIds } },
+    where: { id: { in: productIds }, ...(localId ? { localId } : {}) },
     select: { id: true, name: true, sku: true },
   });
 
@@ -107,9 +107,9 @@ export async function getTopProductsReport(days = 30, limit = 10) {
     .slice(0, limit);
 }
 
-export async function getCategoryBreakdownReport() {
+export async function getCategoryBreakdownReport(localId: string | null | undefined) {
   const products = await prisma.product.findMany({
-    where: { isActive: true },
+    where: { isActive: true, ...(localId ? { localId } : {}) },
     select: { currentStock: true, costPrice: true, categoryId: true, category: { select: { name: true, color: true } } },
   });
 
@@ -136,7 +136,7 @@ export async function getCategoryBreakdownReport() {
 
 type SaleStatsPeriod = { total: number; count: number; avgTicket: number; profit: number };
 
-export async function getSalesStatsReport() {
+export async function getSalesStatsReport(localId: string | null | undefined) {
   const now = new Date();
   const todayStart = startOfDay(now);
   const weekStart = new Date(todayStart.getTime() - 6 * 24 * 60 * 60 * 1000);
@@ -145,7 +145,7 @@ export async function getSalesStatsReport() {
   const rangeStart = yearStart < weekStart ? yearStart : weekStart;
 
   const sales = await prisma.sale.findMany({
-    where: { status: SaleStatus.COMPLETED, createdAt: { gte: rangeStart } },
+    where: { status: SaleStatus.COMPLETED, createdAt: { gte: rangeStart }, ...(localId ? { localId } : {}) },
     select: {
       id: true,
       total: true,
@@ -238,12 +238,12 @@ export async function getSalesStatsReport() {
   };
 }
 
-export async function getProfitabilityReport(days = 30) {
+export async function getProfitabilityReport(localId: string | null | undefined, days = 30) {
   const from = new Date(Date.now() - (days - 1) * 24 * 60 * 60 * 1000);
   from.setHours(0, 0, 0, 0);
 
   const items = await prisma.saleItem.findMany({
-    where: { sale: { status: SaleStatus.COMPLETED, createdAt: { gte: from } } },
+    where: { sale: { status: SaleStatus.COMPLETED, createdAt: { gte: from }, ...(localId ? { localId } : {}) } },
     select: {
       quantity: true,
       subtotal: true,

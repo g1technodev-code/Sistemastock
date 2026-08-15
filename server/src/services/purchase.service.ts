@@ -54,15 +54,15 @@ export async function createPurchase(localId: string | null | undefined, input: 
   });
 }
 
-export async function updatePurchase(id: string, input: UpdatePurchaseInput) {
+export async function updatePurchase(localId: string | null | undefined, id: string, input: UpdatePurchaseInput) {
   return prisma.$transaction(async (tx) => {
-    const existing = await tx.purchase.findUnique({ where: { id } });
+    const existing = await tx.purchase.findFirst({ where: { id, ...(localId ? { localId } : {}) } });
     if (!existing) throw ApiError.notFound("Compra no encontrada");
     if (existing.status !== PurchaseStatus.PENDING) {
       throw ApiError.badRequest("Solo se pueden editar compras pendientes");
     }
 
-    const supplier = await tx.supplier.findUnique({ where: { id: input.supplierId } });
+    const supplier = await tx.supplier.findFirst({ where: { id: input.supplierId, ...(localId ? { localId } : {}) } });
     if (!supplier) throw ApiError.notFound("Proveedor no encontrado");
 
     const { items, total } = await buildItemsData(tx, input.items);
@@ -77,8 +77,10 @@ export async function updatePurchase(id: string, input: UpdatePurchaseInput) {
   });
 }
 
-function buildWhere(query: ListPurchasesQuery): Prisma.PurchaseWhereInput {
-  const where: Prisma.PurchaseWhereInput = {};
+function buildWhere(localId: string | null | undefined, query: ListPurchasesQuery): Prisma.PurchaseWhereInput {
+  const where: Prisma.PurchaseWhereInput = {
+    ...(localId ? { localId } : {}),
+  };
   if (query.supplierId) where.supplierId = query.supplierId;
   if (query.status) where.status = query.status;
   if (query.from || query.to) {
@@ -89,8 +91,8 @@ function buildWhere(query: ListPurchasesQuery): Prisma.PurchaseWhereInput {
   return where;
 }
 
-export async function listPurchases(query: ListPurchasesQuery) {
-  const where = buildWhere(query);
+export async function listPurchases(localId: string | null | undefined, query: ListPurchasesQuery) {
+  const where = buildWhere(localId, query);
   const pagination = parsePagination(query);
 
   const [items, total] = await Promise.all([
@@ -107,15 +109,21 @@ export async function listPurchases(query: ListPurchasesQuery) {
   return paginatedResponse(items, total, pagination);
 }
 
-export async function getPurchase(id: string) {
-  const purchase = await prisma.purchase.findUnique({ where: { id }, include: PURCHASE_INCLUDE });
+export async function getPurchase(localId: string | null | undefined, id: string) {
+  const purchase = await prisma.purchase.findFirst({
+    where: { id, ...(localId ? { localId } : {}) },
+    include: PURCHASE_INCLUDE,
+  });
   if (!purchase) throw ApiError.notFound("Compra no encontrada");
   return purchase;
 }
 
-export async function receivePurchase(id: string, userId: string) {
+export async function receivePurchase(localId: string | null | undefined, id: string, userId: string) {
   return prisma.$transaction(async (tx) => {
-    const purchase = await tx.purchase.findUnique({ where: { id }, include: { items: true } });
+    const purchase = await tx.purchase.findFirst({
+      where: { id, ...(localId ? { localId } : {}) },
+      include: { items: true },
+    });
     if (!purchase) throw ApiError.notFound("Compra no encontrada");
     if (purchase.status !== PurchaseStatus.PENDING) {
       throw ApiError.badRequest("Solo se pueden recibir compras pendientes");
@@ -166,9 +174,9 @@ export async function receivePurchase(id: string, userId: string) {
   });
 }
 
-export async function cancelPurchase(id: string, userId: string) {
+export async function cancelPurchase(localId: string | null | undefined, id: string, userId: string) {
   return prisma.$transaction(async (tx) => {
-    const purchase = await tx.purchase.findUnique({ where: { id } });
+    const purchase = await tx.purchase.findFirst({ where: { id, ...(localId ? { localId } : {}) } });
     if (!purchase) throw ApiError.notFound("Compra no encontrada");
     if (purchase.status !== PurchaseStatus.PENDING) {
       throw ApiError.badRequest("Solo se pueden cancelar compras pendientes");

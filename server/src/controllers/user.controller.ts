@@ -16,13 +16,13 @@ export const create = catchAsync(async (req: Request, res: Response) => {
 
 export const update = catchAsync(async (req: Request, res: Response) => {
   const input = updateUserSchema.parse(req.body);
-  const user = await userService.updateUser(req.params.id, input, req.user!.id, req.user?.role);
+  const user = await userService.updateUser(req.user?.localId, req.params.id, input, req.user!.id, req.user?.role);
   res.json({ user });
 });
 
 
 export const resetPassword = catchAsync(async (req: Request, res: Response) => {
   const input = resetPasswordSchema.parse(req.body ?? {});
-  const result = await userService.resetUserPassword(req.params.id, input.newPassword);
+  const result = await userService.resetUserPassword(req.user?.localId, req.params.id, input.newPassword, req.user?.role);
   res.json(result);
 });

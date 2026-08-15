@@ -5,7 +5,7 @@ import { serializeDecimals } from "../utils/serialize";
 import { toCsv } from "../utils/csv";
 
 export const stockValuation = catchAsync(async (req: Request, res: Response) => {
-  const data = await reportService.getStockValuationReport();
+  const data = await reportService.getStockValuationReport(req.user?.localId);
   if (req.query.format === "csv") {
     const csv = toCsv(data.rows, [
       { key: "sku", header: "SKU" },
@@ -26,7 +26,7 @@ export const stockValuation = catchAsync(async (req: Request, res: Response) => 
 
 export const movements = catchAsync(async (req: Request, res: Response) => {
   const days = Number(req.query.days) || 30;
-  const data = await reportService.getMovementsReport(days);
+  const data = await reportService.getMovementsReport(req.user?.localId, days);
   if (req.query.format === "csv") {
     const rows = data.movements.map((m) => ({
       fecha: m.createdAt.toISOString(),
@@ -56,22 +56,22 @@ export const movements = catchAsync(async (req: Request, res: Response) => {
 export const topProducts = catchAsync(async (req: Request, res: Response) => {
   const days = Number(req.query.days) || 30;
   const limit = Number(req.query.limit) || 10;
-  const data = await reportService.getTopProductsReport(days, limit);
+  const data = await reportService.getTopProductsReport(req.user?.localId, days, limit);
   res.json({ items: data });
 });
 
-export const categoryBreakdown = catchAsync(async (_req: Request, res: Response) => {
-  const data = await reportService.getCategoryBreakdownReport();
+export const categoryBreakdown = catchAsync(async (req: Request, res: Response) => {
+  const data = await reportService.getCategoryBreakdownReport(req.user?.localId);
   res.json({ items: serializeDecimals(data) });
 });
 
-export const salesStats = catchAsync(async (_req: Request, res: Response) => {
-  const data = await reportService.getSalesStatsReport();
+export const salesStats = catchAsync(async (req: Request, res: Response) => {
+  const data = await reportService.getSalesStatsReport(req.user?.localId);
   res.json(serializeDecimals(data));
 });
 
 export const profitability = catchAsync(async (req: Request, res: Response) => {
   const days = Number(req.query.days) || 30;
-  const data = await reportService.getProfitabilityReport(days);
+  const data = await reportService.getProfitabilityReport(req.user?.localId, days);
   res.json(serializeDecimals(data));
 });

@@ -22,14 +22,18 @@ export async function createSession(localId: string | null | undefined, input: C
 }
 
 
-export async function upsertItem(sessionId: string, input: UpsertItemInput) {
+export async function upsertItem(localId: string | null | undefined, sessionId: string, input: UpsertItemInput) {
   return prisma.$transaction(async (tx) => {
-    const session = await tx.inventoryCount.findUnique({ where: { id: sessionId } });
+    const session = await tx.inventoryCount.findFirst({
+      where: { id: sessionId, ...(localId ? { localId } : {}) },
+    });
     if (!session) throw ApiError.notFound("Sesión de inventario no encontrada");
     if (session.status !== InventoryCountStatus.OPEN) {
       throw ApiError.badRequest("Solo se pueden cargar conteos en una sesión abierta");
     }
-    const product = await tx.product.findUnique({ where: { id: input.productId } });
+    const product = await tx.product.findFirst({
+      where: { id: input.productId, ...(localId ? { localId } : {}) },
+    });
     if (!product) throw ApiError.notFound("Producto no encontrado");
 
     // System quantity is snapshotted at count time, not at confirm time, so the
@@ -53,9 +57,11 @@ export async function upsertItem(sessionId: string, input: UpsertItemInput) {
   });
 }
 
-export async function removeItem(sessionId: string, productId: string) {
+export async function removeItem(localId: string | null | undefined, sessionId: string, productId: string) {
   return prisma.$transaction(async (tx) => {
-    const session = await tx.inventoryCount.findUnique({ where: { id: sessionId } });
+    const session = await tx.inventoryCount.findFirst({
+      where: { id: sessionId, ...(localId ? { localId } : {}) },
+    });
     if (!session) throw ApiError.notFound("Sesión de inventario no encontrada");
     if (session.status !== InventoryCountStatus.OPEN) {
       throw ApiError.badRequest("Solo se pueden editar sesiones abiertas");
@@ -66,14 +72,16 @@ export async function removeItem(sessionId: string, productId: string) {
   });
 }
 
-function buildWhere(query: ListInventoryCountsQuery): Prisma.InventoryCountWhereInput {
-  const where: Prisma.InventoryCountWhereInput = {};
+function buildWhere(localId: string | null | undefined, query: ListInventoryCountsQuery): Prisma.InventoryCountWhereInput {
+  const where: Prisma.InventoryCountWhereInput = {
+    ...(localId ? { localId } : {}),
+  };
   if (query.status) where.status = query.status;
   return where;
 }
 
-export async function listSessions(query: ListInventoryCountsQuery) {
-  const where = buildWhere(query);
+export async function listSessions(localId: string | null | undefined, query: ListInventoryCountsQuery) {
+  const where = buildWhere(localId, query);
   const pagination = parsePagination(query);
 
   const [items, total] = await Promise.all([
@@ -90,15 +98,21 @@ export async function listSessions(query: ListInventoryCountsQuery) {
   return paginatedResponse(items, total, pagination);
 }
 
-export async function getSession(id: string) {
-  const session = await prisma.inventoryCount.findUnique({ where: { id }, include: COUNT_INCLUDE });
+export async function getSession(localId: string | null | undefined, id: string) {
+  const session = await prisma.inventoryCount.findFirst({
+    where: { id, ...(localId ? { localId } : {}) },
+    include: COUNT_INCLUDE,
+  });
   if (!session) throw ApiError.notFound("Sesión de inventario no encontrada");
   return session;
 }
 
-export async function confirmSession(sessionId: string, userId: string) {
+export async function confirmSession(localId: string | null | undefined, sessionId: string, userId: string) {
   return prisma.$transaction(async (tx) => {
-    const session = await tx.inventoryCount.findUnique({ where: { id: sessionId }, include: { items: true } });
+    const session = await tx.inventoryCount.findFirst({
+      where: { id: sessionId, ...(localId ? { localId } : {}) },
+      include: { items: true },
+    });
     if (!session) throw ApiError.notFound("Sesión de inventario no encontrada");
     if (session.status !== InventoryCountStatus.OPEN) {
       throw ApiError.badRequest("La sesión ya fue confirmada");

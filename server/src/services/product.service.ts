@@ -89,8 +89,10 @@ export async function createProduct(localId: string | null | undefined, input: U
 }
 
 
-export async function updateProduct(id: string, input: UpsertProductInput) {
-  const product = await prisma.product.findUnique({ where: { id } });
+export async function updateProduct(localId: string | null | undefined, id: string, input: UpsertProductInput) {
+  const product = await prisma.product.findFirst({
+    where: { id, ...(localId ? { localId } : {}) },
+  });
   if (!product) throw ApiError.notFound("Producto no encontrado");
 
   if (input.sku !== product.sku) {
@@ -102,7 +104,7 @@ export async function updateProduct(id: string, input: UpsertProductInput) {
 
 
   return prisma.product.update({
-    where: { id },
+    where: { id: product.id },
     data: {
       sku: input.sku,
       barcode: input.barcode || null,
@@ -121,16 +123,18 @@ export async function updateProduct(id: string, input: UpsertProductInput) {
   });
 }
 
-export async function deleteProduct(id: string) {
-  const product = await prisma.product.findUnique({ where: { id } });
+export async function deleteProduct(localId: string | null | undefined, id: string) {
+  const product = await prisma.product.findFirst({
+    where: { id, ...(localId ? { localId } : {}) },
+  });
   if (!product) throw ApiError.notFound("Producto no encontrado");
 
   const movementCount = await prisma.stockMovement.count({ where: { productId: id } });
   if (movementCount > 0) {
-    await prisma.product.update({ where: { id }, data: { isActive: false } });
+    await prisma.product.update({ where: { id: product.id }, data: { isActive: false } });
     return { softDeleted: true };
   }
 
-  await prisma.product.delete({ where: { id } });
+  await prisma.product.delete({ where: { id: product.id } });
   return { softDeleted: false };
 }

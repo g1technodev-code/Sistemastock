@@ -204,8 +204,10 @@ export async function createSale(localId: string | null | undefined, input: Crea
   });
 }
 
-function buildWhere(query: ListSalesQuery): Prisma.SaleWhereInput {
-  const where: Prisma.SaleWhereInput = {};
+function buildWhere(localId: string | null | undefined, query: ListSalesQuery): Prisma.SaleWhereInput {
+  const where: Prisma.SaleWhereInput = {
+    ...(localId ? { localId } : {}),
+  };
   if (query.userId) where.userId = query.userId;
   if (query.paymentMethod) where.paymentMethod = query.paymentMethod;
   if (query.from || query.to) {
@@ -216,8 +218,8 @@ function buildWhere(query: ListSalesQuery): Prisma.SaleWhereInput {
   return where;
 }
 
-export async function listSales(query: ListSalesQuery) {
-  const where = buildWhere(query);
+export async function listSales(localId: string | null | undefined, query: ListSalesQuery) {
+  const where = buildWhere(localId, query);
   const pagination = parsePagination(query);
 
   const [items, total] = await Promise.all([
@@ -234,17 +236,22 @@ export async function listSales(query: ListSalesQuery) {
   return paginatedResponse(items, total, pagination);
 }
 
-export async function getSale(id: string) {
-  const sale = await prisma.sale.findUnique({ where: { id }, include: SALE_INCLUDE });
+export async function getSale(localId: string | null | undefined, id: string) {
+  const where = { id, ...(localId ? { localId } : {}) };
+  const sale = await prisma.sale.findFirst({ where, include: SALE_INCLUDE });
   if (!sale) throw ApiError.notFound("Venta no encontrada");
   return sale;
 }
 
-export async function getSalesSummary(query: SalesSummaryQuery) {
+export async function getSalesSummary(localId: string | null | undefined, query: SalesSummaryQuery) {
   const from = query.from ? new Date(query.from) : startOfDay(new Date());
   const to = query.to ? new Date(query.to) : new Date();
 
-  const where: Prisma.SaleWhereInput = { createdAt: { gte: from, lte: to }, status: SaleStatus.COMPLETED };
+  const where: Prisma.SaleWhereInput = {
+    ...(localId ? { localId } : {}),
+    createdAt: { gte: from, lte: to },
+    status: SaleStatus.COMPLETED,
+  };
   if (query.userId) where.userId = query.userId;
 
   const [aggregate, grouped] = await Promise.all([
