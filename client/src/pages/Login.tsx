@@ -67,11 +67,7 @@ export default function Login() {
         </CardBody>
       </Card>
 
-      <div className="mt-6 rounded-lg border border-neutral-200 bg-white p-4 text-xs text-neutral-500 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-400">
-        <p className="mb-1 font-medium text-neutral-700 dark:text-neutral-300">Credenciales de prueba</p>
-        <p>admin@stockflow.com · manager@stockflow.com · empleado@stockflow.com</p>
-        <p>Contraseña: Stockflow2026!</p>
-      </div>
+     
     </AuthLayout>
   );
 }
