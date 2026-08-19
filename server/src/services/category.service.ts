@@ -23,14 +23,18 @@ export async function createCategory(localId: string | null | undefined, input: 
 }
 
 
-export async function updateCategory(id: string, input: UpsertCategoryInput) {
-  const category = await prisma.category.findUnique({ where: { id } });
+export async function updateCategory(localId: string | null | undefined, id: string, input: UpsertCategoryInput) {
+  const category = await prisma.category.findFirst({
+    where: { id, ...(localId ? { localId } : {}) },
+  });
   if (!category) throw ApiError.notFound("Categoría no encontrada");
-  return prisma.category.update({ where: { id }, data: input });
+  return prisma.category.update({ where: { id: category.id }, data: input });
 }
 
-export async function deleteCategory(id: string) {
-  const category = await prisma.category.findUnique({ where: { id } });
+export async function deleteCategory(localId: string | null | undefined, id: string) {
+  const category = await prisma.category.findFirst({
+    where: { id, ...(localId ? { localId } : {}) },
+  });
   if (!category) throw ApiError.notFound("Categoría no encontrada");
 
   const productCount = await prisma.product.count({ where: { categoryId: id } });
@@ -40,5 +44,5 @@ export async function deleteCategory(id: string) {
     );
   }
 
-  await prisma.category.delete({ where: { id } });
+  await prisma.category.delete({ where: { id: category.id } });
 }

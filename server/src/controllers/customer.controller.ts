@@ -11,12 +11,12 @@ import { serializeDecimals } from "../utils/serialize";
 
 export const list = catchAsync(async (req: Request, res: Response) => {
   const query = listCustomersQuerySchema.parse(req.query);
-  const result = await customerService.listCustomers(query);
+  const result = await customerService.listCustomers(req.user?.localId, query);
   res.json(serializeDecimals(result));
 });
 
 export const getOne = catchAsync(async (req: Request, res: Response) => {
-  const customer = await customerService.getCustomer(req.params.id);
+  const customer = await customerService.getCustomer(req.user?.localId, req.params.id);
   res.json(serializeDecimals(customer));
 });
 
@@ -29,12 +29,12 @@ export const create = catchAsync(async (req: Request, res: Response) => {
 
 export const update = catchAsync(async (req: Request, res: Response) => {
   const input = updateCustomerSchema.parse(req.body);
-  const customer = await customerService.updateCustomer(req.params.id, input);
+  const customer = await customerService.updateCustomer(req.user?.localId, req.params.id, input);
   res.json(serializeDecimals(customer));
 });
 
 export const registerPayment = catchAsync(async (req: Request, res: Response) => {
   const input = registerPaymentSchema.parse(req.body);
-  const movement = await customerService.registerPayment(req.params.id, input, req.user!.id);
+  const movement = await customerService.registerPayment(req.user?.localId, req.params.id, input, req.user!.id);
   res.status(201).json(serializeDecimals(movement));
 });

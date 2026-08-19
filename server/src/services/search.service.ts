@@ -1,6 +1,6 @@
 import { prisma } from "../config/prisma";
 
-export async function globalSearch(q: string) {
+export async function globalSearch(localId: string | null | undefined, q: string) {
   if (!q || q.trim().length < 2) {
     return { products: [], categories: [], suppliers: [] };
   }
@@ -8,6 +8,7 @@ export async function globalSearch(q: string) {
   const [products, categories, suppliers] = await Promise.all([
     prisma.product.findMany({
       where: {
+        ...(localId ? { localId } : {}),
         OR: [
           { name: { contains: q, mode: "insensitive" } },
           { sku: { contains: q, mode: "insensitive" } },
@@ -18,12 +19,18 @@ export async function globalSearch(q: string) {
       take: 6,
     }),
     prisma.category.findMany({
-      where: { name: { contains: q, mode: "insensitive" } },
+      where: {
+        ...(localId ? { localId } : {}),
+        name: { contains: q, mode: "insensitive" },
+      },
       select: { id: true, name: true },
       take: 5,
     }),
     prisma.supplier.findMany({
-      where: { name: { contains: q, mode: "insensitive" } },
+      where: {
+        ...(localId ? { localId } : {}),
+        name: { contains: q, mode: "insensitive" },
+      },
       select: { id: true, name: true },
       take: 5,
     }),

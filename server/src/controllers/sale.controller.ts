@@ -18,12 +18,12 @@ export const listSales = catchAsync(async (req: Request, res: Response) => {
   if (req.user!.role === "EMPLOYEE") {
     query.userId = req.user!.id;
   }
-  const result = await saleService.listSales(query);
+  const result = await saleService.listSales(req.user?.localId, query);
   res.json(serializeDecimals(result));
 });
 
 export const getSale = catchAsync(async (req: Request, res: Response) => {
-  const sale = await saleService.getSale(req.params.id);
+  const sale = await saleService.getSale(req.user?.localId, req.params.id);
   if (req.user!.role === "EMPLOYEE" && sale.userId !== req.user!.id) {
     throw ApiError.notFound("Venta no encontrada");
   }
@@ -35,6 +35,6 @@ export const getSalesSummary = catchAsync(async (req: Request, res: Response) =>
   if (req.user!.role === "EMPLOYEE") {
     query.userId = req.user!.id;
   }
-  const summary = await saleService.getSalesSummary(query);
+  const summary = await saleService.getSalesSummary(req.user?.localId, query);
   res.json(serializeDecimals(summary));
 });

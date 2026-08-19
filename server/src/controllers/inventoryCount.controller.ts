@@ -13,27 +13,27 @@ export const createSession = catchAsync(async (req: Request, res: Response) => {
 
 export const listSessions = catchAsync(async (req: Request, res: Response) => {
   const query = listInventoryCountsQuerySchema.parse(req.query);
-  const result = await inventoryCountService.listSessions(query);
+  const result = await inventoryCountService.listSessions(req.user?.localId, query);
   res.json(serializeDecimals(result));
 });
 
 export const getSession = catchAsync(async (req: Request, res: Response) => {
-  const session = await inventoryCountService.getSession(req.params.id);
+  const session = await inventoryCountService.getSession(req.user?.localId, req.params.id);
   res.json({ session: serializeDecimals(session) });
 });
 
 export const upsertItem = catchAsync(async (req: Request, res: Response) => {
   const input = upsertItemSchema.parse(req.body);
-  const session = await inventoryCountService.upsertItem(req.params.id, input);
+  const session = await inventoryCountService.upsertItem(req.user?.localId, req.params.id, input);
   res.json({ session: serializeDecimals(session) });
 });
 
 export const removeItem = catchAsync(async (req: Request, res: Response) => {
-  const session = await inventoryCountService.removeItem(req.params.id, req.params.productId);
+  const session = await inventoryCountService.removeItem(req.user?.localId, req.params.id, req.params.productId);
   res.json({ session: serializeDecimals(session) });
 });
 
 export const confirmSession = catchAsync(async (req: Request, res: Response) => {
-  const session = await inventoryCountService.confirmSession(req.params.id, req.user!.id);
+  const session = await inventoryCountService.confirmSession(req.user?.localId, req.params.id, req.user!.id);
   res.json({ session: serializeDecimals(session) });
 });

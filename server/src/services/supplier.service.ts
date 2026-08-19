@@ -19,14 +19,18 @@ export async function createSupplier(localId: string | null | undefined, input: 
 }
 
 
-export async function updateSupplier(id: string, input: UpsertSupplierInput) {
-  const supplier = await prisma.supplier.findUnique({ where: { id } });
+export async function updateSupplier(localId: string | null | undefined, id: string, input: UpsertSupplierInput) {
+  const supplier = await prisma.supplier.findFirst({
+    where: { id, ...(localId ? { localId } : {}) },
+  });
   if (!supplier) throw ApiError.notFound("Proveedor no encontrado");
-  return prisma.supplier.update({ where: { id }, data: { ...input, email: input.email || null } });
+  return prisma.supplier.update({ where: { id: supplier.id }, data: { ...input, email: input.email || null } });
 }
 
-export async function deleteSupplier(id: string) {
-  const supplier = await prisma.supplier.findUnique({ where: { id } });
+export async function deleteSupplier(localId: string | null | undefined, id: string) {
+  const supplier = await prisma.supplier.findFirst({
+    where: { id, ...(localId ? { localId } : {}) },
+  });
   if (!supplier) throw ApiError.notFound("Proveedor no encontrado");
 
   const productCount = await prisma.product.count({ where: { supplierId: id } });
@@ -36,5 +40,5 @@ export async function deleteSupplier(id: string) {
     );
   }
 
-  await prisma.supplier.delete({ where: { id } });
+  await prisma.supplier.delete({ where: { id: supplier.id } });
 }

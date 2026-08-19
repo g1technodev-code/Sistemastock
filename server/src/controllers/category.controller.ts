@@ -19,11 +19,11 @@ export const create = catchAsync(async (req: Request, res: Response) => {
 
 export const update = catchAsync(async (req: Request, res: Response) => {
   const input = upsertCategorySchema.parse(req.body);
-  const category = await categoryService.updateCategory(req.params.id, input);
+  const category = await categoryService.updateCategory(req.user?.localId, req.params.id, input);
   res.json({ category });
 });
 
 export const remove = catchAsync(async (req: Request, res: Response) => {
-  await categoryService.deleteCategory(req.params.id);
+  await categoryService.deleteCategory(req.user?.localId, req.params.id);
   res.status(204).send();
 });
