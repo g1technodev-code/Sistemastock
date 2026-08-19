@@ -10,6 +10,7 @@ import {
   createAnnouncement,
   listAnnouncements,
   removeAnnouncement,
+  listPayments,
 } from "../controllers/superadmin.controller";
 import * as planController from "../controllers/plan.controller";
 
@@ -33,7 +34,9 @@ router.get("/announcements", listAnnouncements);
 router.post("/announcements", createAnnouncement);
 router.delete("/announcements/:id", removeAnnouncement);
 
+router.get("/payments", listPayments);
 
 export default router;
+
 
 

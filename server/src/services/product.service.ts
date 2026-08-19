@@ -134,3 +134,77 @@ export async function deleteProduct(id: string) {
   await prisma.product.delete({ where: { id } });
   return { softDeleted: false };
 }
+
+export async function lookupBarcode(barcode: string): Promise<{
+  found: boolean;
+  name?: string;
+  description?: string;
+}> {
+  if (!barcode || barcode.length < 4) {
+    return { found: false };
+  }
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 2500);
+
+  try {
+    // 1. Try Open Food Facts API (excellent for food, beverages, and LATAM retail)
+    const res = await fetch(`https://world.openfoodfacts.org/api/v2/product/${encodeURIComponent(barcode)}.json`, {
+      signal: controller.signal,
+      headers: { "User-Agent": "KipoStockFlow - WebApp - Version 1.0" },
+    });
+
+    if (res.ok) {
+      const data = (await res.json()) as any;
+      if (data.status === 1 && data.product) {
+        const name = data.product.product_name_es || data.product.product_name || "";
+        const brand = data.product.brands ? ` - ${data.product.brands}` : "";
+        const description = data.product.generic_name_es || data.product.generic_name || data.product.categories || "";
+
+        if (name) {
+          clearTimeout(timeoutId);
+          return {
+            found: true,
+            name: `${name}${brand}`.trim(),
+            description: description.trim(),
+          };
+        }
+      }
+    }
+  } catch (error) {
+    console.warn(`[Barcode Lookup OpenFoodFacts] Timeout or error for ${barcode}`);
+  } finally {
+    clearTimeout(timeoutId);
+  }
+
+  // 2. Fallback: UPCitemdb Trial API for general goods
+  const fallbackController = new AbortController();
+  const fallbackTimeoutId = setTimeout(() => fallbackController.abort(), 2500);
+
+  try {
+    const res = await fetch(`https://api.upcitemdb.com/prod/trial/lookup?upc=${encodeURIComponent(barcode)}`, {
+      signal: fallbackController.signal,
+    });
+
+    if (res.ok) {
+      const data = (await res.json()) as any;
+      if (data.items && data.items.length > 0) {
+        const item = data.items[0];
+        clearTimeout(fallbackTimeoutId);
+        return {
+          found: true,
+          name: item.title || "",
+          description: item.description || item.brand || "",
+        };
+      }
+    }
+
+  } catch (error) {
+    console.warn(`[Barcode Lookup UPCitemdb] Timeout or error for ${barcode}`);
+  } finally {
+    clearTimeout(fallbackTimeoutId);
+  }
+
+  return { found: false };
+}
+

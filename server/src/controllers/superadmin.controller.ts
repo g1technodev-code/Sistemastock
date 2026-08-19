@@ -56,3 +56,9 @@ export const getLatestAnnouncement = catchAsync(async (_req: Request, res: Respo
   res.json({ announcement });
 });
 
+export const listPayments = catchAsync(async (req: Request, res: Response) => {
+  const result = await superadminAction.listSubscriptionPayments(req.query as any);
+  res.json(result);
+});
+
+

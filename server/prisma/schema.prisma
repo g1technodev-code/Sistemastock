@@ -37,10 +37,12 @@ model Plan {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  locales Local[]
+  locales  Local[]
+  payments SubscriptionPayment[]
 
   @@map("plans")
 }
+
 
 model Local {
   id           String      @id @default(cuid())
@@ -70,8 +72,10 @@ model Local {
   customers        Customer[]
   notifications    Notification[]
   stockMovements   StockMovement[]
+  payments         SubscriptionPayment[]
 
   @@index([planId])
+
   @@map("locales")
 }
 
@@ -152,8 +156,10 @@ model User {
   inventoryCountsStarted   InventoryCount[]   @relation("InventoryCountStartedBy")
   inventoryCountsCompleted InventoryCount[]   @relation("InventoryCountCompletedBy")
   customerMovements        CustomerMovement[] @relation("CustomerMovementUser")
+  announcementReads        UserAnnouncementRead[]
 
   @@index([localId])
+
   @@map("users")
 }
 
@@ -540,8 +546,56 @@ model Announcement {
   type      AnnouncementType @default(INFO)
   createdAt DateTime         @default(now())
 
+  reads UserAnnouncementRead[]
+
   @@index([createdAt])
   @@map("announcements")
 }
+
+model UserAnnouncementRead {
+  id             String       @id @default(cuid())
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  announcementId String
+  announcement   Announcement @relation(fields: [announcementId], references: [id], onDelete: Cascade)
+  createdAt      DateTime     @default(now())
+
+  @@unique([userId, announcementId])
+  @@index([userId])
+  @@index([announcementId])
+  @@map("user_announcement_reads")
+}
+
+enum PaymentStatus {
+  APPROVED
+  PENDING
+  REJECTED
+  REFUNDED
+}
+
+model SubscriptionPayment {
+  id                String        @id @default(cuid())
+  localId           String
+  local             Local         @relation(fields: [localId], references: [id], onDelete: Cascade)
+  planId            String?
+  plan              Plan?         @relation(fields: [planId], references: [id], onDelete: SetNull)
+  amount            Decimal       @db.Decimal(12, 2)
+  currency          String        @default("ARS")
+  status            PaymentStatus @default(APPROVED)
+  mpPaymentId       String?       @unique
+  mpMerchantOrderId String?
+  paymentMethod     String?       @default("MERCADO_PAGO")
+  periodStart       DateTime?
+  periodEnd         DateTime?
+  metadata          Json?
+  createdAt         DateTime      @default(now())
+
+  @@index([localId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("subscription_payments")
+}
+
+
 
 

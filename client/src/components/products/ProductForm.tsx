@@ -2,13 +2,15 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useEffect, useState } from "react";
-import { Camera } from "lucide-react";
+import { Camera, Sparkles } from "lucide-react";
 import { Input, Select, Textarea } from "../ui/Field";
 import { Button } from "../ui/Button";
 import { CameraScannerModal } from "../common/CameraScannerModal";
 import { useCategories } from "../../hooks/useCategories";
 import { useSuppliers } from "../../hooks/useSuppliers";
+import { lookupBarcode } from "../../api/products";
 import type { Product } from "../../lib/types";
+
 
 const schema = z.object({
   sku: z.string().min(1, "El SKU es obligatorio"),
@@ -41,8 +43,10 @@ export function ProductForm({
   const { data: categories } = useCategories();
   const { data: suppliers } = useSuppliers();
   const [cameraOpen, setCameraOpen] = useState(false);
+  const [isLookingUp, setIsLookingUp] = useState(false);
 
   const {
+
     register,
     handleSubmit,
     reset,
@@ -82,11 +86,35 @@ export function ProductForm({
     });
   }, [initialValues, reset]);
 
+  const triggerLookup = async (code: string) => {
+    if (!code || code.trim().length < 4 || isLookingUp) return;
+    setIsLookingUp(true);
+    try {
+      const res = await lookupBarcode(code.trim());
+      if (res.found) {
+        const currentName = getValues("name");
+        const currentDesc = getValues("description");
+        if (res.name && (!currentName || currentName.trim() === "")) {
+          setValue("name", res.name, { shouldValidate: true, shouldDirty: true });
+        }
+        if (res.description && (!currentDesc || currentDesc.trim() === "")) {
+          setValue("description", res.description, { shouldValidate: true, shouldDirty: true });
+        }
+
+      }
+    } catch (e) {
+      // Defensive fallback: do nothing
+    } finally {
+      setIsLookingUp(false);
+    }
+  };
+
   const handleBarcodeScanned = (code: string) => {
     setValue("barcode", code, { shouldValidate: true, shouldDirty: true });
     if (!getValues("sku")) {
       setValue("sku", code, { shouldValidate: true, shouldDirty: true });
     }
+    triggerLookup(code);
   };
 
   return (
@@ -98,11 +126,20 @@ export function ProductForm({
             Código de barras
           </label>
           <div className="flex gap-2">
-            <input
-              {...register("barcode")}
-              placeholder="Escanear o ingresar..."
-              className="w-full rounded-xl border border-neutral-300 px-3.5 py-2 text-sm dark:border-neutral-800 dark:bg-neutral-900"
-            />
+            <div className="relative flex-1">
+              <input
+                {...register("barcode", {
+                  onBlur: (e) => triggerLookup(e.target.value),
+                })}
+                placeholder="Escanear o ingresar..."
+                className="w-full rounded-xl border border-neutral-300 px-3.5 py-2 text-sm dark:border-neutral-800 dark:bg-neutral-900 pr-9"
+              />
+              {isLookingUp && (
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 text-primary-500" title="Buscando datos del producto...">
+                  <Sparkles className="h-4 w-4 animate-pulse" />
+                </div>
+              )}
+            </div>
             <button
               type="button"
               onClick={() => setCameraOpen(true)}

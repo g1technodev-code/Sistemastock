@@ -108,16 +108,41 @@ export async function updateUser(id: string, input: UpdateUserInput, actingUserI
     throw ApiError.badRequest("No puedes cambiar tu propio rol o desactivar tu propia cuenta");
   }
 
+  if (input.isActive === true && target.isActive === false && target.localId) {
+    const local = await prisma.local.findUnique({ where: { id: target.localId }, include: { plan: true } });
+    if (local) {
+      if (target.role === "ADMIN" || target.role === "MANAGER") {
+        const activeAdmins = await prisma.user.count({
+          where: { localId: target.localId, role: { in: ["ADMIN", "MANAGER"] }, isActive: true },
+        });
+        if (activeAdmins >= local.plan.maxAdmins) {
+          throw ApiError.forbidden(
+            `No puedes activar este usuario. Tu plan ${local.plan.name} permite un máximo de ${local.plan.maxAdmins} Administrador(es).`,
+          );
+        }
+      } else if (target.role === "EMPLOYEE") {
+        const activeEmployees = await prisma.user.count({
+          where: { localId: target.localId, role: "EMPLOYEE", isActive: true },
+        });
+        if (activeEmployees >= local.plan.maxEmployees) {
+          throw ApiError.forbidden(
+            `No puedes activar este usuario. Tu plan ${local.plan.name} permite un máximo de ${local.plan.maxEmployees} Empleado(s).`,
+          );
+        }
+      }
+    }
+  }
+
   const updated = await prisma.user.update({
     where: { id },
     data: input,
     select: SELECT_FIELDS,
   });
 
-
   if (input.isActive === false || (input.role && input.role !== target.role)) {
     await revokeAllSessionsForUser(id);
   }
+
 
   return updated;
 }

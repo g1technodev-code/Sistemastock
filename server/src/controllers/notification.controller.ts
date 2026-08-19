@@ -11,18 +11,18 @@ const listQuerySchema = z.object({
 
 export const list = catchAsync(async (req: Request, res: Response) => {
   const query = listQuerySchema.parse(req.query);
-  const result = await notificationService.listNotifications(req.user?.localId, query);
+  const result = await notificationService.listNotifications(req.user?.id, req.user?.localId, query);
   res.json(result);
 });
 
-
 export const markRead = catchAsync(async (req: Request, res: Response) => {
   const id = req.params.id;
-  await notificationService.markAsRead(id);
+  await notificationService.markAsRead(id, req.user?.id, req.user?.localId);
   res.json({ success: true });
 });
 
-export const markAllRead = catchAsync(async (_req: Request, res: Response) => {
-  await notificationService.markAsRead();
+export const markAllRead = catchAsync(async (req: Request, res: Response) => {
+  await notificationService.markAsRead(undefined, req.user?.id, req.user?.localId);
   res.json({ success: true });
 });
+
