@@ -32,3 +32,10 @@ export const remove = catchAsync(async (req: Request, res: Response) => {
   const result = await productService.deleteProduct(req.user?.localId, req.params.id);
   res.json(result);
 });
+
+export const lookupBarcode = catchAsync(async (req: Request, res: Response) => {
+  const barcode = (req.query.code as string) || req.params.code;
+  const result = await productService.lookupBarcode(barcode);
+  res.json(result);
+});
+

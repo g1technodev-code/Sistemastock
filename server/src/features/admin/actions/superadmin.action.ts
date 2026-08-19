@@ -3,6 +3,8 @@ import { ApiError } from "../../../utils/apiError";
 import { parsePagination, paginatedResponse } from "../../../utils/pagination";
 import { hashPassword } from "../../../utils/password";
 import { Role } from "@prisma/client";
+import { revokeAllSessionsForUser } from "../../../services/auth.service";
+
 
 
 export type CreateLocalInput = {
@@ -174,6 +176,10 @@ export async function enforceLocalPlanQuota(localId: string) {
         where: { id: admins[i].id },
         data: { isActive: shouldBeActive },
       });
+
+      if (!shouldBeActive) {
+        await revokeAllSessionsForUser(admins[i].id);
+      }
     }
   }
 
@@ -184,9 +190,14 @@ export async function enforceLocalPlanQuota(localId: string) {
         where: { id: employees[i].id },
         data: { isActive: shouldBeActive },
       });
+
+      if (!shouldBeActive) {
+        await revokeAllSessionsForUser(employees[i].id);
+      }
     }
   }
 }
+
 
 export async function updateLocalPlan(id: string, planId: string) {
   const local = await prisma.local.findUnique({ where: { id } });
@@ -261,6 +272,80 @@ export async function getLatestAnnouncement() {
     orderBy: { createdAt: "desc" },
   });
 }
+
+export async function listSubscriptionPayments(query: { page?: number; limit?: number; search?: string; status?: string }) {
+  const page = Number(query.page) || 1;
+  const limit = Number(query.limit) || 10;
+  const skip = (page - 1) * limit;
+
+  const where: any = {};
+
+  if (query.status && query.status !== "ALL") {
+    where.status = query.status;
+  }
+
+  if (query.search) {
+    where.OR = [
+      { local: { name: { contains: query.search, mode: "insensitive" } } },
+      { mpPaymentId: { contains: query.search, mode: "insensitive" } },
+    ];
+  }
+
+  const now = new Date();
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+  const [items, total, monthlySum, activeLocales] = await Promise.all([
+    prisma.subscriptionPayment.findMany({
+      where,
+      include: {
+        local: { select: { id: true, name: true, ownerEmail: true } },
+        plan: { select: { id: true, name: true } },
+      },
+      orderBy: { createdAt: "desc" },
+      skip,
+      take: limit,
+    }),
+    prisma.subscriptionPayment.count({ where }),
+    prisma.subscriptionPayment.aggregate({
+      _sum: { amount: true },
+      where: {
+        status: "APPROVED",
+        createdAt: { gte: startOfMonth },
+      },
+    }),
+    prisma.local.findMany({
+      where: { status: { in: ["ACTIVE", "DUE_SOON"] } },
+      select: { monthlyPrice: true },
+    }),
+  ]);
+
+  const monthlyIncome = Number(monthlySum._sum.amount ?? 0);
+  const estimatedMrr = activeLocales.reduce((acc: number, l: { monthlyPrice: any }) => acc + Number(l.monthlyPrice), 0);
+
+  const totalPaymentsCount = await prisma.subscriptionPayment.count();
+  const approvedPaymentsCount = await prisma.subscriptionPayment.count({ where: { status: "APPROVED" } });
+  const successRate = totalPaymentsCount > 0 ? Math.round((approvedPaymentsCount / totalPaymentsCount) * 100) : 100;
+
+  return {
+    items: items.map((i: any) => ({
+      ...i,
+      amount: Number(i.amount),
+    })),
+    pagination: {
+
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    },
+    metrics: {
+      monthlyIncome,
+      estimatedMrr,
+      successRate,
+    },
+  };
+}
+
 
 
 

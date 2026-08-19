@@ -341,7 +341,60 @@ async function main() {
     }
   }
 
+  // Seed Subscription Payments for SuperAdmin view
+  const paymentCount = await prisma.subscriptionPayment.count();
+
+  if (paymentCount === 0) {
+    console.log("Seeding subscription payments for SuperAdmin...");
+    const planPro = await prisma.plan.findFirst({ where: { name: "Kipo Pro" } });
+    const planBasico = await prisma.plan.findFirst({ where: { name: "Kipo Básico" } });
+
+    const pastPayments = [
+      {
+        localId: localDemo.id,
+        planId: planPro?.id,
+        amount: Number(planPro?.monthlyPrice ?? 34900),
+        status: "APPROVED" as const,
+        mpPaymentId: "MP-984712041",
+        paymentMethod: "MERCADO_PAGO",
+        createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
+      },
+      {
+        localId: localDemo.id,
+        planId: planPro?.id,
+        amount: Number(planPro?.monthlyPrice ?? 34900),
+        status: "APPROVED" as const,
+        mpPaymentId: "MP-982104928",
+        paymentMethod: "MERCADO_PAGO",
+        createdAt: new Date(Date.now() - 32 * 24 * 60 * 60 * 1000),
+      },
+      {
+        localId: localDemo.id,
+        planId: planBasico?.id,
+        amount: Number(planBasico?.monthlyPrice ?? 18900),
+        status: "APPROVED" as const,
+        mpPaymentId: "MP-979104820",
+        paymentMethod: "MERCADO_PAGO",
+        createdAt: new Date(Date.now() - 62 * 24 * 60 * 60 * 1000),
+      },
+      {
+        localId: localDemo.id,
+        planId: planPro?.id,
+        amount: Number(planPro?.monthlyPrice ?? 34900),
+        status: "PENDING" as const,
+        mpPaymentId: "MP-985102941",
+        paymentMethod: "MERCADO_PAGO",
+        createdAt: new Date(Date.now() - 5 * 60 * 60 * 1000),
+      },
+    ];
+
+    for (const p of pastPayments) {
+      await prisma.subscriptionPayment.create({ data: p });
+    }
+  }
+
   console.log("Seed completed successfully!");
+
   console.log("-----------------------------------------");
   console.log("SuperAdmin -> superadmin@kipo.com / KipoSuperadmin2026!");
   console.log("Local 1 Admin -> admin@stockflow.com / Stockflow2026!");

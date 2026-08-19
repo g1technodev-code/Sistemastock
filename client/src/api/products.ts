@@ -50,3 +50,9 @@ export async function deleteProduct(id: string): Promise<{ softDeleted: boolean 
   const { data } = await api.delete(`/products/${id}`);
   return data;
 }
+
+export async function lookupBarcode(code: string): Promise<{ found: boolean; name?: string; description?: string }> {
+  const { data } = await api.get("/products/barcode-lookup", { params: { code } });
+  return data;
+}
+
