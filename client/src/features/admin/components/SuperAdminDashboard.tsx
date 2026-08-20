@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Building2, ShieldAlert, CheckCircle, DollarSign, Search, Power, AlertCircle, Sparkles, Plus, Clock, UserCheck, RefreshCw, Trash2 } from "lucide-react";
-import { getSuperAdminMetrics, listLocales, updateLocalStatus, createLocal, updateLocalPlan, deleteLocal } from "../actions/superadmin.api";
+import { Building2, ShieldAlert, CheckCircle, DollarSign, Search, Power, AlertCircle, Sparkles, Plus, Clock, UserCheck, RefreshCw, Trash2, Store } from "lucide-react";
+import { getSuperAdminMetrics, listLocales, updateLocalStatus, createLocal, updateLocalPlan, updateLocalRubro, deleteLocal } from "../actions/superadmin.api";
 
 import { Card, CardHeader, CardBody } from "../../../components/ui/Card";
 import { StatCard } from "../../../components/ui/StatCard";
@@ -13,6 +13,7 @@ import { DataTable, type DataTableColumn } from "../../../components/ui/DataTabl
 import { FullPageSpinner } from "../../../components/ui/Spinner";
 import { useToast } from "../../../context/ToastContext";
 import { usePlans } from "../../../hooks/usePlans";
+import { useRubros } from "../../../hooks/useRubros";
 import { formatCurrency, formatDate } from "../../../lib/formatters";
 import type { LocalItem, LocalStatus } from "../../../lib/types";
 
@@ -40,14 +41,19 @@ export default function SuperAdminDashboard() {
   const [ownerEmail, setOwnerEmail] = useState("");
   const [adminPassword, setAdminPassword] = useState("");
   const [planId, setPlanId] = useState("");
+  const [rubroId, setRubroId] = useState("");
   const [changePlanTarget, setChangePlanTarget] = useState<LocalItem | null>(null);
   const [changePlanId, setChangePlanId] = useState("");
+  const [changeRubroTarget, setChangeRubroTarget] = useState<LocalItem | null>(null);
+  const [changeRubroId, setChangeRubroId] = useState("");
 
   const { showSuccess, showError } = useToast();
   const queryClient = useQueryClient();
 
   const { data: plansData } = usePlans(false);
   const activePlans = plansData ?? [];
+  const { data: rubrosData } = useRubros(false);
+  const activeRubros = rubrosData ?? [];
 
   const { data: metricsData, isLoading: metricsLoading } = useQuery({
     queryKey: ["superadmin-metrics"],
@@ -68,6 +74,7 @@ export default function SuperAdminDashboard() {
       setOwnerEmail("");
       setAdminPassword("");
       setPlanId("");
+      setRubroId("");
       queryClient.invalidateQueries({ queryKey: ["superadmin-metrics"] });
       queryClient.invalidateQueries({ queryKey: ["superadmin-locales"] });
     },
@@ -101,6 +108,19 @@ export default function SuperAdminDashboard() {
     },
   });
 
+  const changeRubroMutation = useMutation({
+    mutationFn: ({ id, rubroId }: { id: string; rubroId: string | null }) => updateLocalRubro(id, rubroId),
+    onSuccess: () => {
+      showSuccess("Rubro del local actualizado correctamente");
+      setChangeRubroTarget(null);
+      queryClient.invalidateQueries({ queryKey: ["superadmin-metrics"] });
+      queryClient.invalidateQueries({ queryKey: ["superadmin-locales"] });
+    },
+    onError: (err: any) => {
+      showError(err?.response?.data?.message || "No se pudo cambiar el rubro del local");
+    },
+  });
+
   const deleteMutation = useMutation({
     mutationFn: (id: string) => deleteLocal(id),
     onSuccess: () => {
@@ -129,12 +149,17 @@ export default function SuperAdminDashboard() {
       showError("Completa todos los campos obligatorios");
       return;
     }
-    createMutation.mutate({ name, ownerEmail, adminPassword, planId: selectedPlanId });
+    createMutation.mutate({ name, ownerEmail, adminPassword, planId: selectedPlanId, rubroId: rubroId || undefined });
   };
 
   const openChangePlan = (item: LocalItem) => {
     setChangePlanTarget(item);
     setChangePlanId(item.plan.id);
+  };
+
+  const openChangeRubro = (item: LocalItem) => {
+    setChangeRubroTarget(item);
+    setChangeRubroId(item.rubroId ?? "");
   };
 
   const handleDeleteSubmit = (e: React.FormEvent) => {
@@ -172,6 +197,17 @@ export default function SuperAdminDashboard() {
         <button onClick={() => openChangePlan(item)} className="text-left">
           <Badge tone={item.isTrial ? "warning" : "success"} className="font-semibold">
             {item.isTrial ? `Prueba (${item.plan.trialDays ?? "-"} días)` : item.plan.name}
+          </Badge>
+        </button>
+      ),
+    },
+    {
+      key: "rubro",
+      header: "Rubro",
+      render: (item) => (
+        <button onClick={() => openChangeRubro(item)} className="text-left">
+          <Badge tone={item.rubro ? "info" : "neutral"} className="font-semibold">
+            {item.rubro?.name ?? "Sin asignar"}
           </Badge>
         </button>
       ),
@@ -418,6 +454,18 @@ export default function SuperAdminDashboard() {
               </option>
             ))}
           </Select>
+          <Select
+            label="Rubro (opcional)"
+            value={rubroId}
+            onChange={(e) => setRubroId(e.target.value)}
+          >
+            <option value="">Sin rubro asignado</option>
+            {activeRubros.map((r) => (
+              <option key={r.id} value={r.id}>
+                {r.name}
+              </option>
+            ))}
+          </Select>
 
           <div className="flex justify-end gap-3 pt-4">
             <Button
@@ -462,6 +510,40 @@ export default function SuperAdminDashboard() {
               onClick={() => changePlanTarget && changePlanMutation.mutate({ id: changePlanTarget.id, planId: changePlanId })}
             >
               <RefreshCw className="h-4 w-4 mr-1.5" /> Cambiar Plan
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Modal Cambiar Rubro */}
+      <Modal
+        open={!!changeRubroTarget}
+        onClose={() => setChangeRubroTarget(null)}
+        title={`Cambiar rubro de ${changeRubroTarget?.name ?? ""}`}
+        size="sm"
+      >
+        <div className="space-y-4">
+          <Select label="Rubro" value={changeRubroId} onChange={(e) => setChangeRubroId(e.target.value)}>
+            <option value="">Sin rubro asignado</option>
+            {activeRubros.map((r) => (
+              <option key={r.id} value={r.id}>
+                {r.name}
+              </option>
+            ))}
+          </Select>
+          <div className="flex justify-end gap-3 pt-2">
+            <Button type="button" variant="outline" onClick={() => setChangeRubroTarget(null)}>
+              Cancelar
+            </Button>
+            <Button
+              type="button"
+              isLoading={changeRubroMutation.isPending}
+              onClick={() =>
+                changeRubroTarget &&
+                changeRubroMutation.mutate({ id: changeRubroTarget.id, rubroId: changeRubroId || null })
+              }
+            >
+              <Store className="h-4 w-4 mr-1.5" /> Cambiar Rubro
             </Button>
           </div>
         </div>

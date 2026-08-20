@@ -13,7 +13,6 @@ import type { Product } from "../../lib/types";
 
 
 const schema = z.object({
-  sku: z.string().min(1, "El SKU es obligatorio"),
   name: z.string().min(2, "El nombre es muy corto"),
   description: z.string().optional(),
   barcode: z.string().optional(),
@@ -56,7 +55,6 @@ export function ProductForm({
   } = useForm<ProductFormInput, unknown, ProductFormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
-      sku: initialValues?.sku ?? "",
       name: initialValues?.name ?? "",
       description: initialValues?.description ?? "",
       barcode: initialValues?.barcode ?? "",
@@ -72,7 +70,6 @@ export function ProductForm({
 
   useEffect(() => {
     reset({
-      sku: initialValues?.sku ?? "",
       name: initialValues?.name ?? "",
       description: initialValues?.description ?? "",
       barcode: initialValues?.barcode ?? "",
@@ -111,44 +108,43 @@ export function ProductForm({
 
   const handleBarcodeScanned = (code: string) => {
     setValue("barcode", code, { shouldValidate: true, shouldDirty: true });
-    if (!getValues("sku")) {
-      setValue("sku", code, { shouldValidate: true, shouldDirty: true });
-    }
     triggerLookup(code);
   };
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
-      <div className="grid grid-cols-2 gap-4">
-        <Input label="SKU *" required error={errors.sku?.message} {...register("sku")} />
-        <div>
-          <label className="block text-xs font-semibold uppercase text-neutral-600 dark:text-neutral-400 mb-1">
-            Código de barras
-          </label>
-          <div className="flex gap-2">
-            <div className="relative flex-1">
-              <input
-                {...register("barcode", {
-                  onBlur: (e) => triggerLookup(e.target.value),
-                })}
-                placeholder="Escanear o ingresar..."
-                className="w-full rounded-xl border border-neutral-300 px-3.5 py-2 text-sm dark:border-neutral-800 dark:bg-neutral-900 pr-9"
-              />
-              {isLookingUp && (
-                <div className="absolute right-3 top-1/2 -translate-y-1/2 text-primary-500" title="Buscando datos del producto...">
-                  <Sparkles className="h-4 w-4 animate-pulse" />
-                </div>
-              )}
-            </div>
-            <button
-              type="button"
-              onClick={() => setCameraOpen(true)}
-              title="Escanear con Cámara"
-              className="flex items-center justify-center rounded-xl border border-neutral-300 bg-white px-3 text-neutral-700 shadow-sm hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-200 dark:hover:bg-neutral-800"
-            >
-              <Camera className="h-4 w-4 text-primary-600 dark:text-primary-400" />
-            </button>
+      {initialValues?.sku && (
+        <p className="text-xs font-medium text-neutral-500 dark:text-neutral-400">
+          SKU: <span className="font-mono font-semibold text-neutral-700 dark:text-neutral-300">{initialValues.sku}</span>
+        </p>
+      )}
+      <div>
+        <label className="block text-xs font-semibold uppercase text-neutral-600 dark:text-neutral-400 mb-1">
+          Código de barras
+        </label>
+        <div className="flex gap-2">
+          <div className="relative flex-1">
+            <input
+              {...register("barcode", {
+                onBlur: (e) => triggerLookup(e.target.value),
+              })}
+              placeholder="Escanear o ingresar..."
+              className="w-full rounded-xl border border-neutral-300 px-3.5 py-2 text-sm dark:border-neutral-800 dark:bg-neutral-900 pr-9"
+            />
+            {isLookingUp && (
+              <div className="absolute right-3 top-1/2 -translate-y-1/2 text-primary-500" title="Buscando datos del producto...">
+                <Sparkles className="h-4 w-4 animate-pulse" />
+              </div>
+            )}
           </div>
+          <button
+            type="button"
+            onClick={() => setCameraOpen(true)}
+            title="Escanear con Cámara"
+            className="flex items-center justify-center rounded-xl border border-neutral-300 bg-white px-3 text-neutral-700 shadow-sm hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-200 dark:hover:bg-neutral-800"
+          >
+            <Camera className="h-4 w-4 text-primary-600 dark:text-primary-400" />
+          </button>
         </div>
       </div>
       <Input label="Nombre" required error={errors.name?.message} {...register("name")} />

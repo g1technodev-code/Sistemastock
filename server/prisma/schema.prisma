@@ -50,6 +50,9 @@ model Local {
   ownerEmail   String
   planId       String
   plan         Plan        @relation(fields: [planId], references: [id])
+  rubroId      String?
+  rubro        Rubro?      @relation(fields: [rubroId], references: [id])
+  nextSkuNumber Int        @default(1)
   isTrial      Boolean     @default(false)
   status       LocalStatus @default(ACTIVE)
   dueDate      DateTime
@@ -75,8 +78,42 @@ model Local {
   payments         SubscriptionPayment[]
 
   @@index([planId])
+  @@index([rubroId])
 
   @@map("locales")
+}
+
+model Rubro {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  icon        String?
+  isActive    Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  locales         Local[]
+  catalogProducts CatalogProduct[]
+
+  @@map("rubros")
+}
+
+model CatalogProduct {
+  id          String   @id @default(cuid())
+  rubroId     String
+  rubro       Rubro    @relation(fields: [rubroId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+  unit        String   @default("unidad")
+  imageUrl    String?
+  barcode     String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([rubroId])
+  @@map("catalog_products")
 }
 
 

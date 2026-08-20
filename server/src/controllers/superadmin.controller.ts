@@ -14,8 +14,8 @@ export const listLocales = catchAsync(async (req: Request, res: Response) => {
 });
 
 export const createLocal = catchAsync(async (req: Request, res: Response) => {
-  const { name, ownerEmail, adminPassword, planId } = req.body;
-  const result = await superadminAction.createLocal({ name, ownerEmail, adminPassword, planId });
+  const { name, ownerEmail, adminPassword, planId, rubroId } = req.body;
+  const result = await superadminAction.createLocal({ name, ownerEmail, adminPassword, planId, rubroId });
   res.status(201).json(result);
 });
 
@@ -28,6 +28,12 @@ export const updateStatus = catchAsync(async (req: Request, res: Response) => {
 export const updatePlan = catchAsync(async (req: Request, res: Response) => {
   const { planId } = req.body as { planId: string };
   const updated = await superadminAction.updateLocalPlan(req.params.id, planId);
+  res.json(updated);
+});
+
+export const updateRubro = catchAsync(async (req: Request, res: Response) => {
+  const { rubroId } = req.body as { rubroId: string | null };
+  const updated = await superadminAction.updateLocalRubro(req.params.id, rubroId);
   res.json(updated);
 });
 

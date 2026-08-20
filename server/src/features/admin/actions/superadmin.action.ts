@@ -12,6 +12,7 @@ export type CreateLocalInput = {
   ownerEmail: string;
   adminPassword: string;
   planId: string;
+  rubroId?: string | null;
 };
 
 export async function createLocal(input: CreateLocalInput) {
@@ -22,6 +23,11 @@ export async function createLocal(input: CreateLocalInput) {
 
   const plan = await prisma.plan.findUnique({ where: { id: input.planId } });
   if (!plan) throw ApiError.badRequest("Plan no válido");
+
+  if (input.rubroId) {
+    const rubro = await prisma.rubro.findUnique({ where: { id: input.rubroId } });
+    if (!rubro) throw ApiError.badRequest("Rubro no válido");
+  }
 
   const dueDate = new Date();
   dueDate.setDate(dueDate.getDate() + (plan.isTrial ? plan.trialDays ?? 7 : 30));
@@ -34,6 +40,7 @@ export async function createLocal(input: CreateLocalInput) {
         name: input.name,
         ownerEmail: input.ownerEmail,
         planId: plan.id,
+        rubroId: input.rubroId || null,
         isTrial: plan.isTrial,
         status: "ACTIVE",
         dueDate,
@@ -141,7 +148,7 @@ export async function listLocales(query: { page?: number; limit?: number; q?: st
   const [items, total] = await Promise.all([
     prisma.local.findMany({
       where,
-      include: { plan: true },
+      include: { plan: true, rubro: true },
       orderBy: { createdAt: "desc" },
       skip: pagination.skip,
       take: pagination.limit,
@@ -218,6 +225,22 @@ export async function updateLocalPlan(id: string, planId: string) {
 
   await enforceLocalPlanQuota(id);
   return updated;
+}
+
+export async function updateLocalRubro(id: string, rubroId: string | null) {
+  const local = await prisma.local.findUnique({ where: { id } });
+  if (!local) throw ApiError.notFound("Local no encontrado");
+
+  if (rubroId) {
+    const rubro = await prisma.rubro.findUnique({ where: { id: rubroId } });
+    if (!rubro) throw ApiError.badRequest("Rubro no válido");
+  }
+
+  return prisma.local.update({
+    where: { id },
+    data: { rubroId },
+    include: { rubro: true },
+  });
 }
 
 export async function updateLocalStatus(id: string, status: "ACTIVE" | "SUSPENDED" | "DUE_SOON") {

@@ -31,6 +31,8 @@ const SuperAdminDashboard = lazy(() => import("./features/admin/components/Super
 const SuperAdminPagos = lazy(() => import("./pages/superadmin/Pagos"));
 const SuperAdminAnuncios = lazy(() => import("./pages/superadmin/Anuncios"));
 const SuperAdminPlanes = lazy(() => import("./pages/superadmin/Planes"));
+const SuperAdminRubros = lazy(() => import("./pages/superadmin/Rubros"));
+const SuperAdminCatalogoProductos = lazy(() => import("./pages/superadmin/CatalogoProductos"));
 
 // Precargar todas las rutas en segundo plano para eliminar pantallas de carga al navegar
 export function preloadAllPages() {
@@ -86,6 +88,8 @@ export default function App() {
           <Route path="/superadmin/pagos" element={<ProtectedRoute allowedRoles={["SUPERADMIN"]}><SuperAdminPagos /></ProtectedRoute>} />
           <Route path="/superadmin/anuncios" element={<ProtectedRoute allowedRoles={["SUPERADMIN"]}><SuperAdminAnuncios /></ProtectedRoute>} />
           <Route path="/superadmin/planes" element={<ProtectedRoute allowedRoles={["SUPERADMIN"]}><SuperAdminPlanes /></ProtectedRoute>} />
+          <Route path="/superadmin/rubros" element={<ProtectedRoute allowedRoles={["SUPERADMIN"]}><SuperAdminRubros /></ProtectedRoute>} />
+          <Route path="/superadmin/catalogo" element={<ProtectedRoute allowedRoles={["SUPERADMIN"]}><SuperAdminCatalogoProductos /></ProtectedRoute>} />
           <Route path="/dashboard" element={<ProtectedRoute allowedRoles={["ADMIN"]}><Dashboard /></ProtectedRoute>} />
 
           <Route path="/categories" element={<ProtectedRoute allowedRoles={["ADMIN"]}><Categories /></ProtectedRoute>} />

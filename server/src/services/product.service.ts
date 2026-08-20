@@ -1,8 +1,9 @@
-import { Prisma } from "@prisma/client";
+import { Prisma, MovementType } from "@prisma/client";
 import { prisma } from "../config/prisma";
 import { ApiError } from "../utils/apiError";
 import { parsePagination, paginatedResponse } from "../utils/pagination";
-import type { ListProductsQuery, UpsertProductInput } from "../schemas/product.schema";
+import { createMovement } from "./stock.service";
+import type { ListProductsQuery, UpsertProductInput, BulkProductRow } from "../schemas/product.schema";
 
 const PRODUCT_INCLUDE = {
   category: { select: { id: true, name: true, color: true } },
@@ -61,18 +62,25 @@ export async function getProduct(localId: string | null | undefined, id: string)
   return product;
 }
 
+/** Atomically reserves the next SKU number for a Local (P-00001, P-00002, ...). */
+async function nextSku(localId: string) {
+  const local = await prisma.local.update({
+    where: { id: localId },
+    data: { nextSkuNumber: { increment: 1 } },
+    select: { nextSkuNumber: true },
+  });
+  return `P-${String(local.nextSkuNumber - 1).padStart(5, "0")}`;
+}
+
 export async function createProduct(localId: string | null | undefined, input: UpsertProductInput) {
   if (!localId) throw ApiError.badRequest("Debe estar asociado a un local para crear productos");
 
-  const existing = await prisma.product.findUnique({
-    where: { localId_sku: { localId, sku: input.sku } },
-  });
-  if (existing) throw ApiError.conflict("Ya existe un producto con ese SKU en tu negocio");
+  const sku = await nextSku(localId);
 
   return prisma.product.create({
     data: {
       localId,
-      sku: input.sku,
+      sku,
       barcode: input.barcode || null,
       name: input.name,
       description: input.description || null,
@@ -95,18 +103,9 @@ export async function updateProduct(localId: string | null | undefined, id: stri
   });
   if (!product) throw ApiError.notFound("Producto no encontrado");
 
-  if (input.sku !== product.sku) {
-    const skuTaken = await prisma.product.findUnique({
-      where: { localId_sku: { localId: product.localId, sku: input.sku } },
-    });
-    if (skuTaken) throw ApiError.conflict("Ya existe un producto con ese SKU en tu negocio");
-  }
-
-
   return prisma.product.update({
     where: { id: product.id },
     data: {
-      sku: input.sku,
       barcode: input.barcode || null,
       name: input.name,
       description: input.description || null,
@@ -137,6 +136,57 @@ export async function deleteProduct(localId: string | null | undefined, id: stri
 
   await prisma.product.delete({ where: { id: product.id } });
   return { softDeleted: false };
+}
+
+export type BulkProductResult = {
+  row: number;
+  success: boolean;
+  error?: string;
+  product?: Awaited<ReturnType<typeof createProduct>>;
+};
+
+/**
+ * Creates each row's Product via createProduct (same localId+sku uniqueness check,
+ * no duplication), then routes any initial "cantidad" through createMovement so it
+ * goes through the same atomic increment + audit-trail path as any other stock-in —
+ * never a direct currentStock write.
+ */
+export async function bulkCreateProducts(
+  localId: string | null | undefined,
+  items: BulkProductRow[],
+  userId: string,
+): Promise<BulkProductResult[]> {
+  const results: BulkProductResult[] = [];
+
+  for (let i = 0; i < items.length; i++) {
+    const row = items[i];
+    try {
+      let product = await createProduct(localId, {
+        name: row.name,
+        description: row.description || null,
+        barcode: row.barcode || null,
+        unit: "unidad",
+        costPrice: 0,
+        sellPrice: row.precio,
+        minStock: 0,
+      });
+
+      if (row.cantidad > 0) {
+        await createMovement(
+          localId,
+          { productId: product.id, type: MovementType.IN, quantity: row.cantidad, reason: "Carga masiva" },
+          userId,
+        );
+        product = await getProduct(localId, product.id);
+      }
+
+      results.push({ row: i, success: true, product });
+    } catch (error) {
+      results.push({ row: i, success: false, error: error instanceof ApiError ? error.message : "Error inesperado" });
+    }
+  }
+
+  return results;
 }
 
 export async function lookupBarcode(barcode: string): Promise<{
