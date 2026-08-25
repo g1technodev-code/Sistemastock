@@ -67,4 +67,10 @@ export const listPayments = catchAsync(async (req: Request, res: Response) => {
   res.json(result);
 });
 
+export const createManualPayment = catchAsync(async (req: Request, res: Response) => {
+  const payment = await superadminAction.createManualPayment(req.body);
+  res.status(201).json({ payment });
+});
+
+
 

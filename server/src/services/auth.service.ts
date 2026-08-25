@@ -55,7 +55,15 @@ export async function login(email: string, password: string) {
   const tokens = await issueTokenPair({ ...user, planFeatures });
   return {
     ...tokens,
-    user: { id: user.id, localId: user.localId, name: user.name, email: user.email, role: user.role, planFeatures },
+    user: {
+      id: user.id,
+      localId: user.localId,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      canCreateProducts: user.canCreateProducts,
+      planFeatures,
+    },
   };
 }
 
@@ -101,6 +109,7 @@ export async function refresh(refreshTokenValue: string) {
       name: stored.user.name,
       email: stored.user.email,
       role: stored.user.role,
+      canCreateProducts: stored.user.canCreateProducts,
       planFeatures,
     },
   };
@@ -131,7 +140,9 @@ export async function getMe(userId: string) {
     name: user.name,
     email: user.email,
     role: user.role,
+    canCreateProducts: user.canCreateProducts,
     planFeatures: user.local?.plan.enabledFeatures ?? [],
   };
 }
+
 

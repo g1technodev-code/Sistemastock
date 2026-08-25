@@ -46,3 +46,17 @@ export async function listPayments(params?: {
   const { data } = await api.get("/superadmin/payments", { params });
   return data;
 }
+
+export type CreateManualPaymentPayload = {
+  localId: string;
+  planId: string;
+  amount: number;
+  paymentMethod: "EFECTIVO" | "TRANSFERENCIA";
+  createdAt?: string;
+};
+
+export async function createManualPayment(payload: CreateManualPaymentPayload): Promise<{ payment: SubscriptionPayment }> {
+  const { data } = await api.post("/superadmin/payments/manual", payload);
+  return data;
+}
+
