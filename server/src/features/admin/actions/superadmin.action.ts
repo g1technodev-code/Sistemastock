@@ -355,7 +355,6 @@ export async function listSubscriptionPayments(query: { page?: number; limit?: n
       amount: Number(i.amount),
     })),
     pagination: {
-
       page,
       limit,
       total,
@@ -368,6 +367,69 @@ export async function listSubscriptionPayments(query: { page?: number; limit?: n
     },
   };
 }
+
+export type CreateManualPaymentInput = {
+  localId: string;
+  planId: string;
+  amount: number;
+  paymentMethod: "EFECTIVO" | "TRANSFERENCIA";
+  createdAt?: string;
+};
+
+export async function createManualPayment(input: CreateManualPaymentInput) {
+  const local = await prisma.local.findUnique({
+    where: { id: input.localId },
+    include: { plan: true },
+  });
+  if (!local) throw ApiError.notFound("Local no encontrado");
+
+  const targetPlan = await prisma.plan.findUnique({
+    where: { id: input.planId },
+  });
+  if (!targetPlan) throw ApiError.badRequest("Plan no válido");
+
+  const paymentDate = input.createdAt ? new Date(input.createdAt) : new Date();
+
+  const currentDueDate = new Date(local.dueDate);
+  const baseDate = currentDueDate > paymentDate ? currentDueDate : paymentDate;
+  const newDueDate = new Date(baseDate);
+  newDueDate.setDate(newDueDate.getDate() + 30);
+
+  const manualPaymentCode = `MANUAL-${input.paymentMethod.substring(0, 4)}-${Date.now()}`;
+
+  const result = await prisma.$transaction(async (tx) => {
+    const payment = await tx.subscriptionPayment.create({
+      data: {
+        localId: input.localId,
+        planId: input.planId,
+        amount: input.amount,
+        currency: "ARS",
+        status: "APPROVED",
+        paymentMethod: input.paymentMethod,
+        mpPaymentId: manualPaymentCode,
+        createdAt: paymentDate,
+      },
+    });
+
+    await tx.local.update({
+      where: { id: input.localId },
+      data: {
+        planId: targetPlan.id,
+        status: "ACTIVE",
+        isTrial: false,
+        dueDate: newDueDate,
+        monthlyPrice: targetPlan.monthlyPrice,
+      },
+    });
+
+    return payment;
+  });
+
+  await enforceLocalPlanQuota(input.localId);
+
+  return result;
+}
+
 
 
 

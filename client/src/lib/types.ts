@@ -127,8 +127,10 @@ export type AuthUser = {
   name: string;
   email: string;
   role: Role;
+  canCreateProducts?: boolean;
   planFeatures?: string[];
 };
+
 
 
 export type Customer = {

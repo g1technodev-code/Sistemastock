@@ -10,7 +10,9 @@ export type ProductInput = {
   costPrice: number;
   sellPrice: number;
   minStock: number;
+  initialStock?: number;
   imageUrl?: string | null;
+
   categoryId?: string | null;
   supplierId?: string | null;
   isActive?: boolean;

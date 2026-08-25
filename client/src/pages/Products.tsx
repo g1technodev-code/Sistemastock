@@ -28,7 +28,8 @@ import type { Product } from "../lib/types";
 export default function Products() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const canManage = user ? permissions.canManageCatalog(user.role) : false;
+  const canManage = user ? permissions.canManageCatalog(user) : false;
+
   const { showSuccess, showError } = useToast();
   const queryClient = useQueryClient();
 
@@ -179,19 +180,22 @@ export default function Products() {
           <h1 className="text-2xl font-black tracking-tight text-neutral-900 dark:text-white">Productos</h1>
           <p className="mt-1 text-sm font-medium text-neutral-500 dark:text-neutral-400">Catálogo completo de tu inventario.</p>
         </div>
-        {canManage && (
-          <div className="flex items-center gap-2">
-            <Button onClick={() => setCameraOpen(true)} variant="outline" className="shadow-sm">
-              <Camera className="h-4 w-4 text-primary-600 dark:text-primary-400" strokeWidth={2.5} /> Escanear
-            </Button>
-            <Button onClick={() => setBulkOpen(true)} variant="outline" className="shadow-sm">
-              <Upload className="h-4 w-4" strokeWidth={2.5} /> Carga masiva
-            </Button>
-            <Button onClick={openCreate} className="shadow-sm">
-              <Plus className="h-4 w-4" strokeWidth={2.5} /> Nuevo producto
-            </Button>
-          </div>
-        )}
+        <div className="flex items-center gap-2">
+          <Button onClick={() => setCameraOpen(true)} variant="outline" className="shadow-sm">
+            <Camera className="h-4 w-4 text-primary-600 dark:text-primary-400" strokeWidth={2.5} /> Escanear
+          </Button>
+          {canManage && (
+            <>
+              <Button onClick={() => setBulkOpen(true)} variant="outline" className="shadow-sm">
+                <Upload className="h-4 w-4" strokeWidth={2.5} /> Carga masiva
+              </Button>
+              <Button onClick={openCreate} className="shadow-sm">
+                <Plus className="h-4 w-4" strokeWidth={2.5} /> Nuevo producto
+              </Button>
+            </>
+          )}
+        </div>
+
       </div>
 
       <div className="flex gap-1 border-b border-neutral-200 dark:border-neutral-800">

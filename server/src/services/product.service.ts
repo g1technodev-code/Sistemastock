@@ -72,29 +72,52 @@ async function nextSku(localId: string) {
   return `P-${String(local.nextSkuNumber - 1).padStart(5, "0")}`;
 }
 
-export async function createProduct(localId: string | null | undefined, input: UpsertProductInput) {
+export async function createProduct(localId: string | null | undefined, input: UpsertProductInput, userId?: string) {
   if (!localId) throw ApiError.badRequest("Debe estar asociado a un local para crear productos");
 
   const sku = await nextSku(localId);
+  const initialStock = input.initialStock ?? 0;
 
-  return prisma.product.create({
-    data: {
-      localId,
-      sku,
-      barcode: input.barcode || null,
-      name: input.name,
-      description: input.description || null,
-      unit: input.unit,
-      costPrice: input.costPrice,
-      sellPrice: input.sellPrice,
-      minStock: input.minStock,
-      imageUrl: input.imageUrl || null,
-      categoryId: input.categoryId || null,
-      supplierId: input.supplierId || null,
-    },
-    include: PRODUCT_INCLUDE,
+  return prisma.$transaction(async (tx) => {
+    const product = await tx.product.create({
+      data: {
+        localId,
+        sku,
+        barcode: input.barcode || null,
+        name: input.name,
+        description: input.description || null,
+        unit: input.unit,
+        costPrice: input.costPrice,
+        sellPrice: input.sellPrice,
+        currentStock: initialStock,
+        minStock: input.minStock,
+        imageUrl: input.imageUrl || null,
+        categoryId: input.categoryId || null,
+        supplierId: input.supplierId || null,
+      },
+      include: PRODUCT_INCLUDE,
+    });
+
+    if (initialStock > 0 && userId) {
+      await tx.stockMovement.create({
+        data: {
+          localId,
+          productId: product.id,
+          userId,
+          type: MovementType.IN,
+          quantity: initialStock,
+          quantityBefore: 0,
+          quantityAfter: initialStock,
+          reason: "Stock inicial al crear producto",
+        },
+      });
+    }
+
+
+    return product;
   });
 }
+
 
 
 export async function updateProduct(localId: string | null | undefined, id: string, input: UpsertProductInput) {

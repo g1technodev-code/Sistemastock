@@ -7,8 +7,11 @@ export const upsertProductSchema = z.object({
   unit: z.string().default("unidad"),
   costPrice: z.coerce.number().min(0),
   sellPrice: z.coerce.number().min(0),
-  minStock: z.coerce.number().int().min(0),
+  minStock: z.coerce.number().int().min(0).default(0),
+  initialStock: z.coerce.number().int().min(0).optional(),
   imageUrl: z.string().optional().nullable(),
+
+
   categoryId: z.string().optional().nullable(),
   supplierId: z.string().optional().nullable(),
   isActive: z.boolean().optional(),

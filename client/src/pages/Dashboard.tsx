@@ -259,7 +259,8 @@ export default function Dashboard() {
         <p className="mt-1 text-base text-neutral-500 dark:text-neutral-400">Resumen de tu inventario en tiempo real. Haz clic en cualquier tarjeta para ver su detalle.</p>
       </div>
 
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      <div className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-3 xl:grid-cols-4 animate-in fade-in slide-in-from-bottom-4 duration-700">
+
         <StatCard
           label="Ventas de hoy"
           value={formatCurrency(kpis.salesToday)}

@@ -17,9 +17,23 @@ const schema = z.object({
   description: z.string().optional(),
   barcode: z.string().optional(),
   unit: z.string().min(1, "Obligatorio"),
-  costPrice: z.coerce.number().min(0, "Debe ser 0 o mayor"),
-  sellPrice: z.coerce.number().min(0, "Debe ser 0 o mayor"),
-  minStock: z.coerce.number().int().min(0, "Debe ser 0 o mayor"),
+  costPrice: z.preprocess(
+    (v) => (v === "" || v === undefined || v === null ? undefined : Number(v)),
+    z.number({ message: "Debe ingresar el costo" }).min(0, "Debe ser 0 o mayor")
+  ),
+  sellPrice: z.preprocess(
+    (v) => (v === "" || v === undefined || v === null ? undefined : Number(v)),
+    z.number({ message: "Debe ingresar el precio de venta" }).min(0, "Debe ser 0 o mayor")
+  ),
+
+  minStock: z.preprocess(
+    (v) => (v === "" || v === undefined || v === null ? undefined : Number(v)),
+    z.number().int().min(0, "Debe ser 0 o mayor").default(0)
+  ),
+  initialStock: z.preprocess(
+    (v) => (v === "" || v === undefined || v === null ? undefined : Number(v)),
+    z.number().int().min(0, "Debe ser 0 o mayor").optional().default(0)
+  ),
   categoryId: z.string().optional(),
   supplierId: z.string().optional(),
   isActive: z.boolean().optional(),
@@ -44,8 +58,9 @@ export function ProductForm({
   const [cameraOpen, setCameraOpen] = useState(false);
   const [isLookingUp, setIsLookingUp] = useState(false);
 
-  const {
+  const isEditing = Boolean(initialValues && initialValues.id);
 
+  const {
     register,
     handleSubmit,
     reset,
@@ -59,9 +74,10 @@ export function ProductForm({
       description: initialValues?.description ?? "",
       barcode: initialValues?.barcode ?? "",
       unit: initialValues?.unit ?? "unidad",
-      costPrice: initialValues?.costPrice ?? 0,
-      sellPrice: initialValues?.sellPrice ?? 0,
-      minStock: initialValues?.minStock ?? 0,
+      costPrice: (initialValues?.costPrice as any) ?? "",
+      sellPrice: (initialValues?.sellPrice as any) ?? "",
+      minStock: (initialValues?.minStock as any) ?? "",
+      initialStock: (initialValues?.currentStock as any) ?? "",
       categoryId: initialValues?.categoryId ?? "",
       supplierId: initialValues?.supplierId ?? "",
       isActive: initialValues?.isActive ?? true,
@@ -74,9 +90,10 @@ export function ProductForm({
       description: initialValues?.description ?? "",
       barcode: initialValues?.barcode ?? "",
       unit: initialValues?.unit ?? "unidad",
-      costPrice: initialValues?.costPrice ?? 0,
-      sellPrice: initialValues?.sellPrice ?? 0,
-      minStock: initialValues?.minStock ?? 0,
+      costPrice: (initialValues?.costPrice as any) ?? "",
+      sellPrice: (initialValues?.sellPrice as any) ?? "",
+      minStock: (initialValues?.minStock as any) ?? "",
+      initialStock: (initialValues?.currentStock as any) ?? "",
       categoryId: initialValues?.categoryId ?? "",
       supplierId: initialValues?.supplierId ?? "",
       isActive: initialValues?.isActive ?? true,
@@ -97,7 +114,6 @@ export function ProductForm({
         if (res.description && (!currentDesc || currentDesc.trim() === "")) {
           setValue("description", res.description, { shouldValidate: true, shouldDirty: true });
         }
-
       }
     } catch (e) {
       // Defensive fallback: do nothing
@@ -147,7 +163,7 @@ export function ProductForm({
           </button>
         </div>
       </div>
-      <Input label="Nombre" required error={errors.name?.message} {...register("name")} />
+      <Input label="Nombre *" required error={errors.name?.message} {...register("name")} />
       <Textarea label="Descripción" rows={2} {...register("description")} />
 
       <div className="grid grid-cols-2 gap-4">
@@ -170,19 +186,32 @@ export function ProductForm({
       </div>
 
       <div className="grid grid-cols-3 gap-4">
-        <Input label="Unidad" required error={errors.unit?.message} {...register("unit")} />
-        <Input label="Costo" type="number" step="0.01" required error={errors.costPrice?.message} {...register("costPrice")} />
-        <Input label="Precio venta" type="number" step="0.01" required error={errors.sellPrice?.message} {...register("sellPrice")} />
+        <Input label="Unidad *" required error={errors.unit?.message} {...register("unit")} />
+        <Input label="Costo ($) *" type="number" step="0.01" placeholder="0.00" required error={errors.costPrice?.message} {...register("costPrice")} />
+        <Input label="Precio venta ($) *" type="number" step="0.01" placeholder="0.00" required error={errors.sellPrice?.message} {...register("sellPrice")} />
       </div>
 
-      <Input
-        label="Stock mínimo"
-        type="number"
-        hint="Se generará una alerta cuando el stock actual sea igual o menor"
-        required
-        error={errors.minStock?.message}
-        {...register("minStock")}
-      />
+      <div className="grid grid-cols-2 gap-4">
+        <Input
+          label="Stock mínimo"
+          type="number"
+          placeholder="0"
+          hint="Genera una alerta cuando el stock descienda"
+          error={errors.minStock?.message}
+          {...register("minStock")}
+        />
+        {!isEditing && (
+          <Input
+            label="Stock inicial / actual"
+            type="number"
+            placeholder="0"
+            hint="Cantidad de unidades actualmente en stock"
+            error={errors.initialStock?.message}
+            {...register("initialStock")}
+          />
+        )}
+      </div>
+
 
       {initialValues && initialValues.id && (
         <label className="flex items-center gap-2 text-sm text-neutral-700 dark:text-neutral-300">

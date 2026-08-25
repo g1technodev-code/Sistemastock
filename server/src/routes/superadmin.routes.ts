@@ -12,7 +12,9 @@ import {
   listAnnouncements,
   removeAnnouncement,
   listPayments,
+  createManualPayment,
 } from "../controllers/superadmin.controller";
+
 import * as planController from "../controllers/plan.controller";
 import * as rubroController from "../controllers/rubro.controller";
 import * as catalogProductController from "../controllers/catalogProduct.controller";
@@ -52,8 +54,10 @@ router.post("/announcements", createAnnouncement);
 router.delete("/announcements/:id", removeAnnouncement);
 
 router.get("/payments", listPayments);
+router.post("/payments/manual", createManualPayment);
 
 export default router;
+
 
 
 
