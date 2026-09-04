@@ -1,4 +1,4 @@
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useEffect, useState } from "react";
@@ -48,6 +48,7 @@ export function ProductForm({
     reset,
     setValue,
     getValues,
+    control,
     formState: { errors },
   } = useForm<ProductFormInput, unknown, ProductFormValues>({
     resolver: zodResolver(schema),
@@ -88,6 +89,11 @@ export function ProductForm({
       setValue("sku", code, { shouldValidate: true, shouldDirty: true });
     }
   };
+
+  const costPrice = useWatch({ control, name: "costPrice" }) || 0;
+  const sellPrice = useWatch({ control, name: "sellPrice" }) || 0;
+  const profit = Number(sellPrice) - Number(costPrice);
+  const margin = Number(costPrice) > 0 ? (profit / Number(costPrice)) * 100 : 0;
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
@@ -139,7 +145,15 @@ export function ProductForm({
       <div className="grid grid-cols-3 gap-4">
         <Input label="Unidad" required error={errors.unit?.message} {...register("unit")} />
         <Input label="Costo" type="number" step="0.01" required error={errors.costPrice?.message} {...register("costPrice")} />
-        <Input label="Precio venta" type="number" step="0.01" required error={errors.sellPrice?.message} {...register("sellPrice")} />
+        <div>
+          <Input label="Precio venta" type="number" step="0.01" required error={errors.sellPrice?.message} {...register("sellPrice")} />
+          {(Number(sellPrice) > 0 || Number(costPrice) > 0) && (
+            <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
+              Ganancia: <span className={profit > 0 ? "text-green-600 dark:text-green-400" : profit < 0 ? "text-red-600 dark:text-red-400" : ""}>${profit.toFixed(2)}</span>
+              {Number(costPrice) > 0 && ` (${margin.toFixed(1)}%)`}
+            </p>
+          )}
+        </div>
       </div>
 
       <Input
