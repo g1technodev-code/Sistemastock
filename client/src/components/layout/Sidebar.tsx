@@ -27,6 +27,8 @@ import {
   DollarSign,
   Megaphone,
   Sliders,
+  Store,
+  PackageSearch,
 } from "lucide-react";
 
 import { useAuth } from "../../context/AuthContext";
@@ -35,7 +37,9 @@ import { cn } from "../../lib/utils";
 import type { Role } from "../../lib/types";
 import { hasFeature, type PlanFeature } from "../../lib/features";
 import { listPublicPlans } from "../../api/plans";
+import { useMySubscription } from "../../hooks/usePlans";
 import { PWAInstallPrompt } from "../PWAInstallPrompt";
+
 
 
 
@@ -56,6 +60,8 @@ const SUPERADMIN_NAV_ITEMS: NavItem[] = [
   { to: "/superadmin/pagos", label: "Pagos e Ingresos", icon: DollarSign, show: () => true },
   { to: "/superadmin/anuncios", label: "Anuncios Globales", icon: Megaphone, show: () => true },
   { to: "/superadmin/planes", label: "Configuración de Planes", icon: Sliders, show: () => true },
+  { to: "/superadmin/rubros", label: "Rubros", icon: Store, show: () => true },
+  { to: "/superadmin/catalogo", label: "Catálogo de Productos", icon: PackageSearch, show: () => true },
 ];
 
 const TENANT_NAV_ITEMS: NavItem[] = [
@@ -89,8 +95,10 @@ function getInitialCollapsed(): boolean {
 export function Sidebar({ mobileOpen, onCloseMobile }: { mobileOpen: boolean; onCloseMobile: () => void }) {
   const { user, logout } = useAuth();
   const [collapsed, setCollapsed] = useState(getInitialCollapsed);
-
   const { data: publicPlans } = useQuery({ queryKey: ["public-plans"], queryFn: listPublicPlans, enabled: !!user && user.role !== "SUPERADMIN" });
+  const { data: subscription } = useMySubscription(!!user && user.role !== "SUPERADMIN" && !!user.localId);
+
+
 
   useEffect(() => {
     localStorage.setItem(COLLAPSE_STORAGE_KEY, collapsed ? "1" : "0");
@@ -101,11 +109,26 @@ export function Sidebar({ mobileOpen, onCloseMobile }: { mobileOpen: boolean; on
   const rawItems = user.role === "SUPERADMIN" ? SUPERADMIN_NAV_ITEMS : TENANT_NAV_ITEMS;
   const items = rawItems.filter((item) => item.show(user.role));
 
+  const isProPlan = subscription?.planName?.toLowerCase().includes("pro") ?? false;
+  const subFeatures = subscription?.plan?.enabledFeatures ?? subscription?.plan?.features ?? [];
+
+  function isItemLocked(feature?: PlanFeature): boolean {
+    if (!feature) return false;
+    if (user?.role === "SUPERADMIN") return false;
+    if (isProPlan) return false;
+    if (subFeatures.length > 0) return !subFeatures.includes(feature);
+    return !hasFeature(user, feature);
+  }
+
   function upgradePlanFor(feature: PlanFeature): string | null {
-    const candidates = (publicPlans ?? []).filter((p) => p.enabledFeatures.includes(feature));
+    const candidates = (publicPlans ?? []).filter((p) => {
+      const feats = (p as any).enabledFeatures ?? p.features ?? [];
+      return feats.includes(feature);
+    });
     if (candidates.length === 0) return null;
     return [...candidates].sort((a, b) => a.monthlyPrice - b.monthlyPrice)[0].name;
   }
+
 
 
   function renderContent(isCollapsed: boolean) {
@@ -127,13 +150,15 @@ export function Sidebar({ mobileOpen, onCloseMobile }: { mobileOpen: boolean; on
         </div>
         <nav className="flex-1 space-y-1 px-4 mt-2 overflow-y-auto">
           {items.map((item) => {
-            const locked = item.feature ? !hasFeature(user, item.feature) : false;
+            const locked = isItemLocked(item.feature);
             const upgradePlan = locked && item.feature ? upgradePlanFor(item.feature) : null;
             return (
             <NavLink
               key={item.to}
               to={item.to}
+              end
               onClick={onCloseMobile}
+
               title={
                 isCollapsed
                   ? `${item.label}${item.shortcut ? ` (${item.shortcut})` : ""}${locked ? ` — requiere plan ${upgradePlan ?? "superior"}` : ""}`

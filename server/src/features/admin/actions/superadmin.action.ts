@@ -3,6 +3,8 @@ import { ApiError } from "../../../utils/apiError";
 import { parsePagination, paginatedResponse } from "../../../utils/pagination";
 import { hashPassword } from "../../../utils/password";
 import { Role } from "@prisma/client";
+import { revokeAllSessionsForUser } from "../../../services/auth.service";
+
 
 
 export type CreateLocalInput = {
@@ -10,6 +12,7 @@ export type CreateLocalInput = {
   ownerEmail: string;
   adminPassword: string;
   planId: string;
+  rubroId?: string | null;
 };
 
 export async function createLocal(input: CreateLocalInput) {
@@ -20,6 +23,11 @@ export async function createLocal(input: CreateLocalInput) {
 
   const plan = await prisma.plan.findUnique({ where: { id: input.planId } });
   if (!plan) throw ApiError.badRequest("Plan no válido");
+
+  if (input.rubroId) {
+    const rubro = await prisma.rubro.findUnique({ where: { id: input.rubroId } });
+    if (!rubro) throw ApiError.badRequest("Rubro no válido");
+  }
 
   const dueDate = new Date();
   dueDate.setDate(dueDate.getDate() + (plan.isTrial ? plan.trialDays ?? 7 : 30));
@@ -32,6 +40,7 @@ export async function createLocal(input: CreateLocalInput) {
         name: input.name,
         ownerEmail: input.ownerEmail,
         planId: plan.id,
+        rubroId: input.rubroId || null,
         isTrial: plan.isTrial,
         status: "ACTIVE",
         dueDate,
@@ -139,7 +148,7 @@ export async function listLocales(query: { page?: number; limit?: number; q?: st
   const [items, total] = await Promise.all([
     prisma.local.findMany({
       where,
-      include: { plan: true },
+      include: { plan: true, rubro: true },
       orderBy: { createdAt: "desc" },
       skip: pagination.skip,
       take: pagination.limit,
@@ -174,6 +183,10 @@ export async function enforceLocalPlanQuota(localId: string) {
         where: { id: admins[i].id },
         data: { isActive: shouldBeActive },
       });
+
+      if (!shouldBeActive) {
+        await revokeAllSessionsForUser(admins[i].id);
+      }
     }
   }
 
@@ -184,9 +197,14 @@ export async function enforceLocalPlanQuota(localId: string) {
         where: { id: employees[i].id },
         data: { isActive: shouldBeActive },
       });
+
+      if (!shouldBeActive) {
+        await revokeAllSessionsForUser(employees[i].id);
+      }
     }
   }
 }
+
 
 export async function updateLocalPlan(id: string, planId: string) {
   const local = await prisma.local.findUnique({ where: { id } });
@@ -207,6 +225,22 @@ export async function updateLocalPlan(id: string, planId: string) {
 
   await enforceLocalPlanQuota(id);
   return updated;
+}
+
+export async function updateLocalRubro(id: string, rubroId: string | null) {
+  const local = await prisma.local.findUnique({ where: { id } });
+  if (!local) throw ApiError.notFound("Local no encontrado");
+
+  if (rubroId) {
+    const rubro = await prisma.rubro.findUnique({ where: { id: rubroId } });
+    if (!rubro) throw ApiError.badRequest("Rubro no válido");
+  }
+
+  return prisma.local.update({
+    where: { id },
+    data: { rubroId },
+    include: { rubro: true },
+  });
 }
 
 export async function updateLocalStatus(id: string, status: "ACTIVE" | "SUSPENDED" | "DUE_SOON") {
@@ -261,6 +295,142 @@ export async function getLatestAnnouncement() {
     orderBy: { createdAt: "desc" },
   });
 }
+
+export async function listSubscriptionPayments(query: { page?: number; limit?: number; search?: string; status?: string }) {
+  const page = Number(query.page) || 1;
+  const limit = Number(query.limit) || 10;
+  const skip = (page - 1) * limit;
+
+  const where: any = {};
+
+  if (query.status && query.status !== "ALL") {
+    where.status = query.status;
+  }
+
+  if (query.search) {
+    where.OR = [
+      { local: { name: { contains: query.search, mode: "insensitive" } } },
+      { mpPaymentId: { contains: query.search, mode: "insensitive" } },
+    ];
+  }
+
+  const now = new Date();
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+  const [items, total, monthlySum, activeLocales] = await Promise.all([
+    prisma.subscriptionPayment.findMany({
+      where,
+      include: {
+        local: { select: { id: true, name: true, ownerEmail: true } },
+        plan: { select: { id: true, name: true } },
+      },
+      orderBy: { createdAt: "desc" },
+      skip,
+      take: limit,
+    }),
+    prisma.subscriptionPayment.count({ where }),
+    prisma.subscriptionPayment.aggregate({
+      _sum: { amount: true },
+      where: {
+        status: "APPROVED",
+        createdAt: { gte: startOfMonth },
+      },
+    }),
+    prisma.local.findMany({
+      where: { status: { in: ["ACTIVE", "DUE_SOON"] } },
+      select: { monthlyPrice: true },
+    }),
+  ]);
+
+  const monthlyIncome = Number(monthlySum._sum.amount ?? 0);
+  const estimatedMrr = activeLocales.reduce((acc: number, l: { monthlyPrice: any }) => acc + Number(l.monthlyPrice), 0);
+
+  const totalPaymentsCount = await prisma.subscriptionPayment.count();
+  const approvedPaymentsCount = await prisma.subscriptionPayment.count({ where: { status: "APPROVED" } });
+  const successRate = totalPaymentsCount > 0 ? Math.round((approvedPaymentsCount / totalPaymentsCount) * 100) : 100;
+
+  return {
+    items: items.map((i: any) => ({
+      ...i,
+      amount: Number(i.amount),
+    })),
+    pagination: {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    },
+    metrics: {
+      monthlyIncome,
+      estimatedMrr,
+      successRate,
+    },
+  };
+}
+
+export type CreateManualPaymentInput = {
+  localId: string;
+  planId: string;
+  amount: number;
+  paymentMethod: "EFECTIVO" | "TRANSFERENCIA";
+  createdAt?: string;
+};
+
+export async function createManualPayment(input: CreateManualPaymentInput) {
+  const local = await prisma.local.findUnique({
+    where: { id: input.localId },
+    include: { plan: true },
+  });
+  if (!local) throw ApiError.notFound("Local no encontrado");
+
+  const targetPlan = await prisma.plan.findUnique({
+    where: { id: input.planId },
+  });
+  if (!targetPlan) throw ApiError.badRequest("Plan no válido");
+
+  const paymentDate = input.createdAt ? new Date(input.createdAt) : new Date();
+
+  const currentDueDate = new Date(local.dueDate);
+  const baseDate = currentDueDate > paymentDate ? currentDueDate : paymentDate;
+  const newDueDate = new Date(baseDate);
+  newDueDate.setDate(newDueDate.getDate() + 30);
+
+  const manualPaymentCode = `MANUAL-${input.paymentMethod.substring(0, 4)}-${Date.now()}`;
+
+  const result = await prisma.$transaction(async (tx) => {
+    const payment = await tx.subscriptionPayment.create({
+      data: {
+        localId: input.localId,
+        planId: input.planId,
+        amount: input.amount,
+        currency: "ARS",
+        status: "APPROVED",
+        paymentMethod: input.paymentMethod,
+        mpPaymentId: manualPaymentCode,
+        createdAt: paymentDate,
+      },
+    });
+
+    await tx.local.update({
+      where: { id: input.localId },
+      data: {
+        planId: targetPlan.id,
+        status: "ACTIVE",
+        isTrial: false,
+        dueDate: newDueDate,
+        monthlyPrice: targetPlan.monthlyPrice,
+      },
+    });
+
+    return payment;
+  });
+
+  await enforceLocalPlanQuota(input.localId);
+
+  return result;
+}
+
+
 
 
 

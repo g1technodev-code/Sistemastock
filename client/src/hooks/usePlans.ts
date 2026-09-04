@@ -28,11 +28,13 @@ export function usePlanMutations() {
   return { create, update, remove };
 }
 
-export function useMySubscription() {
+export function useMySubscription(enabled = true) {
   return useQuery({
     queryKey: ["my-subscription"],
     queryFn: () => publicPlansApi.getMySubscription(),
+    enabled,
   });
 }
+
 
 

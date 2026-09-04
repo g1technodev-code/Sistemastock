@@ -139,6 +139,40 @@ async function main() {
     },
   });
 
+  // 2b. Seed base Rubros (dynamic, superadmin-managed) + demo CatalogProducts
+  const rubroKiosco = await prisma.rubro.upsert({
+    where: { id: "rubro-kiosco" },
+    update: {},
+    create: { id: "rubro-kiosco", name: "Kiosco", description: "Kioscos y almacenes de cercanía", sortOrder: 0 },
+  });
+  const rubroFerreteria = await prisma.rubro.upsert({
+    where: { id: "rubro-ferreteria" },
+    update: {},
+    create: { id: "rubro-ferreteria", name: "Ferretería", description: "Ferreterías y corralones", sortOrder: 1 },
+  });
+
+  const CATALOG_KIOSCO = [
+    { name: "Coca-Cola 500ml", unit: "unidad", barcode: "7790895000782" },
+    { name: "Alfajor Jorgito Triple", unit: "unidad" },
+    { name: "Papas Fritas Lays 45g", unit: "unidad" },
+    { name: "Cigarrillos Marlboro Box", unit: "paquete" },
+  ];
+  const CATALOG_FERRETERIA = [
+    { name: "Taladro Percutor 650W", unit: "unidad" },
+    { name: "Tornillos Autoperforantes 8x1 (x100)", unit: "caja" },
+    { name: "Pintura Látex Interior 20L", unit: "balde" },
+    { name: "Cinta Métrica Stanley 5m", unit: "unidad" },
+  ];
+
+  for (const item of CATALOG_KIOSCO) {
+    const existing = await prisma.catalogProduct.findFirst({ where: { rubroId: rubroKiosco.id, name: item.name } });
+    if (!existing) await prisma.catalogProduct.create({ data: { ...item, rubroId: rubroKiosco.id } });
+  }
+  for (const item of CATALOG_FERRETERIA) {
+    const existing = await prisma.catalogProduct.findFirst({ where: { rubroId: rubroFerreteria.id, name: item.name } });
+    if (!existing) await prisma.catalogProduct.create({ data: { ...item, rubroId: rubroFerreteria.id } });
+  }
+
   // 3. Create Demo Local (ID 1 / demo-local-1)
   const demoDueDate = new Date();
   demoDueDate.setDate(demoDueDate.getDate() + 30);
@@ -171,6 +205,7 @@ async function main() {
       name: "Ferretería Nordelta",
       ownerEmail: "contacto@nordeltaferro.com",
       planId: planBasico.id,
+      rubroId: rubroFerreteria.id,
       status: LocalStatus.ACTIVE,
       dueDate: local2DueDate,
       monthlyPrice: 24900,
@@ -341,7 +376,60 @@ async function main() {
     }
   }
 
+  // Seed Subscription Payments for SuperAdmin view
+  const paymentCount = await prisma.subscriptionPayment.count();
+
+  if (paymentCount === 0) {
+    console.log("Seeding subscription payments for SuperAdmin...");
+    const planPro = await prisma.plan.findFirst({ where: { name: "Kipo Pro" } });
+    const planBasico = await prisma.plan.findFirst({ where: { name: "Kipo Básico" } });
+
+    const pastPayments = [
+      {
+        localId: localDemo.id,
+        planId: planPro?.id,
+        amount: Number(planPro?.monthlyPrice ?? 34900),
+        status: "APPROVED" as const,
+        mpPaymentId: "MP-984712041",
+        paymentMethod: "MERCADO_PAGO",
+        createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
+      },
+      {
+        localId: localDemo.id,
+        planId: planPro?.id,
+        amount: Number(planPro?.monthlyPrice ?? 34900),
+        status: "APPROVED" as const,
+        mpPaymentId: "MP-982104928",
+        paymentMethod: "MERCADO_PAGO",
+        createdAt: new Date(Date.now() - 32 * 24 * 60 * 60 * 1000),
+      },
+      {
+        localId: localDemo.id,
+        planId: planBasico?.id,
+        amount: Number(planBasico?.monthlyPrice ?? 18900),
+        status: "APPROVED" as const,
+        mpPaymentId: "MP-979104820",
+        paymentMethod: "MERCADO_PAGO",
+        createdAt: new Date(Date.now() - 62 * 24 * 60 * 60 * 1000),
+      },
+      {
+        localId: localDemo.id,
+        planId: planPro?.id,
+        amount: Number(planPro?.monthlyPrice ?? 34900),
+        status: "PENDING" as const,
+        mpPaymentId: "MP-985102941",
+        paymentMethod: "MERCADO_PAGO",
+        createdAt: new Date(Date.now() - 5 * 60 * 60 * 1000),
+      },
+    ];
+
+    for (const p of pastPayments) {
+      await prisma.subscriptionPayment.create({ data: p });
+    }
+  }
+
   console.log("Seed completed successfully!");
+
   console.log("-----------------------------------------");
   console.log("SuperAdmin -> superadmin@kipo.com / KipoSuperadmin2026!");
   console.log("Local 1 Admin -> admin@stockflow.com / Stockflow2026!");

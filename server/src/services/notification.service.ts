@@ -21,47 +21,109 @@ export async function createNotification(
   });
 }
 
-export async function listNotifications(localId: string | null | undefined, query: { page?: number; limit?: number; unreadOnly?: boolean }) {
+export async function listNotifications(
+  userId: string | undefined,
+  localId: string | null | undefined,
+  query: { page?: number; limit?: number; unreadOnly?: boolean },
+) {
   const pagination = parsePagination(query);
-  const where: Prisma.NotificationWhereInput = {
-    ...(localId ? { localId } : {}),
-  };
-  if (query.unreadOnly) {
-    where.isRead = false;
-  }
 
-  const [items, total, unreadCount] = await Promise.all([
+  // Fetch local notifications
+  const notifWhere: Prisma.NotificationWhereInput = {
+    ...(localId ? { localId } : {}),
+    ...(query.unreadOnly ? { isRead: false } : {}),
+  };
+
+  const [localNotifs, unreadNotifCount, announcements, userReads] = await Promise.all([
     prisma.notification.findMany({
-      where,
+      where: notifWhere,
       orderBy: { createdAt: "desc" },
       skip: pagination.skip,
       take: pagination.limit,
     }),
-    prisma.notification.count({ where }),
-    prisma.notification.count({ where: { ...(localId ? { localId } : {}), isRead: false } }),
+    prisma.notification.count({
+      where: { ...(localId ? { localId } : {}), isRead: false },
+    }),
+    prisma.announcement.findMany({
+      orderBy: { createdAt: "desc" },
+      take: 5,
+    }),
+    userId
+      ? prisma.userAnnouncementRead.findMany({
+          where: { userId },
+          select: { announcementId: true },
+        })
+      : Promise.resolve([]),
   ]);
 
+  const readAnnouncementIds = new Set(userReads.map((r) => r.announcementId));
+
+  // Format announcements as notification items
+  const announcementItems = announcements.map((ann) => ({
+    id: `announcement_${ann.id}`,
+    announcementId: ann.id,
+    localId: localId ?? "",
+    type: `ANNOUNCEMENT_${ann.type}`,
+    title: ann.title,
+    message: ann.message,
+    metadata: { isAnnouncement: true, announcementType: ann.type },
+    isRead: readAnnouncementIds.has(ann.id),
+    createdAt: ann.createdAt.toISOString(),
+  }));
+
+  const unreadAnnouncementsCount = announcements.filter((ann) => !readAnnouncementIds.has(ann.id)).length;
+
+  const allItems = [...announcementItems, ...localNotifs.map((n) => ({ ...n, createdAt: n.createdAt.toISOString() }))].sort(
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+  );
+
   return {
-    ...paginatedResponse(items, total, pagination),
-    unreadCount,
+    items: allItems,
+    unreadCount: unreadNotifCount + unreadAnnouncementsCount,
   };
 }
 
+export async function markAsRead(id?: string, userId?: string, localId?: string | null) {
 
-export async function markAsRead(localId: string | null | undefined, id?: string) {
-  if (id) {
-    const existing = await prisma.notification.findFirst({
-      where: { id, ...(localId ? { localId } : {}) },
-    });
-    if (!existing) return null;
-    return prisma.notification.update({
-      where: { id: existing.id },
+  if (!id) {
+    // Mark all local notifications as read and mark all announcements as read for this user
+    await prisma.notification.updateMany({
+      where: { ...(localId ? { localId } : {}), isRead: false },
       data: { isRead: true },
     });
+
+    if (userId) {
+      const allAnnouncements = await prisma.announcement.findMany({ select: { id: true } });
+      const readData = allAnnouncements.map((a) => ({
+        userId,
+        announcementId: a.id,
+      }));
+      await prisma.userAnnouncementRead.createMany({
+        data: readData,
+        skipDuplicates: true,
+      });
+    }
+
+    return { success: true };
   }
 
-  return prisma.notification.updateMany({
-    where: { isRead: false, ...(localId ? { localId } : {}) },
+  if (id.startsWith("announcement_")) {
+    const annId = id.replace("announcement_", "");
+    if (userId) {
+      await prisma.userAnnouncementRead.upsert({
+        where: {
+          userId_announcementId: { userId, announcementId: annId },
+        },
+        create: { userId, announcementId: annId },
+        update: {},
+      });
+    }
+    return { success: true };
+  }
+
+  return prisma.notification.update({
+    where: { id },
     data: { isRead: true },
   });
 }
+

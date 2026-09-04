@@ -55,11 +55,44 @@ export type Announcement = {
 };
 
 
+export type BulkRowResult = {
+  row: number;
+  success: boolean;
+  error?: string;
+};
+
+export type Rubro = {
+  id: string;
+  name: string;
+  description: string | null;
+  icon: string | null;
+  isActive: boolean;
+  sortOrder: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type CatalogProduct = {
+  id: string;
+  rubroId: string;
+  rubro?: { id: string; name: string };
+  name: string;
+  description: string | null;
+  unit: string;
+  imageUrl: string | null;
+  barcode: string | null;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type LocalItem = {
   id: string;
   name: string;
   ownerEmail: string;
   plan: Plan;
+  rubroId?: string | null;
+  rubro?: Rubro | null;
   isTrial?: boolean;
   status: LocalStatus;
   dueDate: string;
@@ -94,8 +127,10 @@ export type AuthUser = {
   name: string;
   email: string;
   role: Role;
+  canCreateProducts?: boolean;
   planFeatures?: string[];
 };
+
 
 
 export type Customer = {

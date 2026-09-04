@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Menu, Search, Bell, LogOut, AlertTriangle, Sun, Moon, Wallet, CheckCheck } from "lucide-react";
+import { Menu, Search, Bell, LogOut, AlertTriangle, Sun, Moon, Wallet, CheckCheck, Megaphone } from "lucide-react";
+
 import { useAuth } from "../../context/AuthContext";
 import { useTheme } from "../../context/ThemeContext";
 import { listNotifications, markAllNotificationsAsRead, markNotificationAsRead } from "../../api/notifications";
@@ -112,37 +113,48 @@ export function Topbar({ onOpenMenu, onOpenSearch }: { onOpenMenu: () => void; o
                   </div>
                 )}
                 {notificationsData?.items.map((n: NotificationItem) => {
+                  const isAnnouncement = n.metadata?.isAnnouncement || n.type.startsWith("ANNOUNCEMENT_");
                   const isStock = n.type === "LOW_STOCK";
-                  const targetLink = isStock ? "/products" : "/caja";
+                  const targetLink = isAnnouncement ? "#" : isStock ? "/products" : "/caja";
+
                   return (
-                    <Link
+                    <div
                       key={n.id}
-                      to={targetLink}
                       onClick={() => {
                         if (!n.isRead) markOneMutation.mutate(n.id);
-                        setAlertsOpen(false);
+                        if (!isAnnouncement) setAlertsOpen(false);
                       }}
-                      className={`flex items-start gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors ${
+                      className={`flex items-start gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors cursor-pointer ${
                         n.isRead
                           ? "opacity-60 hover:bg-neutral-50 dark:hover:bg-neutral-800/60"
                           : "bg-primary-50/40 dark:bg-primary-500/10 hover:bg-primary-50 dark:hover:bg-primary-500/20"
                       }`}
                     >
                       <div className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${
-                        isStock
+                        isAnnouncement
+                          ? "bg-indigo-100 text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-400"
+                          : isStock
                           ? "bg-warning-100 text-warning-600 dark:bg-warning-500/10 dark:text-warning-400"
                           : "bg-primary-100 text-primary-600 dark:bg-primary-500/10 dark:text-primary-400"
                       }`}>
-                        {isStock ? <AlertTriangle className="h-4 w-4" /> : <Wallet className="h-4 w-4" />}
+                        {isAnnouncement ? <Megaphone className="h-4 w-4" /> : isStock ? <AlertTriangle className="h-4 w-4" /> : <Wallet className="h-4 w-4" />}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="truncate font-semibold text-neutral-900 dark:text-neutral-100">{n.title}</p>
+                        <div className="flex items-center justify-between gap-1">
+                          <p className="truncate font-semibold text-neutral-900 dark:text-neutral-100">{n.title}</p>
+                          {isAnnouncement && (
+                            <Badge tone="info" className="text-[9px] px-1.5 py-0 font-bold uppercase tracking-wider shrink-0">
+                              Aviso
+                            </Badge>
+                          )}
+                        </div>
                         <p className="text-xs text-neutral-600 dark:text-neutral-400 line-clamp-2 mt-0.5">{n.message}</p>
                         <p className="text-[10px] text-neutral-400 mt-1">{formatDate(n.createdAt)}</p>
                       </div>
-                    </Link>
+                    </div>
                   );
                 })}
+
               </div>
             </div>
           )}
