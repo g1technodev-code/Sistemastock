@@ -26,6 +26,8 @@ const Customers = lazy(() => import("./pages/Customers"));
 const Plans = lazy(() => import("./pages/Plans"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const Tutorial = lazy(() => import("./pages/Tutorial"));
+const Catalog = lazy(() => import("./pages/Catalog"));
+
 
 
 
@@ -75,7 +77,9 @@ export default function App() {
   return (
     <Suspense fallback={<PageLoader />}>
       <Routes>
+        <Route path="/c/:localId" element={<Catalog />} />
         <Route path="/login" element={<Login />} />
+
 
         <Route
           element={

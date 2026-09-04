@@ -1,7 +1,11 @@
 import { useState, useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Menu, Search, Bell, LogOut, AlertTriangle, Sun, Moon, Wallet, CheckCheck, Megaphone } from "lucide-react";
+import { Menu, Search, Bell, LogOut, AlertTriangle, Sun, Moon, Wallet, CheckCheck, Megaphone, Gift, Copy } from "lucide-react";
+import { Modal } from "../ui/Modal";
+import { Button } from "../ui/Button";
+import { Input } from "../ui/Field";
+import { useToast } from "../../context/ToastContext";
 
 import { useAuth } from "../../context/AuthContext";
 import { useTheme } from "../../context/ThemeContext";
@@ -19,6 +23,8 @@ export function Topbar({ onOpenMenu, onOpenSearch }: { onOpenMenu: () => void; o
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const alertsRef = useRef<HTMLDivElement>(null);
   const userRef = useRef<HTMLDivElement>(null);
+  const [referralOpen, setReferralOpen] = useState(false);
+  const { showSuccess } = useToast();
 
   const { data: notificationsData } = useQuery({
     queryKey: ["notifications"],
@@ -52,6 +58,7 @@ export function Topbar({ onOpenMenu, onOpenSearch }: { onOpenMenu: () => void; o
   const unreadCount = notificationsData?.unreadCount ?? 0;
 
   return (
+    <>
     <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b border-neutral-200 bg-white/70 px-4 backdrop-blur-xl dark:border-white/10 dark:bg-neutral-950/70 sm:px-6">
       <button onClick={onOpenMenu} className="rounded-full p-2 text-neutral-500 transition-colors hover:bg-neutral-100 lg:hidden dark:hover:bg-neutral-800">
         <Menu className="h-5 w-5" />
@@ -69,6 +76,14 @@ export function Topbar({ onOpenMenu, onOpenSearch }: { onOpenMenu: () => void; o
       </button>
 
       <div className="ml-auto flex items-center gap-2 sm:gap-3">
+        {user?.role === "ADMIN" && (
+          <button
+            onClick={() => setReferralOpen(true)}
+            className="hidden sm:flex items-center gap-2 rounded-full border border-yellow-300 bg-yellow-50 px-3 py-1.5 text-xs font-bold text-yellow-700 shadow-sm transition-all hover:bg-yellow-100 hover:shadow dark:border-yellow-900/50 dark:bg-yellow-950/30 dark:text-yellow-500"
+          >
+            <Gift className="h-4 w-4" /> Gana 1 Mes Gratis
+          </button>
+        )}
         <button
           onClick={toggleTheme}
           aria-label={theme === "dark" ? "Activar modo claro" : "Activar modo oscuro"}
@@ -187,5 +202,35 @@ export function Topbar({ onOpenMenu, onOpenSearch }: { onOpenMenu: () => void; o
         </div>
       </div>
     </header>
+      
+      {/* Referral Modal */}
+      <Modal open={referralOpen} onClose={() => setReferralOpen(false)} title="🎁 ¡Gana 1 Mes Gratis!" size="sm">
+        <div className="flex flex-col gap-4">
+          <p className="text-sm text-neutral-600 dark:text-neutral-400">
+            Comparte Kipo con otros negocios. Por cada local que se registre con tu enlace y adquiera un plan, te regalaremos <strong>1 mes gratis</strong> en tu plan actual.
+          </p>
+          <div className="flex flex-col gap-2">
+            <span className="text-xs font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">Tu enlace de invitación</span>
+            <div className="flex gap-2">
+              <Input
+                readOnly
+                value={`https://kipo.app/registro?ref=${user?.localId || user?.id}`}
+                className="flex-1 font-mono text-xs"
+              />
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  navigator.clipboard.writeText(`https://kipo.app/registro?ref=${user?.localId || user?.id}`);
+                  showSuccess("¡Enlace copiado!");
+                }}
+                className="shrink-0"
+              >
+                <Copy className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        </div>
+      </Modal>
+    </>
   );
 }

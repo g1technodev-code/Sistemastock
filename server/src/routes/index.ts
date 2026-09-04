@@ -20,6 +20,7 @@ import superadminRoutes from "./superadmin.routes";
 import planRoutes from "./plan.routes";
 import announcementRoutes from "./announcement.routes";
 import rubroRoutes from "./rubro.routes";
+import catalogRoutes from "./catalog.routes";
 
 const router = Router();
 
@@ -46,6 +47,7 @@ router.use("/settings", settingsRoutes);
 router.use("/customers", customerRoutes);
 router.use("/notifications", notificationRoutes);
 router.use("/mercadopago", mercadopagoRoutes);
+router.use("/catalog", catalogRoutes);
 
 export default router;
 
