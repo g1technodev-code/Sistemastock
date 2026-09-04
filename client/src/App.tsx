@@ -67,7 +67,6 @@ function RootRedirect() {
   const { user } = useAuth();
   if (!user) return <Navigate to="/login" replace />;
   if (user.role === "SUPERADMIN") return <Navigate to="/superadmin" replace />;
-  if (user.role === "ADMIN") return <Navigate to="/dashboard" replace />;
   return <Navigate to="/ventas" replace />;
 }
 

@@ -359,6 +359,7 @@ export default function Ventas() {
                 </div>
 
                 <Button
+                  variant="success"
                   onClick={checkout}
                   disabled={cart.length === 0 || !hasOpenShift || missingReceiptInfo || missingCustomer}
                   isLoading={createSale.isPending}
