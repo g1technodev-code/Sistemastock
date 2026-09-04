@@ -192,11 +192,10 @@ export function ProductForm({
       </div>
 
       <div className="grid grid-cols-3 gap-4">
-<<<<<<< HEAD
-        <Input label="Unidad" required error={errors.unit?.message} {...register("unit")} />
-        <Input label="Costo" type="number" step="0.01" required error={errors.costPrice?.message} {...register("costPrice")} />
+        <Input label="Unidad *" required error={errors.unit?.message} {...register("unit")} />
+        <Input label="Costo ($) *" type="number" step="0.01" placeholder="0.00" required error={errors.costPrice?.message} {...register("costPrice")} />
         <div>
-          <Input label="Precio venta" type="number" step="0.01" required error={errors.sellPrice?.message} {...register("sellPrice")} />
+          <Input label="Precio venta ($) *" type="number" step="0.01" placeholder="0.00" required error={errors.sellPrice?.message} {...register("sellPrice")} />
           {(Number(sellPrice) > 0 || Number(costPrice) > 0) && (
             <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
               Ganancia: <span className={profit > 0 ? "text-green-600 dark:text-green-400" : profit < 0 ? "text-red-600 dark:text-red-400" : ""}>${profit.toFixed(2)}</span>
@@ -204,10 +203,6 @@ export function ProductForm({
             </p>
           )}
         </div>
-=======
-        <Input label="Unidad *" required error={errors.unit?.message} {...register("unit")} />
-        <Input label="Costo ($) *" type="number" step="0.01" placeholder="0.00" required error={errors.costPrice?.message} {...register("costPrice")} />
-        <Input label="Precio venta ($) *" type="number" step="0.01" placeholder="0.00" required error={errors.sellPrice?.message} {...register("sellPrice")} />
       </div>
 
       <div className="grid grid-cols-2 gap-4">
@@ -229,7 +224,6 @@ export function ProductForm({
             {...register("initialStock")}
           />
         )}
->>>>>>> 41503c86a2ab4419fef6f48913340d06dd3ab904
       </div>
 
 
