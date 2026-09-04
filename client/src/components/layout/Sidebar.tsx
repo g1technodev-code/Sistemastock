@@ -29,6 +29,7 @@ import {
   Sliders,
   Store,
   PackageSearch,
+  HelpCircle,
 } from "lucide-react";
 
 import { useAuth } from "../../context/AuthContext";
@@ -83,6 +84,7 @@ const TENANT_NAV_ITEMS: NavItem[] = [
   { to: "/rentabilidad", label: "Rentabilidad", icon: Percent, show: permissions.canViewReports, feature: "REPORTS" },
   { to: "/users", label: "Usuarios", icon: Users, show: permissions.canManageUsers },
   { to: "/settings", label: "Configuración", icon: Settings, show: permissions.canManageSettings },
+  { to: "/tutorial", label: "Centro de Ayuda", icon: HelpCircle, show: () => true },
 ];
 
 

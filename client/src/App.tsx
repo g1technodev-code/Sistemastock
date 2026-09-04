@@ -25,6 +25,8 @@ const Settings = lazy(() => import("./pages/Settings"));
 const Customers = lazy(() => import("./pages/Customers"));
 const Plans = lazy(() => import("./pages/Plans"));
 const NotFound = lazy(() => import("./pages/NotFound"));
+const Tutorial = lazy(() => import("./pages/Tutorial"));
+
 
 
 const SuperAdminDashboard = lazy(() => import("./features/admin/components/SuperAdminDashboard"));
@@ -50,6 +52,7 @@ export function preloadAllPages() {
   import("./pages/Rentabilidad");
   import("./pages/Users");
   import("./pages/Settings");
+  import("./pages/Tutorial");
 }
 
 function PageLoader() {
@@ -97,6 +100,7 @@ export default function App() {
           <Route path="/inventario-fisico" element={<ProtectedRoute requiredFeature="PHYSICAL_INVENTORY"><InventarioFisico /></ProtectedRoute>} />
 
           {/* Both Admin and Employee */}
+          <Route path="/tutorial" element={<Tutorial />} />
           <Route path="/products" element={<Products />} />
           <Route path="/products/:id" element={<ProductDetail />} />
           <Route path="/stock" element={<Stock />} />
