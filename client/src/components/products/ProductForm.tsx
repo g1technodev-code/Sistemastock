@@ -194,7 +194,6 @@ export function ProductForm({
       </div>
 
       <Input label="Nombre *" required error={errors.name?.message} {...register("name")} />
-      <Textarea label="Descripción" rows={2} {...register("description")} />
 
       <div className="grid grid-cols-2 gap-4">
         <Select label="Categoría" {...register("categoryId")}>
@@ -216,8 +215,7 @@ export function ProductForm({
       </div>
 
       {saleType !== "AMOUNT" ? (
-        <div className="grid grid-cols-3 gap-4">
-          <Input label="Unidad *" required error={errors.unit?.message} {...register("unit")} />
+        <div className="grid grid-cols-2 gap-4">
           <Input label="Costo ($) *" type="number" step="0.01" placeholder="0.00" required error={errors.costPrice?.message} {...register("costPrice")} />
           <div>
             <Input label={saleType === "WEIGHT" ? "Precio por Kg ($) *" : "Precio venta ($) *"} type="number" step="0.01" placeholder="0.00" required error={errors.sellPrice?.message} {...register("sellPrice")} />
