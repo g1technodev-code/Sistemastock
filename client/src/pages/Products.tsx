@@ -100,7 +100,7 @@ export default function Products() {
         barcode: values.barcode || null,
         description: values.description || null,
       };
-      if (editingProduct) {
+      if (editingProduct && editingProduct.id) {
         await update.mutateAsync({ id: editingProduct.id, input });
         showSuccess("Producto actualizado");
       } else {
