@@ -137,6 +137,7 @@ export async function updateProduct(localId: string | null | undefined, id: stri
       costPrice: input.costPrice,
       sellPrice: input.sellPrice,
       minStock: input.minStock,
+      currentStock: input.initialStock !== undefined ? input.initialStock : undefined,
       imageUrl: input.imageUrl || null,
       saleType: input.saleType || "UNIT",
       categoryId: input.categoryId || null,

@@ -11,6 +11,8 @@ export type PurchaseInput = {
   supplierId: string;
   items: PurchaseItemInput[];
   note?: string | null;
+  paymentMethod?: string | null;
+  receiptNumber?: string | null;
 };
 
 export type ListPurchasesParams = {

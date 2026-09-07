@@ -119,7 +119,7 @@ export default function Ventas() {
     return sum;
   }, 0), [cart]);
   const hasOpenShift = !!cashStatus?.myOpenShift;
-  const requiresReceiptInfo = paymentMethod === "TRANSFERENCIA" || paymentMethod === "TARJETA";
+  const requiresReceiptInfo = false;
   const requiresCustomer = paymentMethod === "CUENTA_CORRIENTE";
   const missingReceiptInfo = requiresReceiptInfo && (!receiptNumber.trim() || !payerName.trim());
   const missingCustomer = requiresCustomer && !selectedCustomerId;

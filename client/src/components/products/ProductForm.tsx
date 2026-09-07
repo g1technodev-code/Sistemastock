@@ -243,7 +243,6 @@ export function ProductForm({
           error={errors.minStock?.message}
           {...register("minStock")}
         />
-        {!isEditing && (
           <Input
             label="Stock inicial / actual"
             type="number"
@@ -252,7 +251,6 @@ export function ProductForm({
             error={errors.initialStock?.message}
             {...register("initialStock")}
           />
-        )}
       </div>
       )}
 

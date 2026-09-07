@@ -11,7 +11,7 @@ const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Products = lazy(() => import("./pages/Products"));
 const ProductDetail = lazy(() => import("./pages/ProductDetail"));
 const Categories = lazy(() => import("./pages/Categories"));
-const Suppliers = lazy(() => import("./pages/Suppliers"));
+
 const Stock = lazy(() => import("./pages/Stock"));
 const Ventas = lazy(() => import("./pages/Ventas"));
 const Compras = lazy(() => import("./pages/Compras"));
@@ -47,7 +47,7 @@ export function preloadAllPages() {
   import("./pages/Stock");
   import("./pages/Compras");
   import("./pages/Categories");
-  import("./pages/Suppliers");
+
   import("./pages/InventarioFisico");
   import("./pages/Reports");
   import("./pages/Estadisticas");
@@ -99,7 +99,7 @@ export default function App() {
           <Route path="/dashboard" element={<ProtectedRoute allowedRoles={["ADMIN"]}><Dashboard /></ProtectedRoute>} />
 
           <Route path="/categories" element={<ProtectedRoute allowedRoles={["ADMIN"]}><Categories /></ProtectedRoute>} />
-          <Route path="/suppliers" element={<ProtectedRoute allowedRoles={["ADMIN"]}><Suppliers /></ProtectedRoute>} />
+
           <Route path="/inventario-fisico" element={<ProtectedRoute requiredFeature="PHYSICAL_INVENTORY"><InventarioFisico /></ProtectedRoute>} />
 
           {/* Both Admin and Employee */}

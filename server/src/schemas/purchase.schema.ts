@@ -8,14 +8,19 @@ const purchaseItemSchema = z.object({
 
 export const createPurchaseSchema = z.object({
   supplierId: z.string().min(1, "Selecciona un proveedor"),
+  purchaseOrderId: z.string().optional().nullable(),
   items: z.array(purchaseItemSchema).min(1, "Agrega al menos un producto"),
   note: z.string().optional().nullable(),
+  paymentMethod: z.enum(["EFECTIVO", "TRANSFERENCIA", "TARJETA", "CUENTA_CORRIENTE"]).optional().nullable(),
+  receiptNumber: z.string().optional().nullable(),
 });
 
 export const updatePurchaseSchema = z.object({
   supplierId: z.string().min(1, "Selecciona un proveedor"),
   items: z.array(purchaseItemSchema).min(1, "Agrega al menos un producto"),
   note: z.string().optional().nullable(),
+  paymentMethod: z.enum(["EFECTIVO", "TRANSFERENCIA", "TARJETA", "CUENTA_CORRIENTE"]).optional().nullable(),
+  receiptNumber: z.string().optional().nullable(),
 });
 
 export const listPurchasesQuerySchema = z.object({

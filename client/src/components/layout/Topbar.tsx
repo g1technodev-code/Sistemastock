@@ -10,7 +10,7 @@ import { useToast } from "../../context/ToastContext";
 import { useAuth } from "../../context/AuthContext";
 import { useTheme } from "../../context/ThemeContext";
 import { listNotifications, markAllNotificationsAsRead, markNotificationAsRead } from "../../api/notifications";
-import { initials, formatDate } from "../../lib/formatters";
+import { initials, formatDate, formatDateTime } from "../../lib/formatters";
 import { ROLE_LABEL } from "../../lib/permissions";
 import { Badge } from "../ui/Badge";
 import type { NotificationItem } from "../../lib/types";
@@ -164,7 +164,7 @@ export function Topbar({ onOpenMenu, onOpenSearch }: { onOpenMenu: () => void; o
                           )}
                         </div>
                         <p className="text-xs text-neutral-600 dark:text-neutral-400 line-clamp-2 mt-0.5">{n.message}</p>
-                        <p className="text-[10px] text-neutral-400 mt-1">{formatDate(n.createdAt)}</p>
+                        <p className="text-[10px] text-neutral-400 mt-1">{formatDateTime(n.createdAt)}</p>
                       </div>
                     </div>
                   );
