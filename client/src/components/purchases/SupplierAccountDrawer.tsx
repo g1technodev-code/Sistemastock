@@ -4,10 +4,10 @@ import { Button } from "../ui/Button";
 import { Input, Select, Textarea } from "../ui/Field";
 import { Table, THead, TBody, TR, TH, TD } from "../ui/Table";
 import { Badge } from "../ui/Badge";
-import { formatCurrency, formatDateTime } from "../../lib/utils";
+import { formatCurrency, formatDateTime } from "../../lib/formatters";
 import { useSupplierAccount, useSupplierAccountMutations } from "../../hooks/useSuppliers";
-import { useToast } from "../../hooks/useToast";
-import { extractErrorMessage } from "../../lib/api";
+import { useToast } from "../../context/ToastContext";
+import { extractErrorMessage } from "../../api/client";
 import { ArrowDownRight, ArrowUpRight } from "lucide-react";
 import type { PaymentMethod } from "../../lib/types";
 

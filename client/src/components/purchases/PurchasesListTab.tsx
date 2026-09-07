@@ -7,15 +7,15 @@ import { Button } from "../ui/Button";
 import { Card } from "../ui/Card";
 import { DataTable, type DataTableColumn } from "../ui/DataTable";
 import { Badge } from "../ui/Badge";
-import { Select } from "../ui/Select";
+import { Select } from "../ui/Field";
 import { Modal } from "../ui/Modal";
 import { Drawer } from "../ui/Drawer";
 import { EmptyState } from "../ui/EmptyState";
 import { ConfirmDialog } from "../ui/ConfirmDialog";
 import { Table, TBody, TD, TH, THead, TR } from "../ui/Table";
-import { formatCurrency, formatDateTime } from "../../lib/utils";
-import { useToast } from "../../hooks/useToast";
-import { extractErrorMessage } from "../../lib/api";
+import { formatCurrency, formatDateTime } from "../../lib/formatters";
+import { useToast } from "../../context/ToastContext";
+import { extractErrorMessage } from "../../api/client";
 import type { Purchase, PurchaseStatus } from "../../lib/types";
 
 const STATUS_TONE: Record<PurchaseStatus, "neutral" | "success" | "danger" | "warning"> = {

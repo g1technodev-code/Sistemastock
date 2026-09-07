@@ -2,7 +2,7 @@ import { ShoppingBag, Truck, CreditCard, DollarSign } from "lucide-react";
 import { Card } from "../ui/Card";
 import { usePurchases } from "../../hooks/usePurchases";
 import { useSuppliers } from "../../hooks/useSuppliers";
-import { formatCurrency } from "../../lib/utils";
+import { formatCurrency } from "../../lib/formatters";
 
 export function PurchasesDashboardTab() {
   const { data: purchasesData, isLoading: loadingPurchases } = usePurchases({ limit: 100 });

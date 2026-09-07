@@ -18,10 +18,10 @@ export default function Compras() {
   const [activeTab, setActiveTab] = useState<ComprasTab>("dashboard");
 
   const tabs = [
-    { id: "dashboard", label: "Dashboard" },
-    { id: "proveedores", label: "Proveedores" },
-    { id: "pedidos", label: "Pedidos" },
-    { id: "compras", label: "Historial de Compras" },
+    { value: "dashboard", label: "Dashboard" },
+    { value: "proveedores", label: "Proveedores" },
+    { value: "pedidos", label: "Pedidos" },
+    { value: "compras", label: "Historial de Compras" },
   ] as const;
 
   return (
@@ -33,7 +33,7 @@ export default function Compras() {
         </p>
       </div>
 
-      <Tabs tabs={tabs as any} activeTab={activeTab} onChange={(id) => setActiveTab(id as ComprasTab)} />
+      <Tabs tabs={tabs as any} value={activeTab} onChange={(id) => setActiveTab(id as ComprasTab)} />
 
       <div className="mt-4">
         {activeTab === "dashboard" && <PurchasesDashboardTab />}

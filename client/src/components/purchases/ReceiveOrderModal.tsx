@@ -2,9 +2,9 @@ import { useState } from "react";
 import { Modal } from "../ui/Modal";
 import { Button } from "../ui/Button";
 import { Input, Select, Textarea } from "../ui/Field";
+import { useToast } from "../../context/ToastContext";
+import { extractErrorMessage } from "../../api/client";
 import { usePurchaseOrderMutations } from "../../hooks/usePurchaseOrders";
-import { useToast } from "../../hooks/useToast";
-import { extractErrorMessage } from "../../lib/api";
 import { formatCurrency } from "../../lib/formatters";
 import type { PurchaseOrder, PaymentMethod, PurchaseOrderItem } from "../../lib/types";
 
@@ -59,7 +59,7 @@ export function ReceiveOrderModal({ order, open, onClose }: { order: PurchaseOrd
   };
 
   return (
-    <Modal open={open} onClose={onClose} title={`Recibir Pedido #${order.id.slice(-6)}`} size="xl">
+    <Modal open={open} onClose={onClose} title={`Recibir Pedido #${order.id.slice(-6)}`} size="lg">
       <div className="flex flex-col gap-4">
         <p className="text-sm text-neutral-600 dark:text-neutral-400">
           Ajusta las cantidades recibidas y los costos reales. Los productos se sumarán al stock automáticamente.

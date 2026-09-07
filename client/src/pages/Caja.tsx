@@ -46,14 +46,18 @@ type WithdrawalFormInput = z.input<typeof withdrawalSchema>;
 type WithdrawalFormValues = z.output<typeof withdrawalSchema>;
 
 const MOVEMENT_TYPE_LABEL: Record<CashMovementType, string> = {
-  SALE_IN: "Venta en efectivo",
-  WITHDRAWAL: "Retiro",
-  ADJUSTMENT: "Ajuste",
+  SALE_IN: "Ingreso por venta",
+  WITHDRAWAL: "Retiro manual",
+  ADJUSTMENT: "Ajuste de caja",
+  PURCHASE_OUT: "Compra al contado",
+  SUPPLIER_PAYMENT: "Pago a proveedor",
 };
 const MOVEMENT_TYPE_TONE: Record<CashMovementType, "success" | "danger" | "warning"> = {
   SALE_IN: "success",
   WITHDRAWAL: "danger",
   ADJUSTMENT: "warning",
+  PURCHASE_OUT: "danger",
+  SUPPLIER_PAYMENT: "warning",
 };
 
 function DiscrepancyBadge({ value }: { value: number }) {
