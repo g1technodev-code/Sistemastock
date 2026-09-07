@@ -92,6 +92,7 @@ export async function createProduct(localId: string | null | undefined, input: U
         currentStock: initialStock,
         minStock: input.minStock,
         imageUrl: input.imageUrl || null,
+        saleType: input.saleType || "UNIT",
         categoryId: input.categoryId || null,
         supplierId: input.supplierId || null,
       },
@@ -137,6 +138,7 @@ export async function updateProduct(localId: string | null | undefined, id: stri
       sellPrice: input.sellPrice,
       minStock: input.minStock,
       imageUrl: input.imageUrl || null,
+      saleType: input.saleType || "UNIT",
       categoryId: input.categoryId || null,
       supplierId: input.supplierId || null,
       isActive: input.isActive,
@@ -151,13 +153,14 @@ export async function deleteProduct(localId: string | null | undefined, id: stri
   });
   if (!product) throw ApiError.notFound("Producto no encontrado");
 
-  const movementCount = await prisma.stockMovement.count({ where: { productId: id } });
-  if (movementCount > 0) {
-    await prisma.product.update({ where: { id: product.id }, data: { isActive: false } });
-    return { softDeleted: true };
-  }
+  await prisma.$transaction([
+    prisma.stockMovement.deleteMany({ where: { productId: product.id } }),
+    prisma.saleItem.deleteMany({ where: { productId: product.id } }),
+    prisma.purchaseItem.deleteMany({ where: { productId: product.id } }),
+    prisma.inventoryCountItem.deleteMany({ where: { productId: product.id } }),
+    prisma.product.delete({ where: { id: product.id } })
+  ]);
 
-  await prisma.product.delete({ where: { id: product.id } });
   return { softDeleted: false };
 }
 

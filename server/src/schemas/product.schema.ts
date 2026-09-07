@@ -10,7 +10,7 @@ export const upsertProductSchema = z.object({
   minStock: z.coerce.number().int().min(0).default(0),
   initialStock: z.coerce.number().int().min(0).optional(),
   imageUrl: z.string().optional().nullable(),
-
+  saleType: z.enum(["UNIT", "WEIGHT", "AMOUNT"]).optional(),
 
   categoryId: z.string().optional().nullable(),
   supplierId: z.string().optional().nullable(),

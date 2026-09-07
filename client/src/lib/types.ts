@@ -1,4 +1,5 @@
 export type Role = "SUPERADMIN" | "ADMIN" | "MANAGER" | "EMPLOYEE";
+export type SaleType = "UNIT" | "WEIGHT" | "AMOUNT";
 export type MovementType = "IN" | "OUT" | "ADJUSTMENT";
 export type PaymentMethod = "EFECTIVO" | "TRANSFERENCIA" | "TARJETA" | "CUENTA_CORRIENTE";
 export type SaleStatus = "COMPLETED" | "VOIDED";
@@ -207,6 +208,7 @@ export type Product = {
   currentStock: number;
   minStock: number;
   imageUrl: string | null;
+  saleType: SaleType;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
@@ -238,6 +240,7 @@ export type SaleItem = {
   quantity: number;
   unitPrice: number;
   subtotal: number;
+  saleType: SaleType;
   product: { id: string; sku: string; name: string; unit: string };
 };
 

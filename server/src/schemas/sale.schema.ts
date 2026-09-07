@@ -8,7 +8,8 @@ export const createSaleSchema = z
       .array(
         z.object({
           productId: z.string().min(1, "Selecciona un producto"),
-          quantity: z.coerce.number().int().min(1, "La cantidad debe ser mayor a 0"),
+          quantity: z.coerce.number().int().min(1, "La cantidad debe ser mayor a 0").optional(),
+          amount: z.coerce.number().min(0, "El importe debe ser mayor o igual a 0").optional(),
         }),
       )
       .min(1, "Agrega al menos un producto al carrito"),

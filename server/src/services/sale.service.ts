@@ -1,4 +1,4 @@
-import { Prisma, MovementType, PaymentMethod, SaleStatus, CashMovementType, CashShiftStatus, CustomerMovementType, NotificationType } from "@prisma/client";
+import { Prisma, MovementType, PaymentMethod, SaleStatus, CashMovementType, CashShiftStatus, CustomerMovementType, NotificationType, SaleType } from "@prisma/client";
 import { prisma } from "../config/prisma";
 import { ApiError } from "../utils/apiError";
 import { parsePagination, paginatedResponse } from "../utils/pagination";
@@ -48,7 +48,7 @@ export async function createSale(localId: string | null | undefined, input: Crea
     const sortedItems = [...input.items].sort((a, b) => a.productId.localeCompare(b.productId));
 
     let total = 0;
-    const saleItemsData: { productId: string; quantity: number; unitPrice: number; subtotal: number }[] = [];
+    const saleItemsData: { productId: string; quantity: number; unitPrice: number; subtotal: number; saleType: SaleType }[] = [];
     const pendingMovements: PendingMovement[] = [];
 
     for (const line of sortedItems) {
@@ -56,37 +56,63 @@ export async function createSale(localId: string | null | undefined, input: Crea
       if (!product) throw ApiError.notFound(`Producto no encontrado: ${line.productId}`);
       if (!product.isActive) throw ApiError.badRequest(`El producto "${product.name}" no está activo`);
 
-      const result = await tx.product.updateMany({
-        where: { id: line.productId, localId, currentStock: { gte: line.quantity } },
-        data: { currentStock: { decrement: line.quantity } },
-      });
-      if (result.count === 0) {
-        const fresh = await tx.product.findUnique({ where: { id: line.productId } });
-        throw ApiError.badRequest(
-          `Stock insuficiente para "${product.name}". Disponible: ${fresh?.currentStock ?? product.currentStock}, solicitado: ${line.quantity}`,
-        );
+      let lineQuantity = 0;
+      let unitPrice = 0;
+      let lineSubtotal = 0;
+      let shouldDiscountStock = true;
+
+      if (product.saleType === "UNIT") {
+        if (line.quantity === undefined || line.quantity <= 0) throw ApiError.badRequest(`Cantidad inválida para "${product.name}"`);
+        lineQuantity = line.quantity;
+        unitPrice = Number(product.sellPrice);
+        lineSubtotal = unitPrice * lineQuantity;
+      } else if (product.saleType === "WEIGHT") {
+        if (line.quantity === undefined || line.quantity <= 0) throw ApiError.badRequest(`Peso inválido para "${product.name}"`);
+        lineQuantity = line.quantity; // Grams
+        unitPrice = Number(product.sellPrice); // Price per kg
+        lineSubtotal = (unitPrice / 1000) * lineQuantity;
+      } else if (product.saleType === "AMOUNT") {
+        if (line.amount === undefined || line.amount <= 0) throw ApiError.badRequest(`Importe inválido para "${product.name}"`);
+        lineQuantity = 1;
+        unitPrice = line.amount;
+        lineSubtotal = line.amount;
+        shouldDiscountStock = false;
       }
 
-      const fresh = await tx.product.findUnique({ where: { id: line.productId } });
-      const quantityAfter = fresh!.currentStock;
-      const quantityBefore = quantityAfter + line.quantity;
-      const lineSubtotal = Number(product.sellPrice) * line.quantity;
+      if (shouldDiscountStock) {
+        const result = await tx.product.updateMany({
+          where: { id: line.productId, localId, currentStock: { gte: lineQuantity } },
+          data: { currentStock: { decrement: lineQuantity } },
+        });
+        if (result.count === 0) {
+          const fresh = await tx.product.findUnique({ where: { id: line.productId } });
+          throw ApiError.badRequest(
+            `Stock insuficiente para "${product.name}". Disponible: ${fresh?.currentStock ?? product.currentStock}, solicitado: ${lineQuantity}`
+          );
+        }
+
+        const fresh = await tx.product.findUnique({ where: { id: line.productId } });
+        const quantityAfter = fresh!.currentStock;
+        const quantityBefore = quantityAfter + lineQuantity;
+
+        pendingMovements.push({
+          productId: line.productId,
+          quantity: lineQuantity,
+          quantityBefore,
+          quantityAfter,
+          unitCost: product.costPrice,
+          productName: product.name,
+          minStock: product.minStock,
+        });
+      }
 
       total += lineSubtotal;
       saleItemsData.push({
         productId: line.productId,
-        quantity: line.quantity,
-        unitPrice: Number(product.sellPrice),
+        quantity: lineQuantity,
+        unitPrice,
         subtotal: lineSubtotal,
-      });
-      pendingMovements.push({
-        productId: line.productId,
-        quantity: line.quantity,
-        quantityBefore,
-        quantityAfter,
-        unitCost: product.costPrice,
-        productName: product.name,
-        minStock: product.minStock,
+        saleType: product.saleType,
       });
     }
 
@@ -122,6 +148,7 @@ export async function createSale(localId: string | null | undefined, input: Crea
           quantity: item.quantity,
           unitPrice: item.unitPrice,
           subtotal: item.subtotal,
+          saleType: item.saleType,
         },
       });
     }

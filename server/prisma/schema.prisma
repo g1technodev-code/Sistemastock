@@ -15,6 +15,12 @@ enum Role {
   EMPLOYEE
 }
 
+enum SaleType {
+  UNIT
+  WEIGHT
+  AMOUNT
+}
+
 enum LocalStatus {
   ACTIVE
   DUE_SOON
@@ -270,6 +276,7 @@ model Product {
   currentStock Int      @default(0)
   minStock     Int      @default(0)
   imageUrl     String?
+  saleType     SaleType @default(UNIT)
   isActive     Boolean  @default(true)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
@@ -352,6 +359,7 @@ model SaleItem {
   productId String
   product   Product @relation(fields: [productId], references: [id])
   quantity  Int
+  saleType  SaleType @default(UNIT)
   unitPrice Decimal @db.Decimal(12, 2)
   subtotal  Decimal @db.Decimal(12, 2)
 

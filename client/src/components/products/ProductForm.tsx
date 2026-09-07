@@ -16,26 +16,26 @@ const schema = z.object({
   name: z.string().min(2, "El nombre es muy corto"),
   description: z.string().optional(),
   barcode: z.string().optional(),
-  unit: z.string().min(1, "Obligatorio"),
+  unit: z.string().optional().default("unidad"),
   costPrice: z.preprocess(
-    (v) => (v === "" || v === undefined || v === null ? undefined : Number(v)),
-    z.number({ message: "Debe ingresar el costo" }).min(0, "Debe ser 0 o mayor")
+    (v) => (v === "" || v === undefined || v === null ? 0 : Number(v)),
+    z.number().min(0, "Debe ser 0 o mayor")
   ),
   sellPrice: z.preprocess(
-    (v) => (v === "" || v === undefined || v === null ? undefined : Number(v)),
-    z.number({ message: "Debe ingresar el precio de venta" }).min(0, "Debe ser 0 o mayor")
+    (v) => (v === "" || v === undefined || v === null ? 0 : Number(v)),
+    z.number().min(0, "Debe ser 0 o mayor")
   ),
-
   minStock: z.preprocess(
-    (v) => (v === "" || v === undefined || v === null ? undefined : Number(v)),
+    (v) => (v === "" || v === undefined || v === null ? 0 : Number(v)),
     z.number().int().min(0, "Debe ser 0 o mayor").default(0)
   ),
   initialStock: z.preprocess(
-    (v) => (v === "" || v === undefined || v === null ? undefined : Number(v)),
+    (v) => (v === "" || v === undefined || v === null ? 0 : Number(v)),
     z.number().int().min(0, "Debe ser 0 o mayor").optional().default(0)
   ),
   categoryId: z.string().optional(),
   supplierId: z.string().optional(),
+  saleType: z.enum(["UNIT", "WEIGHT", "AMOUNT"]).default("UNIT"),
   isActive: z.boolean().optional(),
 });
 
@@ -81,6 +81,7 @@ export function ProductForm({
       initialStock: (initialValues?.currentStock as any) ?? "",
       categoryId: initialValues?.categoryId ?? "",
       supplierId: initialValues?.supplierId ?? "",
+      saleType: initialValues?.saleType ?? "UNIT",
       isActive: initialValues?.isActive ?? true,
     },
   });
@@ -97,6 +98,7 @@ export function ProductForm({
       initialStock: (initialValues?.currentStock as any) ?? "",
       categoryId: initialValues?.categoryId ?? "",
       supplierId: initialValues?.supplierId ?? "",
+      saleType: initialValues?.saleType ?? "UNIT",
       isActive: initialValues?.isActive ?? true,
     });
   }, [initialValues, reset]);
@@ -130,6 +132,7 @@ export function ProductForm({
 
   const costPrice = useWatch({ control, name: "costPrice" }) || 0;
   const sellPrice = useWatch({ control, name: "sellPrice" }) || 0;
+  const saleType = useWatch({ control, name: "saleType" }) || "UNIT";
   const profit = Number(sellPrice) - Number(costPrice);
   const margin = Number(costPrice) > 0 ? (profit / Number(costPrice)) * 100 : 0;
 
@@ -169,6 +172,27 @@ export function ProductForm({
           </button>
         </div>
       </div>
+
+      <div>
+        <label className="block text-xs font-semibold uppercase text-neutral-600 dark:text-neutral-400 mb-2">
+          Tipo de venta
+        </label>
+        <div className="flex gap-4">
+          <label className="flex items-center gap-2 text-sm text-neutral-700 dark:text-neutral-300">
+            <input type="radio" value="UNIT" className="h-4 w-4 text-primary-600" {...register("saleType")} />
+            Por unidad
+          </label>
+          <label className="flex items-center gap-2 text-sm text-neutral-700 dark:text-neutral-300">
+            <input type="radio" value="WEIGHT" className="h-4 w-4 text-primary-600" {...register("saleType")} />
+            Por peso
+          </label>
+          <label className="flex items-center gap-2 text-sm text-neutral-700 dark:text-neutral-300">
+            <input type="radio" value="AMOUNT" className="h-4 w-4 text-primary-600" {...register("saleType")} />
+            Por importe
+          </label>
+        </div>
+      </div>
+
       <Input label="Nombre *" required error={errors.name?.message} {...register("name")} />
       <Textarea label="Descripción" rows={2} {...register("description")} />
 
@@ -191,21 +215,28 @@ export function ProductForm({
         </Select>
       </div>
 
-      <div className="grid grid-cols-3 gap-4">
-        <Input label="Unidad *" required error={errors.unit?.message} {...register("unit")} />
-        <Input label="Costo ($) *" type="number" step="0.01" placeholder="0.00" required error={errors.costPrice?.message} {...register("costPrice")} />
-        <div>
-          <Input label="Precio venta ($) *" type="number" step="0.01" placeholder="0.00" required error={errors.sellPrice?.message} {...register("sellPrice")} />
-          {(Number(sellPrice) > 0 || Number(costPrice) > 0) && (
-            <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
-              Ganancia: <span className={profit > 0 ? "text-green-600 dark:text-green-400" : profit < 0 ? "text-red-600 dark:text-red-400" : ""}>${profit.toFixed(2)}</span>
-              {Number(costPrice) > 0 && ` (${margin.toFixed(1)}%)`}
-            </p>
-          )}
+      {saleType !== "AMOUNT" ? (
+        <div className="grid grid-cols-3 gap-4">
+          <Input label="Unidad *" required error={errors.unit?.message} {...register("unit")} />
+          <Input label="Costo ($) *" type="number" step="0.01" placeholder="0.00" required error={errors.costPrice?.message} {...register("costPrice")} />
+          <div>
+            <Input label={saleType === "WEIGHT" ? "Precio por Kg ($) *" : "Precio venta ($) *"} type="number" step="0.01" placeholder="0.00" required error={errors.sellPrice?.message} {...register("sellPrice")} />
+            {(Number(sellPrice) > 0 || Number(costPrice) > 0) && (
+              <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
+                Ganancia: <span className={profit > 0 ? "text-green-600 dark:text-green-400" : profit < 0 ? "text-red-600 dark:text-red-400" : ""}>${profit.toFixed(2)}</span>
+                {Number(costPrice) > 0 && ` (${margin.toFixed(1)}%)`}
+              </p>
+            )}
+          </div>
         </div>
-      </div>
+      ) : (
+        <div className="rounded-lg bg-blue-50 p-4 text-sm text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
+          En ventas por importe (ej. golosinas sueltas), el precio se ingresa al momento de realizar la venta.
+        </div>
+      )}
 
-      <div className="grid grid-cols-2 gap-4">
+      {saleType !== "AMOUNT" && (
+        <div className="grid grid-cols-2 gap-4">
         <Input
           label="Stock mínimo"
           type="number"
@@ -225,6 +256,7 @@ export function ProductForm({
           />
         )}
       </div>
+      )}
 
 
       {initialValues && initialValues.id && (
