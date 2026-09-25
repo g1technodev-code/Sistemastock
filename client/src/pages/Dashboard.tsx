@@ -16,6 +16,7 @@ import {
   CheckCircle2,
   ArrowRight,
   Info,
+  CreditCard,
 } from "lucide-react";
 import { getDashboardSummary } from "../api/dashboard";
 import { StatCard } from "../components/ui/StatCard";
@@ -151,13 +152,29 @@ export default function Dashboard() {
         return (
           <div className="space-y-4">
             <div className="rounded-xl border border-teal-100 bg-teal-50/50 p-4 dark:border-teal-900/40 dark:bg-teal-950/20">
-              <p className="text-xs font-semibold uppercase tracking-wider text-teal-600 dark:text-teal-400">Saldo actual en caja</p>
+              <p className="text-xs font-semibold uppercase tracking-wider text-teal-600 dark:text-teal-400">Saldo actual en caja (Físico)</p>
               <p className="mt-1 text-3xl font-black text-neutral-900 dark:text-white">{formatCurrency(kpis.cashBalance)}</p>
               <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">Dinero disponible actualmente registrado en el turno de caja activo o caja física.</p>
             </div>
             <div className="pt-2 flex justify-end">
               <Button onClick={() => { setSelectedCard(null); navigate("/caja"); }}>
                 Ir a Gestión de Caja <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        );
+
+      case "transferBalance":
+        return (
+          <div className="space-y-4">
+            <div className="rounded-xl border border-blue-100 bg-blue-50/50 p-4 dark:border-blue-900/40 dark:bg-blue-950/20">
+              <p className="text-xs font-semibold uppercase tracking-wider text-blue-600 dark:text-blue-400">Total en Transferencias (Hoy)</p>
+              <p className="mt-1 text-3xl font-black text-neutral-900 dark:text-white">{formatCurrency(kpis.transferBalance || 0)}</p>
+              <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">Monto total facturado hoy mediante pagos por transferencia o medios electrónicos.</p>
+            </div>
+            <div className="pt-2 flex justify-end">
+              <Button onClick={() => { setSelectedCard(null); navigate("/ventas"); }}>
+                Ir a Ventas <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </div>
           </div>
@@ -244,7 +261,8 @@ export default function Dashboard() {
       case "stockValue": return "Detalle: Valor del Inventario";
       case "unitsSold": return "Detalle: Productos Vendidos Hoy";
       case "avgTicket": return "Detalle: Ticket Promedio";
-      case "cashBalance": return "Detalle: Saldo en Caja";
+      case "cashBalance": return "Detalle: Saldo en Caja Física";
+      case "transferBalance": return "Detalle: Total en Transferencias";
       case "lowStock": return "Detalle: Alertas de Stock Bajo";
       case "noMovement": return "Detalle: Productos sin Movimiento";
       default: return "";
@@ -296,10 +314,16 @@ export default function Dashboard() {
           onClick={() => setSelectedCard("avgTicket")}
         />
         <StatCard
-          label="Saldo en caja"
+          label="Plata física en caja"
           value={formatCurrency(kpis.cashBalance)}
           icon={Wallet}
           onClick={() => setSelectedCard("cashBalance")}
+        />
+        <StatCard
+          label="Transferencias de hoy"
+          value={formatCurrency(kpis.transferBalance || 0)}
+          icon={CreditCard}
+          onClick={() => setSelectedCard("transferBalance")}
         />
         <StatCard
           label="Alertas de stock bajo"

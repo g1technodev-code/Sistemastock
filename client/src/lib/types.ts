@@ -442,6 +442,7 @@ export type DashboardSummary = {
     movementsToday: number;
     salesToday: number;
     cashBalance: number;
+    transferBalance: number;
     profitToday: number;
     unitsSoldToday: number;
     avgTicketToday: number;
