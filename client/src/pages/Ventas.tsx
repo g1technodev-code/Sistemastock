@@ -12,6 +12,7 @@ import {
   Trash2,
   Camera,
   Users,
+  Split,
 } from "lucide-react";
 import { Card, CardHeader, CardBody } from "../components/ui/Card";
 import { Button } from "../components/ui/Button";
@@ -41,18 +42,21 @@ const PAYMENT_METHOD_LABEL: Record<PaymentMethod, string> = {
   TRANSFERENCIA: "Transferencia",
   TARJETA: "Tarjeta",
   CUENTA_CORRIENTE: "Cuenta Corriente",
+  MIXTO: "Mixto",
 };
 const PAYMENT_METHOD_ICON: Record<PaymentMethod, typeof Banknote> = {
   EFECTIVO: Banknote,
   TRANSFERENCIA: Receipt,
   TARJETA: CreditCard,
   CUENTA_CORRIENTE: Users,
+  MIXTO: Split,
 };
 const PAYMENT_METHOD_TONE: Record<PaymentMethod, "success" | "info" | "warning" | "neutral"> = {
   EFECTIVO: "success",
   TRANSFERENCIA: "info",
   TARJETA: "warning",
   CUENTA_CORRIENTE: "neutral",
+  MIXTO: "info",
 };
 
 type CartLine = { productId: string; name: string; sku: string; unitPrice: number; availableStock: number; quantity: number; amount?: number; saleType: "UNIT" | "WEIGHT" | "AMOUNT" };
@@ -79,6 +83,14 @@ export default function Ventas() {
   const [weightModal, setWeightModal] = useState<{ productId: string, name: string, sku: string, unitPrice: number, availableStock: number } | null>(null);
   const [amountModal, setAmountModal] = useState<{ productId: string, name: string, sku: string, availableStock: number } | null>(null);
   const [modalInput, setModalInput] = useState("");
+  
+  const [splitAmounts, setSplitAmounts] = useState<Record<string, string>>({
+    EFECTIVO: "",
+    TRANSFERENCIA: "",
+    TARJETA: "",
+    CUENTA_CORRIENTE: "",
+  });
+
   const createSale = useCreateSale();
 
   const handleScan = async (code: string) => {
@@ -120,9 +132,15 @@ export default function Ventas() {
   }, 0), [cart]);
   const hasOpenShift = !!cashStatus?.myOpenShift;
   const requiresReceiptInfo = false;
-  const requiresCustomer = paymentMethod === "CUENTA_CORRIENTE";
+  
+  const ccSplitAmount = paymentMethod === "MIXTO" ? Number(splitAmounts.CUENTA_CORRIENTE || 0) : 0;
+  const requiresCustomer = paymentMethod === "CUENTA_CORRIENTE" || (paymentMethod === "MIXTO" && ccSplitAmount > 0);
+  
   const missingReceiptInfo = requiresReceiptInfo && (!receiptNumber.trim() || !payerName.trim());
   const missingCustomer = requiresCustomer && !selectedCustomerId;
+  
+  const splitTotal = paymentMethod === "MIXTO" ? Object.values(splitAmounts).reduce((sum, val) => sum + Number(val || 0), 0) : 0;
+  const invalidSplit = paymentMethod === "MIXTO" && Math.abs(splitTotal - total) > 0.01;
 
   const addToCart = (productId: string, name: string, sku: string, unitPrice: number, availableStock: number, saleType: "UNIT" | "WEIGHT" | "AMOUNT", qtyOrAmount?: number) => {
     setCart((prev) => {
@@ -180,6 +198,7 @@ export default function Ventas() {
     try {
       await createSale.mutateAsync({
         paymentMethod,
+        splitPayments: paymentMethod === "MIXTO" ? Object.entries(splitAmounts).map(([method, amount]) => ({ method: method as PaymentMethod, amount: Number(amount || 0) })).filter(p => p.amount > 0) : undefined,
         customerId: requiresCustomer ? selectedCustomerId : undefined,
         items: cart.map((l) => ({ 
           productId: l.productId, 
@@ -194,6 +213,7 @@ export default function Ventas() {
       setReceiptNumber("");
       setPayerName("");
       setSelectedCustomerId("");
+      setSplitAmounts({ EFECTIVO: "", TRANSFERENCIA: "", TARJETA: "", CUENTA_CORRIENTE: "" });
     } catch (error) {
       showError(extractErrorMessage(error, "No se pudo registrar la venta"));
     }
@@ -369,8 +389,8 @@ export default function Ventas() {
 
                 <div className="flex flex-col gap-2 pt-4">
                   <span className="text-sm font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">Medio de pago</span>
-                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                    {(["EFECTIVO", "TRANSFERENCIA", "TARJETA", "CUENTA_CORRIENTE"] as PaymentMethod[]).map((m) => {
+                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
+                    {(["EFECTIVO", "TRANSFERENCIA", "TARJETA", "CUENTA_CORRIENTE", "MIXTO"] as PaymentMethod[]).map((m) => {
                       const Icon = PAYMENT_METHOD_ICON[m];
                       return (
                         <button
@@ -391,6 +411,31 @@ export default function Ventas() {
                     })}
                   </div>
                 </div>
+
+                {paymentMethod === "MIXTO" && (
+                  <div className="flex flex-col gap-3 border-t border-neutral-200 pt-3 dark:border-neutral-800">
+                    <span className="text-sm font-bold text-neutral-700 dark:text-neutral-300">Desglose de Pago</span>
+                    <div className="grid grid-cols-2 gap-3">
+                      {(["EFECTIVO", "TRANSFERENCIA", "TARJETA", "CUENTA_CORRIENTE"] as const).map((m) => (
+                        <Input
+                          key={m}
+                          label={PAYMENT_METHOD_LABEL[m as PaymentMethod]}
+                          type="number"
+                          step="0.01"
+                          placeholder="0.00"
+                          value={splitAmounts[m]}
+                          onChange={(e) => setSplitAmounts(prev => ({ ...prev, [m]: e.target.value }))}
+                        />
+                      ))}
+                    </div>
+                    <div className="flex justify-between items-center bg-neutral-50 p-2 rounded-lg dark:bg-neutral-800/50">
+                      <span className="text-sm font-medium text-neutral-600 dark:text-neutral-400">Total Ingresado:</span>
+                      <span className={cn("font-bold", Math.abs(splitTotal - total) > 0.01 ? "text-amber-600 dark:text-amber-400" : "text-success-600 dark:text-success-400")}>
+                        {formatCurrency(splitTotal)} / {formatCurrency(total)}
+                      </span>
+                    </div>
+                  </div>
+                )}
 
                 {requiresCustomer && (
                   <div className="flex flex-col gap-2 border-t border-neutral-200 pt-3 dark:border-neutral-800">
@@ -434,7 +479,7 @@ export default function Ventas() {
                 <Button
                   variant="success"
                   onClick={checkout}
-                  disabled={cart.length === 0 || !hasOpenShift || missingReceiptInfo || missingCustomer}
+                  disabled={cart.length === 0 || !hasOpenShift || missingReceiptInfo || missingCustomer || invalidSplit}
                   isLoading={createSale.isPending}
                   className="mt-2 h-14 text-lg font-bold shadow-lg"
                 >
@@ -461,6 +506,7 @@ export default function Ventas() {
               <option value="TRANSFERENCIA">Transferencia</option>
               <option value="TARJETA">Tarjeta</option>
               <option value="CUENTA_CORRIENTE">Cuenta Corriente</option>
+              <option value="MIXTO">Mixto</option>
             </Select>
           </div>
 

@@ -8,6 +8,7 @@ import type { CreateSaleInput, ListSalesQuery, SalesSummaryQuery } from "../sche
 
 const SALE_INCLUDE = {
   items: { include: { product: { select: { id: true, sku: true, name: true, unit: true } } } },
+  payments: true,
   user: { select: { id: true, name: true } },
   customer: { select: { id: true, name: true, taxId: true, currentBalance: true } },
 };
@@ -38,7 +39,11 @@ export async function createSale(localId: string | null | undefined, input: Crea
       throw ApiError.badRequest("Debes abrir tu turno de caja antes de registrar ventas");
     }
 
-    if (input.paymentMethod === PaymentMethod.CUENTA_CORRIENTE) {
+    let isCC = input.paymentMethod === PaymentMethod.CUENTA_CORRIENTE;
+    if (input.paymentMethod === PaymentMethod.MIXTO && input.splitPayments?.some(p => p.method === PaymentMethod.CUENTA_CORRIENTE && p.amount > 0)) {
+      isCC = true;
+    }
+    if (isCC) {
       if (!input.customerId) throw ApiError.badRequest("Debes seleccionar un cliente para vender a Cuenta Corriente");
       const customer = await tx.customer.findFirst({ where: { id: input.customerId, localId } });
       if (!customer) throw ApiError.notFound("Cliente no encontrado");
@@ -116,10 +121,17 @@ export async function createSale(localId: string | null | undefined, input: Crea
       });
     }
 
-    if (input.paymentMethod === PaymentMethod.CUENTA_CORRIENTE && input.customerId) {
+    let ccAmount = 0;
+    if (input.paymentMethod === PaymentMethod.CUENTA_CORRIENTE) {
+      ccAmount = total;
+    } else if (input.paymentMethod === PaymentMethod.MIXTO && input.splitPayments) {
+      ccAmount = input.splitPayments.find(p => p.method === PaymentMethod.CUENTA_CORRIENTE)?.amount || 0;
+    }
+
+    if (ccAmount > 0 && input.customerId) {
       const customer = await tx.customer.findUnique({ where: { id: input.customerId } });
       if (customer && customer.creditLimit !== null) {
-        const potentialBalance = Number(customer.currentBalance) + total;
+        const potentialBalance = Number(customer.currentBalance) + ccAmount;
         if (potentialBalance > Number(customer.creditLimit)) {
           throw ApiError.badRequest(
             `El saldo total ($${potentialBalance}) supera el límite de crédito permitido ($${customer.creditLimit}) para ${customer.name}`,
@@ -153,6 +165,20 @@ export async function createSale(localId: string | null | undefined, input: Crea
       });
     }
 
+    if (input.paymentMethod === PaymentMethod.MIXTO && input.splitPayments) {
+      const splitTotal = input.splitPayments.reduce((sum, p) => sum + p.amount, 0);
+      if (Math.abs(splitTotal - total) > 0.01) {
+        throw ApiError.badRequest(`La suma de los pagos mixtos ($${splitTotal}) no coincide con el total de la venta ($${total})`);
+      }
+      for (const p of input.splitPayments) {
+        if (p.amount > 0) {
+          await tx.salePayment.create({
+            data: { saleId: sale.id, paymentMethod: p.method, amount: p.amount }
+          });
+        }
+      }
+    }
+
     for (const movement of pendingMovements) {
       await tx.stockMovement.create({
         data: {
@@ -182,31 +208,40 @@ export async function createSale(localId: string | null | undefined, input: Crea
 
     }
 
+    let cashAmount = 0;
     if (input.paymentMethod === PaymentMethod.EFECTIVO) {
+      cashAmount = total;
+    } else if (input.paymentMethod === PaymentMethod.MIXTO && input.splitPayments) {
+      cashAmount = input.splitPayments.find(p => p.method === PaymentMethod.EFECTIVO)?.amount || 0;
+    }
+
+    if (cashAmount > 0) {
       const register = await getOrCreateRegister(tx, localId);
       await tx.cashRegister.update({
         where: { id: register.id },
-        data: { currentBalance: { increment: total } },
+        data: { currentBalance: { increment: cashAmount } },
       });
       const fresh = await tx.cashRegister.findUnique({ where: { id: register.id } });
       const balanceAfter = Number(fresh!.currentBalance);
-      const balanceBefore = balanceAfter - total;
+      const balanceBefore = balanceAfter - cashAmount;
 
       await tx.cashMovement.create({
         data: {
           localId,
           type: CashMovementType.SALE_IN,
-          amount: total,
+          amount: cashAmount,
           balanceBefore,
           balanceAfter,
           saleId: sale.id,
           userId,
         },
       });
-    } else if (input.paymentMethod === PaymentMethod.CUENTA_CORRIENTE && input.customerId) {
+    }
+
+    if (ccAmount > 0 && input.customerId) {
       const customer = await tx.customer.findUnique({ where: { id: input.customerId } });
       const balanceBefore = Number(customer!.currentBalance);
-      const balanceAfter = balanceBefore + total;
+      const balanceAfter = balanceBefore + ccAmount;
 
       await tx.customer.update({
         where: { id: input.customerId },
@@ -217,7 +252,7 @@ export async function createSale(localId: string | null | undefined, input: Crea
         data: {
           customerId: input.customerId,
           type: CustomerMovementType.CHARGE,
-          amount: total,
+          amount: ccAmount,
           balanceBefore,
           balanceAfter,
           saleId: sale.id,
@@ -281,18 +316,55 @@ export async function getSalesSummary(localId: string | null | undefined, query:
   };
   if (query.userId) where.userId = query.userId;
 
-  const [aggregate, grouped] = await Promise.all([
+  const [aggregate, grouped, mixedSales] = await Promise.all([
     prisma.sale.aggregate({ where, _sum: { total: true }, _count: true }),
     prisma.sale.groupBy({ by: ["paymentMethod"], where, _sum: { total: true }, _count: true }),
+    prisma.sale.findMany({
+      where: { ...where, paymentMethod: PaymentMethod.MIXTO },
+      include: { payments: true }
+    })
   ]);
+
+  const methodTotals: Record<string, number> = {
+    EFECTIVO: 0,
+    TRANSFERENCIA: 0,
+    TARJETA: 0,
+    CUENTA_CORRIENTE: 0,
+    MIXTO: 0
+  };
+  const methodCounts: Record<string, number> = {
+    EFECTIVO: 0,
+    TRANSFERENCIA: 0,
+    TARJETA: 0,
+    CUENTA_CORRIENTE: 0,
+    MIXTO: 0
+  };
+
+  // Add standard grouped totals
+  for (const group of grouped) {
+    if (group.paymentMethod !== PaymentMethod.MIXTO) {
+      methodTotals[group.paymentMethod] += Number(group._sum.total ?? 0);
+      methodCounts[group.paymentMethod] += group._count;
+    }
+  }
+
+  // Add mixed sales breakdown
+  for (const sale of mixedSales) {
+    methodCounts.MIXTO += 1;
+    for (const payment of sale.payments) {
+      methodTotals[payment.paymentMethod] += Number(payment.amount);
+    }
+  }
 
   return {
     total: Number(aggregate._sum.total ?? 0),
     count: aggregate._count,
-    byPaymentMethod: grouped.map((g) => ({
-      paymentMethod: g.paymentMethod,
-      total: Number(g._sum.total ?? 0),
-      count: g._count,
-    })),
+    byPaymentMethod: Object.keys(methodTotals)
+      .filter(m => methodTotals[m] > 0 || m === 'MIXTO')
+      .map(m => ({
+        paymentMethod: m as PaymentMethod,
+        total: methodTotals[m],
+        count: methodCounts[m]
+      })),
   };
 }

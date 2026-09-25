@@ -1,7 +1,7 @@
 export type Role = "SUPERADMIN" | "ADMIN" | "MANAGER" | "EMPLOYEE";
 export type SaleType = "UNIT" | "WEIGHT" | "AMOUNT";
 export type MovementType = "IN" | "OUT" | "ADJUSTMENT";
-export type PaymentMethod = "EFECTIVO" | "TRANSFERENCIA" | "TARJETA" | "CUENTA_CORRIENTE";
+export type PaymentMethod = "EFECTIVO" | "TRANSFERENCIA" | "TARJETA" | "CUENTA_CORRIENTE" | "MIXTO";
 export type SaleStatus = "COMPLETED" | "VOIDED";
 export type CashMovementType = "SALE_IN" | "WITHDRAWAL" | "ADJUSTMENT" | "PURCHASE_OUT" | "SUPPLIER_PAYMENT";
 export type CashShiftStatus = "OPEN" | "CLOSED";

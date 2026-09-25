@@ -3,6 +3,7 @@ import type { Paginated, PaymentMethod, Sale, SalesSummary } from "../lib/types"
 
 export type CreateSaleInput = {
   paymentMethod: PaymentMethod;
+  splitPayments?: { method: PaymentMethod; amount: number }[];
   customerId?: string | null;
   items: { productId: string; quantity?: number; amount?: number }[];
   receiptNumber?: string | null;
