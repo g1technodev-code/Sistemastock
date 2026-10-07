@@ -86,7 +86,7 @@ async function main() {
       trialDays: 7,
       sortOrder: 0,
       features: ["Acceso completo por 7 días", "1 Administrador y 3 Empleados", "Sin necesidad de tarjeta de crédito"],
-      enabledFeatures: ["CASH_REGISTER", "PURCHASES", "PHYSICAL_INVENTORY", "REPORTS", "CUSTOMERS"],
+      enabledFeatures: ["CASH_REGISTER", "PURCHASES", "REPORTS", "CUSTOMERS"],
     },
   });
   const planBasico = await prisma.plan.upsert({
@@ -127,7 +127,6 @@ async function main() {
       features: [
         "Incluye 2 Administradores y 6 Empleados",
         "Todo lo incluido en Kipo Básico",
-        "Control de Inventario Físico (Auditorías y conteo rápido)",
         "Gestión y control de Caja diaria",
         "Módulo completo de Reportes e Historial",
         "Estadísticas avanzadas de rendimiento",
@@ -135,7 +134,7 @@ async function main() {
         "Gestión multiusuario y asignación de roles",
         "Soporte prioritario 24/7",
       ],
-      enabledFeatures: ["CASH_REGISTER", "PURCHASES", "PHYSICAL_INVENTORY", "REPORTS", "CUSTOMERS"],
+      enabledFeatures: ["CASH_REGISTER", "PURCHASES", "REPORTS", "CUSTOMERS"],
     },
   });
 

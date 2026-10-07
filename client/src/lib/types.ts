@@ -5,7 +5,6 @@ export type SaleStatus = "COMPLETED" | "VOIDED";
 export type CashMovementType = "SALE_IN" | "WITHDRAWAL" | "ADJUSTMENT";
 export type CashShiftStatus = "OPEN" | "CLOSED";
 export type PurchaseStatus = "PENDING" | "RECEIVED" | "CANCELLED";
-export type InventoryCountStatus = "OPEN" | "COMPLETED";
 export type CustomerMovementType = "CHARGE" | "PAYMENT";
 export type NotificationType = "LOW_STOCK" | "SHIFT_OPEN" | "SHIFT_CLOSE";
 
@@ -287,29 +286,6 @@ export type Purchase = {
   createdAt: string;
   updatedAt: string;
   items: PurchaseItem[];
-};
-
-export type InventoryCountItem = {
-  id: string;
-  productId: string;
-  systemQuantity: number;
-  countedQuantity: number;
-  difference: number;
-  countedAt: string;
-  product: { id: string; sku: string; name: string; unit: string };
-};
-
-export type InventoryCount = {
-  id: string;
-  status: InventoryCountStatus;
-  note: string | null;
-  startedById: string;
-  startedBy: { id: string; name: string };
-  startedAt: string;
-  completedById: string | null;
-  completedBy: { id: string; name: string } | null;
-  completedAt: string | null;
-  items: InventoryCountItem[];
 };
 
 export type CashShift = {
