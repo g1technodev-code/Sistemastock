@@ -7,6 +7,7 @@ import productRoutes from "./product.routes";
 import stockRoutes from "./stock.routes";
 import saleRoutes from "./sale.routes";
 import purchaseRoutes from "./purchase.routes";
+import purchaseOrderRoutes from "./purchaseOrder.routes";
 import cashRoutes from "./cash.routes";
 import dashboardRoutes from "./dashboard.routes";
 import reportRoutes from "./report.routes";
@@ -19,6 +20,7 @@ import superadminRoutes from "./superadmin.routes";
 import planRoutes from "./plan.routes";
 import announcementRoutes from "./announcement.routes";
 import rubroRoutes from "./rubro.routes";
+import catalogRoutes from "./catalog.routes";
 
 const router = Router();
 
@@ -36,6 +38,7 @@ router.use("/products", productRoutes);
 router.use("/stock", stockRoutes);
 router.use("/sales", saleRoutes);
 router.use("/purchases", purchaseRoutes);
+router.use("/purchase-orders", purchaseOrderRoutes);
 router.use("/cash", cashRoutes);
 router.use("/dashboard", dashboardRoutes);
 router.use("/reports", reportRoutes);
@@ -44,6 +47,7 @@ router.use("/settings", settingsRoutes);
 router.use("/customers", customerRoutes);
 router.use("/notifications", notificationRoutes);
 router.use("/mercadopago", mercadopagoRoutes);
+router.use("/catalog", catalogRoutes);
 
 export default router;
 

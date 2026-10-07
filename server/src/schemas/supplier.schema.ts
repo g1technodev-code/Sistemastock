@@ -12,3 +12,18 @@ export const upsertSupplierSchema = z.object({
 });
 
 export type UpsertSupplierInput = z.infer<typeof upsertSupplierSchema>;
+
+export const supplierPaymentSchema = z.object({
+  amount: z.coerce.number().min(0.01, "El monto debe ser mayor a 0"),
+  paymentMethod: z.enum(["EFECTIVO", "TRANSFERENCIA", "TARJETA"]).default("EFECTIVO"),
+  note: z.string().optional().nullable(),
+});
+
+export type SupplierPaymentInput = z.infer<typeof supplierPaymentSchema>;
+
+export const listSupplierMovementsQuerySchema = z.object({
+  page: z.coerce.number().optional(),
+  limit: z.coerce.number().optional(),
+});
+
+export type ListSupplierMovementsQuery = z.infer<typeof listSupplierMovementsQuerySchema>;

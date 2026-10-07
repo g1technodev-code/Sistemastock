@@ -5,14 +5,17 @@ export const createUserSchema = z.object({
   email: z.string().email("Email inválido"),
   password: z.string().min(8, "La contraseña debe tener al menos 8 caracteres"),
   role: z.enum(["SUPERADMIN", "ADMIN", "MANAGER", "EMPLOYEE"]),
+  canCreateProducts: z.boolean().optional(),
 });
 
 export const updateUserSchema = z.object({
   name: z.string().min(2).optional(),
   email: z.string().email().optional(),
   role: z.enum(["SUPERADMIN", "ADMIN", "MANAGER", "EMPLOYEE"]).optional(),
+  canCreateProducts: z.boolean().optional(),
   isActive: z.boolean().optional(),
 });
+
 
 
 export const resetPasswordSchema = z.object({

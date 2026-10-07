@@ -28,6 +28,7 @@ import {
   Sliders,
   Store,
   PackageSearch,
+  HelpCircle,
 } from "lucide-react";
 
 import { useAuth } from "../../context/AuthContext";
@@ -68,7 +69,6 @@ const TENANT_NAV_ITEMS: NavItem[] = [
   { to: "/dashboard", label: "Panel", icon: LayoutDashboard, show: permissions.canViewDashboard },
   { to: "/products", label: "Productos", icon: Package, show: permissions.canViewProducts },
   { to: "/categories", label: "Categorías", icon: Tags, show: permissions.canViewCategories },
-  { to: "/suppliers", label: "Proveedores", icon: Truck, show: permissions.canViewSuppliers },
   { to: "/stock", label: "Movimientos de stock", icon: ArrowLeftRight, show: permissions.canViewStockMovements },
   { to: "/ventas", label: "Ventas", icon: ShoppingCart, show: permissions.canViewSales, shortcut: "⇧V" },
   { to: "/compras", label: "Compras", icon: ShoppingBag, show: permissions.canViewPurchases, shortcut: "⇧X", feature: "PURCHASES" },
@@ -81,6 +81,7 @@ const TENANT_NAV_ITEMS: NavItem[] = [
   { to: "/rentabilidad", label: "Rentabilidad", icon: Percent, show: permissions.canViewReports, feature: "REPORTS" },
   { to: "/users", label: "Usuarios", icon: Users, show: permissions.canManageUsers },
   { to: "/settings", label: "Configuración", icon: Settings, show: permissions.canManageSettings },
+  { to: "/tutorial", label: "Centro de Ayuda", icon: HelpCircle, show: () => true },
 ];
 
 

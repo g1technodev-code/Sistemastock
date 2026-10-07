@@ -6,7 +6,7 @@ import { Input, Select, Textarea } from "../ui/Field";
 import { useProducts } from "../../hooks/useProducts";
 import { useSuppliers } from "../../hooks/useSuppliers";
 import { formatCurrency } from "../../lib/formatters";
-import type { Purchase } from "../../lib/types";
+import type { Purchase, PaymentMethod } from "../../lib/types";
 import type { PurchaseInput } from "../../api/purchases";
 
 type Line = { productId: string; name: string; sku: string; unitCost: number; quantity: number };
@@ -28,6 +28,8 @@ export function PurchaseForm({
 
   const [supplierId, setSupplierId] = useState(initialPurchase?.supplierId ?? "");
   const [note, setNote] = useState(initialPurchase?.note ?? "");
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | "">(initialPurchase?.paymentMethod ?? "");
+  const [receiptNumber, setReceiptNumber] = useState(initialPurchase?.receiptNumber ?? "");
   const [lines, setLines] = useState<Line[]>(
     initialPurchase?.items.map((it) => ({
       productId: it.productId,
@@ -42,6 +44,8 @@ export function PurchaseForm({
     if (!initialPurchase) return;
     setSupplierId(initialPurchase.supplierId);
     setNote(initialPurchase.note ?? "");
+    setPaymentMethod(initialPurchase.paymentMethod ?? "");
+    setReceiptNumber(initialPurchase.receiptNumber ?? "");
     setLines(
       initialPurchase.items.map((it) => ({
         productId: it.productId,
@@ -76,20 +80,34 @@ export function PurchaseForm({
     onSubmit({
       supplierId,
       note: note.trim() || null,
+      paymentMethod: paymentMethod || null,
+      receiptNumber: receiptNumber.trim() || null,
       items: lines.map((l) => ({ productId: l.productId, quantity: l.quantity, unitCost: l.unitCost })),
     });
   };
 
   return (
     <div className="flex flex-col gap-4">
-      <Select label="Proveedor" required value={supplierId} onChange={(e) => setSupplierId(e.target.value)}>
-        <option value="">Selecciona un proveedor</option>
-        {suppliers?.map((s) => (
-          <option key={s.id} value={s.id}>
-            {s.name}
-          </option>
-        ))}
-      </Select>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Select label="Proveedor" required value={supplierId} onChange={(e) => setSupplierId(e.target.value)}>
+          <option value="">Selecciona un proveedor</option>
+          {suppliers?.map((s) => (
+            <option key={s.id} value={s.id}>
+              {s.name}
+            </option>
+          ))}
+        </Select>
+
+        <Select label="Método de Pago" value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value as PaymentMethod)}>
+          <option value="">Sin pago inmediato (o a convenir)</option>
+          <option value="EFECTIVO">Efectivo (Caja)</option>
+          <option value="CUENTA_CORRIENTE">Cuenta Corriente (Deuda)</option>
+          <option value="TRANSFERENCIA">Transferencia</option>
+          <option value="TARJETA">Tarjeta</option>
+        </Select>
+
+        <Input label="Comprobante (opcional)" value={receiptNumber} onChange={(e) => setReceiptNumber(e.target.value)} placeholder="Nro de Factura/Recibo" />
+      </div>
 
       <div className="flex flex-col gap-4 lg:flex-row">
         <Card className="flex-1">

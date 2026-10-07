@@ -72,29 +72,53 @@ async function nextSku(localId: string) {
   return `P-${String(local.nextSkuNumber - 1).padStart(5, "0")}`;
 }
 
-export async function createProduct(localId: string | null | undefined, input: UpsertProductInput) {
+export async function createProduct(localId: string | null | undefined, input: UpsertProductInput, userId?: string) {
   if (!localId) throw ApiError.badRequest("Debe estar asociado a un local para crear productos");
 
   const sku = await nextSku(localId);
+  const initialStock = input.initialStock ?? 0;
 
-  return prisma.product.create({
-    data: {
-      localId,
-      sku,
-      barcode: input.barcode || null,
-      name: input.name,
-      description: input.description || null,
-      unit: input.unit,
-      costPrice: input.costPrice,
-      sellPrice: input.sellPrice,
-      minStock: input.minStock,
-      imageUrl: input.imageUrl || null,
-      categoryId: input.categoryId || null,
-      supplierId: input.supplierId || null,
-    },
-    include: PRODUCT_INCLUDE,
+  return prisma.$transaction(async (tx) => {
+    const product = await tx.product.create({
+      data: {
+        localId,
+        sku,
+        barcode: input.barcode || null,
+        name: input.name,
+        description: input.description || null,
+        unit: input.unit,
+        costPrice: input.costPrice,
+        sellPrice: input.sellPrice,
+        currentStock: initialStock,
+        minStock: input.minStock,
+        imageUrl: input.imageUrl || null,
+        saleType: input.saleType || "UNIT",
+        categoryId: input.categoryId || null,
+        supplierId: input.supplierId || null,
+      },
+      include: PRODUCT_INCLUDE,
+    });
+
+    if (initialStock > 0 && userId) {
+      await tx.stockMovement.create({
+        data: {
+          localId,
+          productId: product.id,
+          userId,
+          type: MovementType.IN,
+          quantity: initialStock,
+          quantityBefore: 0,
+          quantityAfter: initialStock,
+          reason: "Stock inicial al crear producto",
+        },
+      });
+    }
+
+
+    return product;
   });
 }
+
 
 
 export async function updateProduct(localId: string | null | undefined, id: string, input: UpsertProductInput) {
@@ -113,7 +137,9 @@ export async function updateProduct(localId: string | null | undefined, id: stri
       costPrice: input.costPrice,
       sellPrice: input.sellPrice,
       minStock: input.minStock,
+      currentStock: input.initialStock !== undefined ? input.initialStock : undefined,
       imageUrl: input.imageUrl || null,
+      saleType: input.saleType || "UNIT",
       categoryId: input.categoryId || null,
       supplierId: input.supplierId || null,
       isActive: input.isActive,
@@ -128,13 +154,14 @@ export async function deleteProduct(localId: string | null | undefined, id: stri
   });
   if (!product) throw ApiError.notFound("Producto no encontrado");
 
-  const movementCount = await prisma.stockMovement.count({ where: { productId: id } });
-  if (movementCount > 0) {
-    await prisma.product.update({ where: { id: product.id }, data: { isActive: false } });
-    return { softDeleted: true };
-  }
+  await prisma.$transaction([
+    prisma.stockMovement.deleteMany({ where: { productId: product.id } }),
+    prisma.saleItem.deleteMany({ where: { productId: product.id } }),
+    prisma.purchaseItem.deleteMany({ where: { productId: product.id } }),
+    prisma.inventoryCountItem.deleteMany({ where: { productId: product.id } }),
+    prisma.product.delete({ where: { id: product.id } })
+  ]);
 
-  await prisma.product.delete({ where: { id: product.id } });
   return { softDeleted: false };
 }
 

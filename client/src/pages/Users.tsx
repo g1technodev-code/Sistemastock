@@ -28,6 +28,7 @@ const createSchema = z.object({
   email: z.string().email("Email inválido"),
   password: z.string().min(8, "Mínimo 8 caracteres"),
   role: z.enum(["ADMIN", "MANAGER", "EMPLOYEE"]),
+  canCreateProducts: z.boolean().optional(),
 });
 type CreateFormValues = z.infer<typeof createSchema>;
 
@@ -50,8 +51,15 @@ export default function Users() {
     handleSubmit,
     reset: resetForm,
     setValue,
+    watch,
     formState: { errors },
-  } = useForm<CreateFormValues>({ resolver: zodResolver(createSchema), defaultValues: { role: "EMPLOYEE" } });
+  } = useForm<CreateFormValues>({
+    resolver: zodResolver(createSchema),
+    defaultValues: { role: "EMPLOYEE", canCreateProducts: true },
+  });
+
+  const selectedRole = watch("role");
+
 
   // Plan quotas & limits calculation
   const plan = subData?.plan;
@@ -263,7 +271,19 @@ export default function Users() {
             )}
           </div>
 
+          {selectedRole === "EMPLOYEE" && (
+            <label className="flex items-center gap-2.5 p-3 rounded-xl border border-neutral-200 bg-neutral-50/50 dark:border-neutral-800 dark:bg-neutral-900/50 cursor-pointer text-sm font-medium text-neutral-700 dark:text-neutral-300">
+              <input
+                type="checkbox"
+                className="h-4 w-4 rounded border-neutral-300 text-primary-600 focus:ring-primary-500"
+                {...register("canCreateProducts")}
+              />
+              <span>Permitir crear productos en el catálogo</span>
+            </label>
+          )}
+
           <div className="mt-2 flex justify-end gap-2">
+
             <Button type="button" variant="outline" onClick={() => setFormOpen(false)}>
               Cancelar
             </Button>

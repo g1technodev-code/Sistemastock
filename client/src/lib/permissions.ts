@@ -1,4 +1,4 @@
-import type { Role } from "./types";
+import type { AuthUser, Role } from "./types";
 
 export const ROLE_LABEL: Record<Role, string> = {
   SUPERADMIN: "SuperAdmin SaaS",
@@ -7,10 +7,19 @@ export const ROLE_LABEL: Record<Role, string> = {
   EMPLOYEE: "Empleado",
 };
 
-
 /** Mirrors the server-side RBAC matrix in server/src/middlewares/auth.middleware.ts usage across routes. */
 export const permissions = {
-  canManageCatalog: (role: Role) => role === "ADMIN" || role === "SUPERADMIN",
+  canManageCatalog: (userOrRole: AuthUser | Role) => {
+    if (typeof userOrRole === "string") {
+      return userOrRole === "ADMIN" || userOrRole === "SUPERADMIN";
+    }
+    return (
+      userOrRole.role === "ADMIN" ||
+      userOrRole.role === "SUPERADMIN" ||
+      (userOrRole.role === "EMPLOYEE" && Boolean(userOrRole.canCreateProducts))
+    );
+  },
+
   canViewReports: (role: Role) => role === "ADMIN" || role === "SUPERADMIN",
   canManageUsers: (role: Role) => role === "ADMIN" || role === "SUPERADMIN",
   canManageSettings: (role: Role) => role === "ADMIN" || role === "SUPERADMIN",

@@ -1,5 +1,6 @@
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "rhel-openssl-3.0.x", "rhel-openssl-1.0.x"]
 }
 
 datasource db {
@@ -14,6 +15,12 @@ enum Role {
   EMPLOYEE
 }
 
+enum SaleType {
+  UNIT
+  WEIGHT
+  AMOUNT
+}
+
 enum LocalStatus {
   ACTIVE
   DUE_SOON
@@ -21,21 +28,21 @@ enum LocalStatus {
 }
 
 model Plan {
-  id            String   @id @default(cuid())
-  name          String
-  description   String?
-  monthlyPrice  Decimal  @default(0) @db.Decimal(12, 2)
-  maxAdmins     Int      @default(1)
-  maxEmployees  Int      @default(3)
-  isTrial       Boolean  @default(false)
-  trialDays     Int?
-  isRecommended Boolean  @default(false)
-  isActive      Boolean  @default(true)
-  sortOrder     Int      @default(0)
-  features      String[] @default([])
+  id              String   @id @default(cuid())
+  name            String
+  description     String?
+  monthlyPrice    Decimal  @default(0) @db.Decimal(12, 2)
+  maxAdmins       Int      @default(1)
+  maxEmployees    Int      @default(3)
+  isTrial         Boolean  @default(false)
+  trialDays       Int?
+  isRecommended   Boolean  @default(false)
+  isActive        Boolean  @default(true)
+  sortOrder       Int      @default(0)
+  features        String[] @default([])
   enabledFeatures String[] @default([])
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   locales  Local[]
   payments SubscriptionPayment[]
@@ -43,23 +50,21 @@ model Plan {
   @@map("plans")
 }
 
-
 model Local {
-  id           String      @id @default(cuid())
-  name         String
-  ownerEmail   String
-  planId       String
-  plan         Plan        @relation(fields: [planId], references: [id])
-  rubroId      String?
-  rubro        Rubro?      @relation(fields: [rubroId], references: [id])
-  nextSkuNumber Int        @default(1)
-  isTrial      Boolean     @default(false)
-  status       LocalStatus @default(ACTIVE)
-  dueDate      DateTime
-  monthlyPrice Decimal     @default(24900) @db.Decimal(12, 2)
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
-
+  id            String      @id @default(cuid())
+  name          String
+  ownerEmail    String
+  planId        String
+  plan          Plan        @relation(fields: [planId], references: [id])
+  rubroId       String?
+  rubro         Rubro?      @relation(fields: [rubroId], references: [id])
+  nextSkuNumber Int         @default(1)
+  isTrial       Boolean     @default(false)
+  status        LocalStatus @default(ACTIVE)
+  dueDate       DateTime
+  monthlyPrice  Decimal     @default(24900) @db.Decimal(12, 2)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
 
   users            User[]
   categories       Category[]
@@ -79,7 +84,6 @@ model Local {
 
   @@index([planId])
   @@index([rubroId])
-
   @@map("locales")
 }
 
@@ -116,7 +120,6 @@ model CatalogProduct {
   @@map("catalog_products")
 }
 
-
 enum MovementType {
   IN
   OUT
@@ -128,9 +131,15 @@ enum PaymentMethod {
   TRANSFERENCIA
   TARJETA
   CUENTA_CORRIENTE
+  MIXTO
 }
 
 enum CustomerMovementType {
+  CHARGE
+  PAYMENT
+}
+
+enum SupplierMovementType {
   CHARGE
   PAYMENT
 }
@@ -150,6 +159,8 @@ enum CashMovementType {
   SALE_IN
   WITHDRAWAL
   ADJUSTMENT
+  PURCHASE_OUT
+  SUPPLIER_PAYMENT
 }
 
 enum CashShiftStatus {
@@ -163,40 +174,48 @@ enum PurchaseStatus {
   CANCELLED
 }
 
+enum PurchaseOrderStatus {
+  PENDING
+  PARTIALLY_RECEIVED
+  RECEIVED
+  CANCELLED
+}
+
 enum InventoryCountStatus {
   OPEN
   COMPLETED
 }
 
 model User {
-  id           String   @id @default(cuid())
-  localId      String?
-  local        Local?   @relation(fields: [localId], references: [id], onDelete: Cascade)
-  name         String
-  email        String   @unique
-  passwordHash String
-  role         Role     @default(EMPLOYEE)
-  isActive     Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id                String   @id @default(cuid())
+  localId           String?
+  local             Local?   @relation(fields: [localId], references: [id], onDelete: Cascade)
+  name              String
+  email             String   @unique
+  passwordHash      String
+  role              Role     @default(EMPLOYEE)
+  canCreateProducts Boolean  @default(false)
+  isActive          Boolean  @default(true)
+  createdAt         DateTime @default(now())
+
+  updatedAt DateTime @updatedAt
 
   movements                StockMovement[]
   refreshTokens            RefreshToken[]
-  sales                    Sale[]             @relation("SaleCreatedBy")
-  voidedSales              Sale[]             @relation("SaleVoidedBy")
-  cashMovements            CashMovement[]     @relation("CashMovementBy")
-  shiftsOpened             CashShift[]        @relation("ShiftOpenedBy")
-  shiftsClosed             CashShift[]        @relation("ShiftClosedBy")
-  purchasesCreated         Purchase[]         @relation("PurchaseCreatedBy")
-  purchasesReceived        Purchase[]         @relation("PurchaseReceivedBy")
-  purchasesCancelled       Purchase[]         @relation("PurchaseCancelledBy")
-  inventoryCountsStarted   InventoryCount[]   @relation("InventoryCountStartedBy")
-  inventoryCountsCompleted InventoryCount[]   @relation("InventoryCountCompletedBy")
-  customerMovements        CustomerMovement[] @relation("CustomerMovementUser")
+  sales                    Sale[]                 @relation("SaleCreatedBy")
+  voidedSales              Sale[]                 @relation("SaleVoidedBy")
+  cashMovements            CashMovement[]         @relation("CashMovementBy")
+  shiftsOpened             CashShift[]            @relation("ShiftOpenedBy")
+  shiftsClosed             CashShift[]            @relation("ShiftClosedBy")
+  purchasesCreated         Purchase[]             @relation("PurchaseCreatedBy")
+  purchasesReceived        Purchase[]             @relation("PurchaseReceivedBy")
+  purchasesCancelled       Purchase[]             @relation("PurchaseCancelledBy")
+  inventoryCountsStarted   InventoryCount[]       @relation("InventoryCountStartedBy")
+  inventoryCountsCompleted InventoryCount[]       @relation("InventoryCountCompletedBy")
+  customerMovements        CustomerMovement[]     @relation("CustomerMovementUser")
   announcementReads        UserAnnouncementRead[]
 
   @@index([localId])
-
   @@map("users")
 }
 
@@ -232,22 +251,25 @@ model Category {
 }
 
 model Supplier {
-  id          String   @id @default(cuid())
-  localId     String
-  local       Local    @relation(fields: [localId], references: [id], onDelete: Cascade)
-  name        String
-  contactName String?
-  email       String?
-  phone       String?
-  address     String?
-  taxId       String?
-  notes       String?
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id             String   @id @default(cuid())
+  localId        String
+  local          Local    @relation(fields: [localId], references: [id], onDelete: Cascade)
+  name           String
+  contactName    String?
+  email          String?
+  phone          String?
+  address        String?
+  taxId          String?
+  notes          String?
+  currentBalance Decimal  @default(0) @db.Decimal(12, 2)
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
-  products  Product[]
-  purchases Purchase[]
+  products       Product[]
+  purchases      Purchase[]
+  purchaseOrders PurchaseOrder[]
+  movements      SupplierMovement[]
 
   @@index([localId])
   @@map("suppliers")
@@ -267,6 +289,7 @@ model Product {
   currentStock Int      @default(0)
   minStock     Int      @default(0)
   imageUrl     String?
+  saleType     SaleType @default(UNIT)
   isActive     Boolean  @default(true)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
@@ -281,6 +304,7 @@ model Product {
   saleItems           SaleItem[]
   purchaseItems       PurchaseItem[]
   inventoryCountItems InventoryCountItem[]
+  PurchaseOrderItem   PurchaseOrderItem[]
 
   @@unique([localId, sku])
   @@index([localId])
@@ -288,7 +312,6 @@ model Product {
   @@index([supplierId])
   @@map("products")
 }
-
 
 model StockMovement {
   id             String       @id @default(cuid())
@@ -332,6 +355,7 @@ model Sale {
   createdAt     DateTime      @default(now())
 
   items             SaleItem[]
+  payments          SalePayment[]
   cashMovements     CashMovement[]
   customerMovements CustomerMovement[]
 
@@ -343,44 +367,63 @@ model Sale {
 }
 
 model SaleItem {
-  id        String  @id @default(cuid())
+  id        String   @id @default(cuid())
   saleId    String
-  sale      Sale    @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  sale      Sale     @relation(fields: [saleId], references: [id], onDelete: Cascade)
   productId String
-  product   Product @relation(fields: [productId], references: [id])
+  product   Product  @relation(fields: [productId], references: [id])
   quantity  Int
-  unitPrice Decimal @db.Decimal(12, 2)
-  subtotal  Decimal @db.Decimal(12, 2)
+  saleType  SaleType @default(UNIT)
+  unitPrice Decimal  @db.Decimal(12, 2)
+  subtotal  Decimal  @db.Decimal(12, 2)
 
   @@index([saleId])
   @@index([productId])
   @@map("sale_items")
 }
 
-model Purchase {
-  id            String         @id @default(cuid())
-  localId       String
-  local         Local          @relation(fields: [localId], references: [id], onDelete: Cascade)
-  supplierId    String
-  supplier      Supplier       @relation(fields: [supplierId], references: [id])
-  status        PurchaseStatus @default(PENDING)
-  total         Decimal        @db.Decimal(12, 2)
-  note          String?
-  userId        String
-  user          User           @relation("PurchaseCreatedBy", fields: [userId], references: [id])
-  receivedById  String?
-  receivedBy    User?          @relation("PurchaseReceivedBy", fields: [receivedById], references: [id])
-  receivedAt    DateTime?
-  cancelledById String?
-  cancelledBy   User?          @relation("PurchaseCancelledBy", fields: [cancelledById], references: [id])
-  cancelledAt   DateTime?
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
+model SalePayment {
+  id            String        @id @default(cuid())
+  saleId        String
+  sale          Sale          @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  paymentMethod PaymentMethod
+  amount        Decimal       @db.Decimal(12, 2)
 
-  items PurchaseItem[]
+  @@index([saleId])
+  @@map("sale_payments")
+}
+
+model Purchase {
+  id              String         @id @default(cuid())
+  localId         String
+  local           Local          @relation(fields: [localId], references: [id], onDelete: Cascade)
+  supplierId      String
+  supplier        Supplier       @relation(fields: [supplierId], references: [id])
+  purchaseOrderId String?
+  purchaseOrder   PurchaseOrder? @relation(fields: [purchaseOrderId], references: [id], onDelete: SetNull)
+  status          PurchaseStatus @default(PENDING)
+  total           Decimal        @db.Decimal(12, 2)
+  paymentMethod   PaymentMethod?
+  receiptNumber   String?
+  note            String?
+  cashMovementId  String?
+  userId          String
+  user            User           @relation("PurchaseCreatedBy", fields: [userId], references: [id])
+  receivedById    String?
+  receivedBy      User?          @relation("PurchaseReceivedBy", fields: [receivedById], references: [id])
+  receivedAt      DateTime?
+  cancelledById   String?
+  cancelledBy     User?          @relation("PurchaseCancelledBy", fields: [cancelledById], references: [id])
+  cancelledAt     DateTime?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  items             PurchaseItem[]
+  supplierMovements SupplierMovement[]
 
   @@index([localId])
   @@index([supplierId])
+  @@index([purchaseOrderId])
   @@index([createdAt])
   @@index([status])
   @@map("purchases")
@@ -402,16 +445,16 @@ model PurchaseItem {
 }
 
 model InventoryCount {
-  id            String                @id @default(cuid())
+  id            String               @id @default(cuid())
   localId       String
-  local         Local                 @relation(fields: [localId], references: [id], onDelete: Cascade)
-  status        InventoryCountStatus  @default(OPEN)
+  local         Local                @relation(fields: [localId], references: [id], onDelete: Cascade)
+  status        InventoryCountStatus @default(OPEN)
   note          String?
   startedById   String
-  startedBy     User                  @relation("InventoryCountStartedBy", fields: [startedById], references: [id])
-  startedAt     DateTime              @default(now())
+  startedBy     User                 @relation("InventoryCountStartedBy", fields: [startedById], references: [id])
+  startedAt     DateTime             @default(now())
   completedById String?
-  completedBy   User?                 @relation("InventoryCountCompletedBy", fields: [completedById], references: [id])
+  completedBy   User?                @relation("InventoryCountCompletedBy", fields: [completedById], references: [id])
   completedAt   DateTime?
 
   items InventoryCountItem[]
@@ -553,6 +596,62 @@ model CustomerMovement {
   @@map("customer_movements")
 }
 
+model SupplierMovement {
+  id            String               @id @default(cuid())
+  supplierId    String
+  supplier      Supplier             @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  type          SupplierMovementType
+  amount        Decimal              @db.Decimal(12, 2)
+  balanceBefore Decimal              @db.Decimal(12, 2)
+  balanceAfter  Decimal              @db.Decimal(12, 2)
+  purchaseId    String?
+  purchase      Purchase?            @relation(fields: [purchaseId], references: [id])
+  userId        String
+  note          String?
+  createdAt     DateTime             @default(now())
+
+  @@index([supplierId, createdAt])
+  @@index([createdAt])
+  @@map("supplier_movements")
+}
+
+model PurchaseOrder {
+  id             String              @id @default(cuid())
+  localId        String
+  supplierId     String
+  supplier       Supplier            @relation(fields: [supplierId], references: [id])
+  status         PurchaseOrderStatus @default(PENDING)
+  estimatedTotal Decimal             @db.Decimal(12, 2)
+  notes          String?
+  createdById    String
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+  receivedAt     DateTime?
+
+  items     PurchaseOrderItem[]
+  purchases Purchase[]
+
+  @@index([localId])
+  @@index([supplierId])
+  @@index([status])
+  @@map("purchase_orders")
+}
+
+model PurchaseOrderItem {
+  id                 String        @id @default(cuid())
+  purchaseOrderId    String
+  purchaseOrder      PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+  productId          String
+  product            Product       @relation(fields: [productId], references: [id])
+  quantity           Int
+  receivedQuantity   Int           @default(0)
+  estimatedUnitPrice Decimal       @db.Decimal(12, 2)
+
+  @@index([purchaseOrderId])
+  @@index([productId])
+  @@map("purchase_order_items")
+}
+
 model Notification {
   id        String           @id @default(cuid())
   localId   String
@@ -632,7 +731,3 @@ model SubscriptionPayment {
   @@index([createdAt])
   @@map("subscription_payments")
 }
-
-
-
-

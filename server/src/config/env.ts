@@ -9,7 +9,12 @@ function required(name: string): string {
 export const env = {
   nodeEnv: process.env.NODE_ENV ?? "development",
   port: Number(process.env.PORT ?? 4000),
-  clientOrigin: process.env.CLIENT_ORIGIN ?? "http://localhost:5173",
+  // CLIENT_ORIGIN may hold a comma-separated list (e.g. a custom domain plus the
+  // underlying *.vercel.app URL) so CORS doesn't break when one of them is added/changed.
+  clientOrigins: (process.env.CLIENT_ORIGIN ?? "http://localhost:5173")
+    .split(",")
+    .map((o) => o.trim())
+    .filter(Boolean),
   databaseUrl: required("DATABASE_URL"),
   jwt: {
     accessSecret: required("JWT_ACCESS_SECRET"),

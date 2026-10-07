@@ -11,7 +11,7 @@ const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Products = lazy(() => import("./pages/Products"));
 const ProductDetail = lazy(() => import("./pages/ProductDetail"));
 const Categories = lazy(() => import("./pages/Categories"));
-const Suppliers = lazy(() => import("./pages/Suppliers"));
+
 const Stock = lazy(() => import("./pages/Stock"));
 const Ventas = lazy(() => import("./pages/Ventas"));
 const Compras = lazy(() => import("./pages/Compras"));
@@ -24,6 +24,10 @@ const Settings = lazy(() => import("./pages/Settings"));
 const Customers = lazy(() => import("./pages/Customers"));
 const Plans = lazy(() => import("./pages/Plans"));
 const NotFound = lazy(() => import("./pages/NotFound"));
+const Tutorial = lazy(() => import("./pages/Tutorial"));
+const Catalog = lazy(() => import("./pages/Catalog"));
+
+
 
 
 const SuperAdminDashboard = lazy(() => import("./features/admin/components/SuperAdminDashboard"));
@@ -42,12 +46,12 @@ export function preloadAllPages() {
   import("./pages/Stock");
   import("./pages/Compras");
   import("./pages/Categories");
-  import("./pages/Suppliers");
   import("./pages/Reports");
   import("./pages/Estadisticas");
   import("./pages/Rentabilidad");
   import("./pages/Users");
   import("./pages/Settings");
+  import("./pages/Tutorial");
 }
 
 function PageLoader() {
@@ -62,7 +66,6 @@ function RootRedirect() {
   const { user } = useAuth();
   if (!user) return <Navigate to="/login" replace />;
   if (user.role === "SUPERADMIN") return <Navigate to="/superadmin" replace />;
-  if (user.role === "ADMIN") return <Navigate to="/dashboard" replace />;
   return <Navigate to="/ventas" replace />;
 }
 
@@ -71,7 +74,9 @@ export default function App() {
   return (
     <Suspense fallback={<PageLoader />}>
       <Routes>
+        <Route path="/c/:localId" element={<Catalog />} />
         <Route path="/login" element={<Login />} />
+
 
         <Route
           element={
@@ -91,9 +96,9 @@ export default function App() {
           <Route path="/dashboard" element={<ProtectedRoute allowedRoles={["ADMIN"]}><Dashboard /></ProtectedRoute>} />
 
           <Route path="/categories" element={<ProtectedRoute allowedRoles={["ADMIN"]}><Categories /></ProtectedRoute>} />
-          <Route path="/suppliers" element={<ProtectedRoute allowedRoles={["ADMIN"]}><Suppliers /></ProtectedRoute>} />
 
           {/* Both Admin and Employee */}
+          <Route path="/tutorial" element={<Tutorial />} />
           <Route path="/products" element={<Products />} />
           <Route path="/products/:id" element={<ProductDetail />} />
           <Route path="/stock" element={<Stock />} />

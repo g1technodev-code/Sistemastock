@@ -1,11 +1,14 @@
 export type Role = "SUPERADMIN" | "ADMIN" | "MANAGER" | "EMPLOYEE";
+export type SaleType = "UNIT" | "WEIGHT" | "AMOUNT";
 export type MovementType = "IN" | "OUT" | "ADJUSTMENT";
-export type PaymentMethod = "EFECTIVO" | "TRANSFERENCIA" | "TARJETA" | "CUENTA_CORRIENTE";
+export type PaymentMethod = "EFECTIVO" | "TRANSFERENCIA" | "TARJETA" | "CUENTA_CORRIENTE" | "MIXTO";
 export type SaleStatus = "COMPLETED" | "VOIDED";
-export type CashMovementType = "SALE_IN" | "WITHDRAWAL" | "ADJUSTMENT";
+export type CashMovementType = "SALE_IN" | "WITHDRAWAL" | "ADJUSTMENT" | "PURCHASE_OUT" | "SUPPLIER_PAYMENT";
 export type CashShiftStatus = "OPEN" | "CLOSED";
 export type PurchaseStatus = "PENDING" | "RECEIVED" | "CANCELLED";
+export type PurchaseOrderStatus = "PENDING" | "PARTIALLY_RECEIVED" | "RECEIVED" | "CANCELLED";
 export type CustomerMovementType = "CHARGE" | "PAYMENT";
+export type SupplierMovementType = "CHARGE" | "PAYMENT";
 export type NotificationType = "LOW_STOCK" | "SHIFT_OPEN" | "SHIFT_CLOSE";
 
 export type LocalStatus = "ACTIVE" | "DUE_SOON" | "SUSPENDED";
@@ -126,8 +129,10 @@ export type AuthUser = {
   name: string;
   email: string;
   role: Role;
+  canCreateProducts?: boolean;
   planFeatures?: string[];
 };
+
 
 
 export type Customer = {
@@ -187,9 +192,24 @@ export type Supplier = {
   address: string | null;
   taxId: string | null;
   notes: string | null;
+  currentBalance: number;
   isActive: boolean;
   createdAt: string;
   _count?: { products: number };
+};
+
+export type SupplierMovement = {
+  id: string;
+  supplierId: string;
+  type: SupplierMovementType;
+  amount: number;
+  balanceBefore: number;
+  balanceAfter: number;
+  purchaseId: string | null;
+  purchase?: { id: string; total: number; createdAt: string; receiptNumber: string | null };
+  userId: string;
+  note: string | null;
+  createdAt: string;
 };
 
 export type Product = {
@@ -204,6 +224,7 @@ export type Product = {
   currentStock: number;
   minStock: number;
   imageUrl: string | null;
+  saleType: SaleType;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
@@ -235,6 +256,7 @@ export type SaleItem = {
   quantity: number;
   unitPrice: number;
   subtotal: number;
+  saleType: SaleType;
   product: { id: string; sku: string; name: string; unit: string };
 };
 
@@ -272,8 +294,12 @@ export type Purchase = {
   id: string;
   supplierId: string;
   supplier: { id: string; name: string };
+  purchaseOrderId: string | null;
   status: PurchaseStatus;
   total: number;
+  paymentMethod: PaymentMethod | null;
+  receiptNumber: string | null;
+  cashMovementId: string | null;
   note: string | null;
   userId: string;
   user: { id: string; name: string };
@@ -286,6 +312,29 @@ export type Purchase = {
   createdAt: string;
   updatedAt: string;
   items: PurchaseItem[];
+};
+
+export type PurchaseOrderItem = {
+  id: string;
+  productId: string;
+  quantity: number;
+  receivedQuantity: number;
+  estimatedUnitPrice: number;
+  product: { id: string; sku: string; name: string; unit: string };
+};
+
+export type PurchaseOrder = {
+  id: string;
+  supplierId: string;
+  supplier: { id: string; name: string };
+  status: PurchaseOrderStatus;
+  estimatedTotal: number;
+  notes: string | null;
+  createdById: string;
+  createdAt: string;
+  updatedAt: string;
+  receivedAt: string | null;
+  items: PurchaseOrderItem[];
 };
 
 export type CashShift = {
@@ -369,6 +418,7 @@ export type DashboardSummary = {
     movementsToday: number;
     salesToday: number;
     cashBalance: number;
+    transferBalance: number;
     profitToday: number;
     unitsSoldToday: number;
     avgTicketToday: number;

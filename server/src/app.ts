@@ -14,13 +14,16 @@ app.use(
     // In dev, Vite may bump to another port if 5173 is busy (e.g. a second `npm run dev`
     // left running) — reflect any localhost origin instead of hardcoding one port so the
     // app doesn't break with a CORS error every time that happens. Production stays locked
-    // to CLIENT_ORIGIN.
+    // to the CLIENT_ORIGIN allowlist (comma-separated, e.g. custom domain + *.vercel.app).
     origin:
       env.nodeEnv === "production"
-        ? env.clientOrigin
+        ? (origin, callback) => {
+            if (!origin) return callback(null, true);
+            callback(null, env.clientOrigins.includes(origin));
+          }
         : (origin, callback) => {
             if (!origin || LOCALHOST_ORIGIN.test(origin)) return callback(null, true);
-            callback(null, env.clientOrigin === origin);
+            callback(null, env.clientOrigins.includes(origin));
           },
     credentials: true,
   }),

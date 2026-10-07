@@ -26,9 +26,10 @@ export const getOne = catchAsync(async (req: Request, res: Response) => {
 
 export const create = catchAsync(async (req: Request, res: Response) => {
   const input = upsertProductSchema.parse(req.body);
-  const product = await productService.createProduct(req.user?.localId, input);
+  const product = await productService.createProduct(req.user?.localId, input, req.user?.id);
   res.status(201).json({ product: serializeDecimals(product) });
 });
+
 
 
 export const update = catchAsync(async (req: Request, res: Response) => {

@@ -12,10 +12,12 @@ const SELECT_FIELDS = {
   name: true,
   email: true,
   role: true,
+  canCreateProducts: true,
   isActive: true,
   createdAt: true,
   updatedAt: true,
 };
+
 
 export async function listUsers(localId: string | null | undefined, query: { page?: number; limit?: number; q?: string }) {
   const pagination = parsePagination(query);
@@ -90,9 +92,11 @@ export async function createUser(creatorLocalId: string | null | undefined, inpu
       email: input.email,
       passwordHash,
       role: input.role,
+      canCreateProducts: input.canCreateProducts ?? false,
     },
     select: SELECT_FIELDS,
   });
+
 }
 
 

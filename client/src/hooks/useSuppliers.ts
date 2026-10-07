@@ -25,3 +25,37 @@ export function useSupplierMutations() {
 
   return { create, update, remove };
 }
+
+export function useSupplierAccount(id: string | null) {
+  return useQuery({
+    queryKey: ["supplierAccount", id],
+    queryFn: () => suppliersApi.getSupplierAccount(id!),
+    enabled: !!id,
+    staleTime: 1000 * 60,
+  });
+}
+
+export function useSupplierMovements(id: string | null, params?: { page?: number; limit?: number }) {
+  return useQuery({
+    queryKey: ["supplierMovements", id, params],
+    queryFn: () => suppliersApi.listSupplierMovements(id!, params),
+    enabled: !!id,
+    staleTime: 1000 * 60,
+  });
+}
+
+export function useSupplierAccountMutations() {
+  const qc = useQueryClient();
+  
+  const registerPayment = useMutation({
+    mutationFn: ({ id, input }: { id: string; input: suppliersApi.SupplierPaymentInput }) => suppliersApi.registerSupplierPayment(id, input),
+    onSuccess: (_, variables) => {
+      qc.invalidateQueries({ queryKey: ["supplierAccount", variables.id] });
+      qc.invalidateQueries({ queryKey: ["supplierMovements", variables.id] });
+      qc.invalidateQueries({ queryKey: ["suppliers"] });
+      qc.invalidateQueries({ queryKey: ["cash"] }); // since payment might affect cash
+    },
+  });
+
+  return { registerPayment };
+}

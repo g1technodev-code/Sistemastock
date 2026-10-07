@@ -89,6 +89,8 @@ export async function getSummary(localId: string | null | undefined) {
       where: { localId, createdAt: { gte: todayStart }, status: SaleStatus.COMPLETED },
       select: {
         total: true,
+        paymentMethod: true,
+        payments: { select: { paymentMethod: true, amount: true } },
         items: { select: { quantity: true, subtotal: true, product: { select: { costPrice: true } } } },
       },
     }),
@@ -97,7 +99,19 @@ export async function getSummary(localId: string | null | undefined) {
 
   let profitToday = 0;
   let unitsSoldToday = 0;
+  let transferToday = 0;
+
   for (const sale of todaySales) {
+    if (sale.paymentMethod === 'TRANSFERENCIA') {
+      transferToday += Number(sale.total);
+    } else if (sale.paymentMethod === 'MIXTO') {
+      for (const p of sale.payments) {
+        if (p.paymentMethod === 'TRANSFERENCIA') {
+          transferToday += Number(p.amount);
+        }
+      }
+    }
+
     for (const item of sale.items) {
       unitsSoldToday += item.quantity;
       profitToday += Number(item.subtotal) - item.quantity * Number(item.product.costPrice);
@@ -124,6 +138,7 @@ export async function getSummary(localId: string | null | undefined) {
       movementsToday,
       salesToday: Math.round(salesTotalToday * 100) / 100,
       cashBalance: Number(register.currentBalance),
+      transferBalance: Math.round(transferToday * 100) / 100,
       profitToday: Math.round(profitToday * 100) / 100,
       unitsSoldToday,
       avgTicketToday: Math.round(avgTicketToday * 100) / 100,
