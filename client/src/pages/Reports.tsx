@@ -57,11 +57,6 @@ export default function Reports() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">Reportes</h1>
-        <p className="text-sm text-neutral-500 dark:text-neutral-400">Analiza el valor y el movimiento de tu inventario.</p>
-      </div>
-
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <ChartCard title="Movimientos (30 días)" description="Entradas, salidas y ajustes por día">
           <ResponsiveContainer width="100%" height="85%">

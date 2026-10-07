@@ -16,9 +16,7 @@ const Stock = lazy(() => import("./pages/Stock"));
 const Ventas = lazy(() => import("./pages/Ventas"));
 const Compras = lazy(() => import("./pages/Compras"));
 const Caja = lazy(() => import("./pages/Caja"));
-const Reports = lazy(() => import("./pages/Reports"));
-const Estadisticas = lazy(() => import("./pages/Estadisticas"));
-const Rentabilidad = lazy(() => import("./pages/Rentabilidad"));
+const Analisis = lazy(() => import("./pages/Analisis"));
 const Users = lazy(() => import("./pages/Users"));
 const Settings = lazy(() => import("./pages/Settings"));
 const Customers = lazy(() => import("./pages/Customers"));
@@ -46,9 +44,7 @@ export function preloadAllPages() {
   import("./pages/Stock");
   import("./pages/Compras");
   import("./pages/Categories");
-  import("./pages/Reports");
-  import("./pages/Estadisticas");
-  import("./pages/Rentabilidad");
+  import("./pages/Analisis");
   import("./pages/Users");
   import("./pages/Settings");
   import("./pages/Tutorial");
@@ -110,30 +106,17 @@ export default function App() {
 
 
           <Route
-
-            path="/reports"
+            path="/analisis"
             element={
               <ProtectedRoute allowedRoles={["ADMIN"]} requiredFeature="REPORTS">
-                <Reports />
+                <Analisis />
               </ProtectedRoute>
             }
           />
-          <Route
-            path="/estadisticas"
-            element={
-              <ProtectedRoute allowedRoles={["ADMIN"]} requiredFeature="REPORTS">
-                <Estadisticas />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/rentabilidad"
-            element={
-              <ProtectedRoute allowedRoles={["ADMIN"]} requiredFeature="REPORTS">
-                <Rentabilidad />
-              </ProtectedRoute>
-            }
-          />
+          {/* Old URLs, kept so bookmarks keep working */}
+          <Route path="/reports" element={<Navigate to="/analisis?tab=informes" replace />} />
+          <Route path="/estadisticas" element={<Navigate to="/analisis?tab=estadisticas" replace />} />
+          <Route path="/rentabilidad" element={<Navigate to="/analisis?tab=rentabilidad" replace />} />
           <Route
             path="/users"
             element={
