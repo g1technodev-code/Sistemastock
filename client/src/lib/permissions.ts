@@ -32,7 +32,6 @@ export const permissions = {
   canViewCategories: (role: Role) => role === "ADMIN" || role === "SUPERADMIN",
   canViewSuppliers: (role: Role) => role === "ADMIN" || role === "SUPERADMIN",
   canViewStockMovements: (role: Role) => role === "ADMIN" || role === "EMPLOYEE" || role === "SUPERADMIN",
-  canViewPhysicalInventory: (role: Role) => role === "ADMIN" || role === "EMPLOYEE" || role === "SUPERADMIN",
   canViewSales: (role: Role) => role === "ADMIN" || role === "EMPLOYEE" || role === "SUPERADMIN",
   canViewPurchases: (role: Role) => role === "ADMIN" || role === "EMPLOYEE" || role === "SUPERADMIN",
   canViewCash: (role: Role) => role === "ADMIN" || role === "EMPLOYEE" || role === "SUPERADMIN",
