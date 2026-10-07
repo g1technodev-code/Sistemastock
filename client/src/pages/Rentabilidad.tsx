@@ -67,11 +67,6 @@ export default function Rentabilidad() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">Rentabilidad</h1>
-        <p className="text-sm text-neutral-500 dark:text-neutral-400">Ganancia y margen calculados sobre las ventas de los últimos 30 días.</p>
-      </div>
-
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard label="Ingresos totales" value={formatCurrency(data.totals.revenue)} icon={DollarSign} />
         <StatCard label="Costo total" value={formatCurrency(data.totals.cost)} icon={Package} />

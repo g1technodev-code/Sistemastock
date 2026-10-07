@@ -89,7 +89,7 @@ export default function Dashboard() {
               <p className="mt-1">Para mantener márgenes exactos, asegúrate de que todos tus productos tengan su costo de compra actualizado en el inventario.</p>
             </div>
             <div className="pt-2 flex justify-end">
-              <Button onClick={() => { setSelectedCard(null); navigate("/rentabilidad"); }}>
+              <Button onClick={() => { setSelectedCard(null); navigate("/analisis?tab=rentabilidad"); }}>
                 Ver informe de Rentabilidad <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </div>
@@ -125,7 +125,7 @@ export default function Dashboard() {
               <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">Suma total de ítems individuales despachados en las ventas de hoy.</p>
             </div>
             <div className="pt-2 flex justify-end">
-              <Button onClick={() => { setSelectedCard(null); navigate("/estadisticas"); }}>
+              <Button onClick={() => { setSelectedCard(null); navigate("/analisis?tab=estadisticas"); }}>
                 Ver Estadísticas de Productos <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </div>
@@ -141,7 +141,7 @@ export default function Dashboard() {
               <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">Monto promedio gastado por cliente en cada compra efectuada hoy.</p>
             </div>
             <div className="pt-2 flex justify-end">
-              <Button onClick={() => { setSelectedCard(null); navigate("/estadisticas"); }}>
+              <Button onClick={() => { setSelectedCard(null); navigate("/analisis?tab=estadisticas"); }}>
                 Ver Estadísticas Generales <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </div>

@@ -77,11 +77,6 @@ export default function Estadisticas() {
 
   return (
     <div className="mx-auto flex max-w-[1400px] flex-col gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div>
-        <h1 className="text-2xl font-black tracking-tight text-neutral-900 dark:text-neutral-100">Estadísticas de ventas</h1>
-        <p className="mt-1 text-sm font-medium text-neutral-500 dark:text-neutral-400">Rendimiento de ventas por período, producto, categoría, empleado y método de pago.</p>
-      </div>
-
       <div className="animate-in fade-in slide-in-from-bottom-6 duration-700">
         <SalesChart />
       </div>
