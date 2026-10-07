@@ -1,5 +1,5 @@
 # StockFlow
-
+.
 Sistema de gestión de stock e inventario para pequeñas y medianas empresas. Backend en
 Node.js + Express + TypeScript (arquitectura MVC) con PostgreSQL/Prisma, frontend en
 React + Vite + TypeScript con Tailwind CSS.
