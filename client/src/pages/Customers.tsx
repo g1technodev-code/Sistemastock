@@ -22,6 +22,7 @@ import { extractErrorMessage } from "../api/client";
 import { Badge } from "../components/ui/Badge";
 import { Modal } from "../components/ui/Modal";
 import { Drawer } from "../components/ui/Drawer";
+import { CustomerModal } from "../components/customers/CustomerModal";
 
 export default function Customers() {
   const queryClient = useQueryClient();
@@ -220,52 +221,12 @@ export default function Customers() {
       </div>
 
       {/* Modal Nuevo Cliente */}
-      {createModalOpen && (
-        <Modal open={createModalOpen} onClose={() => setCreateModalOpen(false)} title="Crear Nuevo Cliente">
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              const fd = new FormData(e.currentTarget);
-              createMutation.mutate({
-                name: fd.get("name") as string,
-                taxId: (fd.get("taxId") as string) || null,
-                email: (fd.get("email") as string) || null,
-                phone: (fd.get("phone") as string) || null,
-                address: (fd.get("address") as string) || null,
-                creditLimit: fd.get("creditLimit") ? Number(fd.get("creditLimit")) : null,
-              });
-            }}
-            className="space-y-4"
-          >
-            <div>
-              <label className="block text-xs font-semibold uppercase text-neutral-600 dark:text-neutral-400 mb-1">Nombre Completo / Razón Social *</label>
-              <input required name="name" className="w-full rounded-xl border border-neutral-300 px-3.5 py-2 text-sm dark:border-neutral-800 dark:bg-neutral-900" />
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs font-semibold uppercase text-neutral-600 dark:text-neutral-400 mb-1">RUT / DNI / Tax ID</label>
-                <input name="taxId" className="w-full rounded-xl border border-neutral-300 px-3.5 py-2 text-sm dark:border-neutral-800 dark:bg-neutral-900" />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold uppercase text-neutral-600 dark:text-neutral-400 mb-1">Teléfono</label>
-                <input name="phone" className="w-full rounded-xl border border-neutral-300 px-3.5 py-2 text-sm dark:border-neutral-800 dark:bg-neutral-900" />
-              </div>
-            </div>
-            <div>
-              <label className="block text-xs font-semibold uppercase text-neutral-600 dark:text-neutral-400 mb-1">Email</label>
-              <input type="email" name="email" className="w-full rounded-xl border border-neutral-300 px-3.5 py-2 text-sm dark:border-neutral-800 dark:bg-neutral-900" />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold uppercase text-neutral-600 dark:text-neutral-400 mb-1">Límite de Crédito ($)</label>
-              <input type="number" step="0.01" min="0" name="creditLimit" placeholder="Dejar en blanco para sin límite" className="w-full rounded-xl border border-neutral-300 px-3.5 py-2 text-sm dark:border-neutral-800 dark:bg-neutral-900" />
-            </div>
-            <div className="flex justify-end gap-2 pt-3">
-              <button type="button" onClick={() => setCreateModalOpen(false)} className="rounded-xl px-4 py-2 text-sm font-semibold text-neutral-600 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:bg-neutral-800">Cancelar</button>
-              <button type="submit" disabled={createMutation.isPending} className="rounded-xl bg-primary-600 px-4 py-2 text-sm font-semibold text-white hover:bg-primary-500">Guardar Cliente</button>
-            </div>
-          </form>
-        </Modal>
-      )}
+      <CustomerModal
+        open={createModalOpen}
+        onClose={() => setCreateModalOpen(false)}
+        isLoading={createMutation.isPending}
+        onSubmit={(input) => createMutation.mutate(input)}
+      />
 
       {/* Modal Editar Cliente */}
       {editingCustomer && (
