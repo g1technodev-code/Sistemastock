@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Banknote,
   CreditCard,
@@ -30,7 +30,8 @@ import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 import { extractErrorMessage } from "../api/client";
 import { listProducts } from "../api/products";
-import { listCustomers } from "../api/customers";
+import { listCustomers, createCustomer } from "../api/customers";
+import { CustomerModal } from "../components/customers/CustomerModal";
 import { useBarcodeScanner } from "../hooks/useBarcodeScanner";
 import { CameraScannerModal } from "../components/common/CameraScannerModal";
 import { formatCurrency, formatDateTime } from "../lib/formatters";
@@ -62,6 +63,7 @@ const PAYMENT_METHOD_TONE: Record<PaymentMethod, "success" | "info" | "warning" 
 type CartLine = { productId: string; name: string; sku: string; unitPrice: number; availableStock: number; quantity: number; amount?: number; saleType: "UNIT" | "WEIGHT" | "AMOUNT" };
 
 export default function Ventas() {
+  const queryClient = useQueryClient();
   const { user } = useAuth();
   const { showSuccess, showError } = useToast();
   const [tab, setTab] = useState<"new" | "history">("new");
@@ -83,6 +85,21 @@ export default function Ventas() {
   const [weightModal, setWeightModal] = useState<{ productId: string, name: string, sku: string, unitPrice: number, availableStock: number } | null>(null);
   const [amountModal, setAmountModal] = useState<{ productId: string, name: string, sku: string, availableStock: number } | null>(null);
   const [modalInput, setModalInput] = useState("");
+  const [quickCustomerModalOpen, setQuickCustomerModalOpen] = useState(false);
+
+  const createCustomerMutation = useMutation({
+    mutationFn: createCustomer,
+    onSuccess: (newCustomer: Customer) => {
+      queryClient.invalidateQueries({ queryKey: ["customers-active"] });
+      queryClient.invalidateQueries({ queryKey: ["customers"] });
+      showSuccess(`Cliente "${newCustomer.name}" registrado`);
+      setSelectedCustomerId(newCustomer.id);
+      setQuickCustomerModalOpen(false);
+    },
+    onError: (err: unknown) => {
+      showError(extractErrorMessage(err, "No se pudo crear el cliente"));
+    },
+  });
   
   const [splitAmounts, setSplitAmounts] = useState<Record<string, string>>({
     EFECTIVO: "",
@@ -194,7 +211,12 @@ export default function Ventas() {
   const removeLine = (productId: string) => setCart((prev) => prev.filter((l) => l.productId !== productId));
 
   const checkout = async () => {
-    if (cart.length === 0 || missingReceiptInfo || missingCustomer) return;
+    if (cart.length === 0 || missingReceiptInfo || missingCustomer || invalidSplit) {
+      if (paymentMethod === "MIXTO" && ccSplitAmount > 0 && !selectedCustomerId) {
+        showError("Debes seleccionar un cliente para asignar el monto de Cuenta Corriente.");
+      }
+      return;
+    }
     try {
       await createSale.mutateAsync({
         paymentMethod,
@@ -228,25 +250,27 @@ export default function Ventas() {
   });
 
   return (
-    <div className="flex flex-col gap-4">
-      <div>
+    <div className="flex h-[calc(100vh-7rem)] flex-col gap-3 overflow-hidden">
+      <div className="shrink-0">
         <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">Ventas</h1>
         <p className="text-sm text-neutral-500 dark:text-neutral-400">Registra ventas y consulta el historial.</p>
       </div>
 
-      <Tabs
-        value={tab}
-        onChange={setTab}
-        tabs={[
-          { value: "new", label: "Nueva venta", icon: ShoppingCart },
-          { value: "history", label: `Historial${user?.role === "EMPLOYEE" ? " (mío)" : ""}`, icon: ListChecks },
-        ]}
-      />
+      <div className="shrink-0">
+        <Tabs
+          value={tab}
+          onChange={(val) => setTab(val as "new" | "history")}
+          tabs={[
+            { value: "new", label: "Nueva venta", icon: ShoppingCart },
+            { value: "history", label: `Historial${user?.role === "EMPLOYEE" ? " (mío)" : ""}`, icon: ListChecks },
+          ]}
+        />
+      </div>
 
       {tab === "new" ? (
-        <>
+        <div className="flex flex-1 flex-col min-h-0 gap-3">
           {!hasOpenShift && (
-            <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-300">
+            <div className="shrink-0 rounded-lg border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-300">
               Debes abrir tu turno de caja antes de registrar ventas.{" "}
               <Link to="/caja" className="font-medium underline underline-offset-2">
                 Ir a Caja
@@ -254,11 +278,12 @@ export default function Ventas() {
             </div>
           )}
 
-          <div className="flex flex-col gap-4 lg:flex-row">
-            <Card className="flex-1">
-              <CardHeader title="Productos" description="Busca por nombre, SKU o código de barra" />
-              <CardBody className="flex flex-col gap-3">
-                <div className="flex gap-2">
+          <div className="flex flex-1 min-h-0 flex-col gap-4 lg:flex-row lg:items-stretch">
+            {/* Columna Izquierda (Productos) con Scroll Interno */}
+            <Card className="flex flex-1 flex-col min-h-0 min-w-0 overflow-hidden">
+              <CardHeader className="shrink-0" title="Productos" description="Busca por nombre, SKU o código de barra" />
+              <CardBody className="flex flex-1 flex-col min-h-0 gap-3 overflow-hidden p-4">
+                <div className="shrink-0 flex gap-2">
                   <div className="flex-1">
                     <Input
                       placeholder="Buscar producto o escanear código..."
@@ -282,7 +307,8 @@ export default function Ventas() {
                     <span className="hidden sm:inline">Escanear</span>
                   </button>
                 </div>
-                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+
+                <div className="flex-1 overflow-y-auto min-h-0 pr-1 grid grid-cols-1 gap-2 sm:grid-cols-2">
                   {productsPage?.items.length === 0 && (
                     <p className="col-span-full py-6 text-center text-sm text-neutral-400">Sin resultados.</p>
                   )}
@@ -305,7 +331,7 @@ export default function Ventas() {
                           }
                         }}
                         className={cn(
-                          "flex flex-col items-start gap-2 rounded-2xl border p-4 text-left transition-all duration-200 active:scale-95",
+                          "flex flex-col items-start gap-2 rounded-2xl border p-4 text-left transition-all duration-200 active:scale-95 h-fit",
                           outOfStock
                             ? "cursor-not-allowed border-neutral-200 opacity-50 dark:border-neutral-800"
                             : "border-neutral-200 hover:border-primary-400 hover:bg-primary-50 hover:shadow-md dark:border-neutral-700/60 dark:hover:border-primary-500/50 dark:hover:bg-primary-500/10",
@@ -329,9 +355,10 @@ export default function Ventas() {
               </CardBody>
             </Card>
 
-            <Card className="lg:w-[420px] lg:shrink-0 h-fit sticky top-24 shadow-2xl ring-1 ring-black/5 dark:ring-white/5">
+            {/* Columna Derecha (Carrito) - Scroll Vertical Global */}
+            <Card className="flex h-full flex-col overflow-y-auto shadow-2xl ring-1 ring-black/5 dark:ring-white/5 lg:w-[420px] lg:shrink-0">
               <CardHeader title="Carrito de Compra" description={`${cart.length} producto(s)`} />
-              <CardBody className="flex flex-col gap-4">
+              <CardBody className="flex flex-col gap-4 p-4">
                 {cart.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-12">
                     <div className="flex h-16 w-16 items-center justify-center rounded-full bg-neutral-100 dark:bg-neutral-800">
@@ -340,7 +367,7 @@ export default function Ventas() {
                     <p className="mt-4 text-sm font-medium text-neutral-500 dark:text-neutral-400">Agrega productos al carrito.</p>
                   </div>
                 ) : (
-                  <div className="flex max-h-[300px] flex-col gap-3 overflow-y-auto pr-1">
+                  <div className="flex flex-col gap-3">
                     {cart.map((line) => (
                       <div key={line.productId} className="flex items-center gap-3 rounded-xl border border-neutral-200/80 bg-neutral-50/50 p-3 dark:border-neutral-700/50 dark:bg-neutral-800/20">
                         <div className="min-w-0 flex-1">
@@ -387,108 +414,122 @@ export default function Ventas() {
                   </div>
                 )}
 
-                <div className="flex flex-col gap-2 pt-4">
-                  <span className="text-sm font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">Medio de pago</span>
-                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
-                    {(["EFECTIVO", "TRANSFERENCIA", "TARJETA", "CUENTA_CORRIENTE", "MIXTO"] as PaymentMethod[]).map((m) => {
-                      const Icon = PAYMENT_METHOD_ICON[m];
-                      return (
+                {/* Footer del Carrito (Fluye naturalmente con el scroll del panel derecho) */}
+                <div className="flex flex-col gap-3 pt-3 border-t border-neutral-200 dark:border-neutral-800">
+                  <div className="flex flex-col gap-1.5">
+                    <span className="text-xs font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">Medio de pago</span>
+                    <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-5">
+                      {(["EFECTIVO", "TRANSFERENCIA", "TARJETA", "CUENTA_CORRIENTE", "MIXTO"] as PaymentMethod[]).map((m) => {
+                        const Icon = PAYMENT_METHOD_ICON[m];
+                        return (
+                          <button
+                            key={m}
+                            type="button"
+                            onClick={() => setPaymentMethod(m)}
+                            className={cn(
+                              "flex flex-col items-center gap-1 rounded-xl border p-2 text-[10px] font-bold transition-all duration-200 active:scale-95 text-center",
+                              paymentMethod === m
+                                ? "border-primary-500 bg-primary-500 text-white shadow-md dark:bg-primary-600"
+                                : "border-neutral-200 text-neutral-500 hover:border-neutral-300 hover:bg-neutral-50 dark:border-neutral-700 dark:text-neutral-400 dark:hover:border-neutral-600 dark:hover:bg-neutral-800/60",
+                            )}
+                          >
+                            <Icon className="h-3.5 w-3.5" strokeWidth={paymentMethod === m ? 3 : 2} />
+                            {PAYMENT_METHOD_LABEL[m]}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {paymentMethod === "MIXTO" && (
+                    <div className="flex flex-col gap-2 border-t border-neutral-200 pt-2 dark:border-neutral-800">
+                      <span className="text-xs font-bold text-neutral-700 dark:text-neutral-300">Desglose de Pago</span>
+                      <div className="grid grid-cols-2 gap-2">
+                        {(["EFECTIVO", "TRANSFERENCIA", "TARJETA", "CUENTA_CORRIENTE"] as const).map((m) => (
+                          <Input
+                            key={m}
+                            label={PAYMENT_METHOD_LABEL[m as PaymentMethod]}
+                            type="number"
+                            step="0.01"
+                            placeholder="0.00"
+                            value={splitAmounts[m]}
+                            onChange={(e) => setSplitAmounts(prev => ({ ...prev, [m]: e.target.value }))}
+                          />
+                        ))}
+                      </div>
+                      <div className="flex justify-between items-center bg-neutral-50 p-2 rounded-lg dark:bg-neutral-800/50">
+                        <span className="text-xs font-medium text-neutral-600 dark:text-neutral-400">Total Ingresado:</span>
+                        <span className={cn("text-xs font-bold", Math.abs(splitTotal - total) > 0.01 ? "text-amber-600 dark:text-amber-400" : "text-success-600 dark:text-success-400")}>
+                          {formatCurrency(splitTotal)} / {formatCurrency(total)}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+
+                  {requiresCustomer && (
+                    <div className="flex flex-col gap-1.5 border-t border-neutral-200 pt-2 dark:border-neutral-800">
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-semibold uppercase text-neutral-600 dark:text-neutral-400">
+                          Cliente en Cuenta Corriente *
+                        </label>
                         <button
-                          key={m}
                           type="button"
-                          onClick={() => setPaymentMethod(m)}
-                          className={cn(
-                            "flex flex-col items-center gap-1.5 rounded-xl border p-2.5 text-[11px] font-bold transition-all duration-200 active:scale-95 text-center",
-                            paymentMethod === m
-                              ? "border-primary-500 bg-primary-500 text-white shadow-md dark:bg-primary-600"
-                              : "border-neutral-200 text-neutral-500 hover:border-neutral-300 hover:bg-neutral-50 dark:border-neutral-700 dark:text-neutral-400 dark:hover:border-neutral-600 dark:hover:bg-neutral-800/60",
-                          )}
+                          onClick={() => setQuickCustomerModalOpen(true)}
+                          className="flex items-center gap-1 text-xs font-bold text-primary-600 hover:text-primary-500 dark:text-primary-400"
                         >
-                          <Icon className="h-4 w-4" strokeWidth={paymentMethod === m ? 3 : 2} />
-                          {PAYMENT_METHOD_LABEL[m]}
+                          <Plus className="h-3.5 w-3.5" /> + Nuevo Cliente
                         </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {paymentMethod === "MIXTO" && (
-                  <div className="flex flex-col gap-3 border-t border-neutral-200 pt-3 dark:border-neutral-800">
-                    <span className="text-sm font-bold text-neutral-700 dark:text-neutral-300">Desglose de Pago</span>
-                    <div className="grid grid-cols-2 gap-3">
-                      {(["EFECTIVO", "TRANSFERENCIA", "TARJETA", "CUENTA_CORRIENTE"] as const).map((m) => (
-                        <Input
-                          key={m}
-                          label={PAYMENT_METHOD_LABEL[m as PaymentMethod]}
-                          type="number"
-                          step="0.01"
-                          placeholder="0.00"
-                          value={splitAmounts[m]}
-                          onChange={(e) => setSplitAmounts(prev => ({ ...prev, [m]: e.target.value }))}
-                        />
-                      ))}
+                      </div>
+                      <Select
+                        value={selectedCustomerId}
+                        onChange={(e) => setSelectedCustomerId(e.target.value)}
+                      >
+                        <option value="">-- Selecciona un cliente --</option>
+                        {customersData?.items.filter((c: Customer) => c.isActive).map((c: Customer) => (
+                          <option key={c.id} value={c.id}>
+                            {c.name} {c.taxId ? `(${c.taxId})` : ""} - Deuda: {formatCurrency(c.currentBalance)}
+                          </option>
+                        ))}
+                      </Select>
                     </div>
-                    <div className="flex justify-between items-center bg-neutral-50 p-2 rounded-lg dark:bg-neutral-800/50">
-                      <span className="text-sm font-medium text-neutral-600 dark:text-neutral-400">Total Ingresado:</span>
-                      <span className={cn("font-bold", Math.abs(splitTotal - total) > 0.01 ? "text-amber-600 dark:text-amber-400" : "text-success-600 dark:text-success-400")}>
-                        {formatCurrency(splitTotal)} / {formatCurrency(total)}
-                      </span>
+                  )}
+
+                  {requiresReceiptInfo && (
+                    <div className="flex flex-col gap-2 border-t border-neutral-200 pt-2 dark:border-neutral-800">
+                      <Input
+                        label="N.° de comprobante *"
+                        required
+                        value={receiptNumber}
+                        onChange={(e) => setReceiptNumber(e.target.value)}
+                      />
+                      <Input
+                        label="Nombre de quien paga *"
+                        required
+                        value={payerName}
+                        onChange={(e) => setPayerName(e.target.value)}
+                      />
                     </div>
-                  </div>
-                )}
+                  )}
 
-                {requiresCustomer && (
-                  <div className="flex flex-col gap-2 border-t border-neutral-200 pt-3 dark:border-neutral-800">
-                    <Select
-                      label="Cliente en Cuenta Corriente *"
-                      value={selectedCustomerId}
-                      onChange={(e) => setSelectedCustomerId(e.target.value)}
-                    >
-                      <option value="">-- Selecciona un cliente --</option>
-                      {customersData?.items.filter((c: Customer) => c.isActive).map((c: Customer) => (
-                        <option key={c.id} value={c.id}>
-                          {c.name} {c.taxId ? `(${c.taxId})` : ""} - Deuda: {formatCurrency(c.currentBalance)}
-                        </option>
-                      ))}
-                    </Select>
+                  <div className="flex items-center justify-between border-t border-neutral-200 pt-2 dark:border-neutral-800">
+                    <span className="text-sm font-medium text-neutral-600 dark:text-neutral-300">Total</span>
+                    <span className="text-lg font-bold text-neutral-900 dark:text-neutral-100">{formatCurrency(total)}</span>
                   </div>
-                )}
 
-                {requiresReceiptInfo && (
-                  <div className="flex flex-col gap-3 border-t border-neutral-200 pt-3 dark:border-neutral-800">
-                    <Input
-                      label="N.° de comprobante *"
-                      required
-                      value={receiptNumber}
-                      onChange={(e) => setReceiptNumber(e.target.value)}
-                    />
-                    <Input
-                      label="Nombre de quien paga *"
-                      required
-                      value={payerName}
-                      onChange={(e) => setPayerName(e.target.value)}
-                    />
-                  </div>
-                )}
-
-                <div className="flex items-center justify-between border-t border-neutral-200 pt-3 dark:border-neutral-800">
-                  <span className="text-sm font-medium text-neutral-600 dark:text-neutral-300">Total</span>
-                  <span className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">{formatCurrency(total)}</span>
+                  <Button
+                    variant="success"
+                    onClick={checkout}
+                    disabled={cart.length === 0 || !hasOpenShift || missingReceiptInfo || missingCustomer || invalidSplit}
+                    isLoading={createSale.isPending}
+                    className="h-11 text-base font-bold shadow-lg"
+                  >
+                    Confirmar venta
+                  </Button>
                 </div>
-
-                <Button
-                  variant="success"
-                  onClick={checkout}
-                  disabled={cart.length === 0 || !hasOpenShift || missingReceiptInfo || missingCustomer || invalidSplit}
-                  isLoading={createSale.isPending}
-                  className="mt-2 h-14 text-lg font-bold shadow-lg"
-                >
-                  Confirmar venta
-                </Button>
               </CardBody>
             </Card>
           </div>
-        </>
+        </div>
       ) : (
         <Card>
           <div className="flex items-center justify-between border-b border-neutral-200 px-5 py-3 dark:border-neutral-800">
@@ -648,6 +689,14 @@ export default function Ventas() {
           </div>
         </div>
       )}
+
+      <CustomerModal
+        open={quickCustomerModalOpen}
+        onClose={() => setQuickCustomerModalOpen(false)}
+        isLoading={createCustomerMutation.isPending}
+        onSubmit={(input) => createCustomerMutation.mutate(input)}
+      />
     </div>
   );
 }
+
