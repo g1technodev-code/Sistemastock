@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -13,6 +13,7 @@ import {
   Camera,
   Users,
   Split,
+  ArrowLeft,
 } from "lucide-react";
 import { Card, CardHeader, CardBody } from "../components/ui/Card";
 import { Button } from "../components/ui/Button";
@@ -86,6 +87,7 @@ export default function Ventas() {
   const [amountModal, setAmountModal] = useState<{ productId: string, name: string, sku: string, availableStock: number } | null>(null);
   const [modalInput, setModalInput] = useState("");
   const [quickCustomerModalOpen, setQuickCustomerModalOpen] = useState(false);
+  const [isMobileCartOpen, setIsMobileCartOpen] = useState(false);
 
   const createCustomerMutation = useMutation({
     mutationFn: createCustomer,
@@ -100,7 +102,7 @@ export default function Ventas() {
       showError(extractErrorMessage(err, "No se pudo crear el cliente"));
     },
   });
-  
+
   const [splitAmounts, setSplitAmounts] = useState<Record<string, string>>({
     EFECTIVO: "",
     TRANSFERENCIA: "",
@@ -147,6 +149,28 @@ export default function Ventas() {
     if (line.saleType === "AMOUNT") return sum + (line.amount || 0);
     return sum;
   }, 0), [cart]);
+
+  // Auto-cálculo de Cuenta Corriente en Pago Mixto
+  useEffect(() => {
+    if (paymentMethod !== "MIXTO") return;
+
+    const efectivo = Number(splitAmounts.EFECTIVO || 0);
+    const transferencia = Number(splitAmounts.TRANSFERENCIA || 0);
+    const tarjeta = Number(splitAmounts.TARJETA || 0);
+
+    const pagado = efectivo + transferencia + tarjeta;
+    const resto = total - pagado;
+
+    const newCuentaCorriente = resto > 0 ? (Math.round(resto * 100) / 100).toString() : "";
+
+    if (splitAmounts.CUENTA_CORRIENTE !== newCuentaCorriente) {
+      setSplitAmounts((prev) => ({
+        ...prev,
+        CUENTA_CORRIENTE: newCuentaCorriente,
+      }));
+    }
+  }, [paymentMethod, total, splitAmounts.EFECTIVO, splitAmounts.TRANSFERENCIA, splitAmounts.TARJETA]);
+
   const hasOpenShift = !!cashStatus?.myOpenShift;
   const requiresReceiptInfo = false;
   
@@ -236,6 +260,7 @@ export default function Ventas() {
       setPayerName("");
       setSelectedCustomerId("");
       setSplitAmounts({ EFECTIVO: "", TRANSFERENCIA: "", TARJETA: "", CUENTA_CORRIENTE: "" });
+      setIsMobileCartOpen(false);
     } catch (error) {
       showError(extractErrorMessage(error, "No se pudo registrar la venta"));
     }
@@ -259,7 +284,10 @@ export default function Ventas() {
       <div className="shrink-0">
         <Tabs
           value={tab}
-          onChange={(val) => setTab(val as "new" | "history")}
+          onChange={(val) => {
+            setTab(val as "new" | "history");
+            setIsMobileCartOpen(false);
+          }}
           tabs={[
             { value: "new", label: "Nueva venta", icon: ShoppingCart },
             { value: "history", label: `Historial${user?.role === "EMPLOYEE" ? " (mío)" : ""}`, icon: ListChecks },
@@ -279,8 +307,11 @@ export default function Ventas() {
           )}
 
           <div className="flex flex-1 min-h-0 flex-col gap-4 lg:flex-row lg:items-stretch">
-            {/* Columna Izquierda (Productos) con Scroll Interno */}
-            <Card className="flex flex-1 flex-col min-h-0 min-w-0 overflow-hidden">
+            {/* Columna Izquierda (Productos) */}
+            <Card className={cn(
+              "flex-1 flex-col min-h-0 min-w-0 overflow-hidden",
+              isMobileCartOpen ? "hidden lg:flex" : "flex"
+            )}>
               <CardHeader className="shrink-0" title="Productos" description="Busca por nombre, SKU o código de barra" />
               <CardBody className="flex flex-1 flex-col min-h-0 gap-3 overflow-hidden p-4">
                 <div className="shrink-0 flex gap-2">
@@ -352,12 +383,41 @@ export default function Ventas() {
                     );
                   })}
                 </div>
+
+                {/* Floating Action Button (Mobile only) */}
+                <div className="shrink-0 pt-2 border-t border-neutral-200 dark:border-neutral-800 lg:hidden">
+                  <Button
+                    variant="primary"
+                    onClick={() => setIsMobileCartOpen(true)}
+                    className="w-full flex items-center justify-between h-12 px-4 text-sm font-bold shadow-lg"
+                  >
+                    <span className="flex items-center gap-2">
+                      <ShoppingCart className="h-5 w-5" />
+                      Ver Carrito ({cart.reduce((sum, item) => sum + (item.saleType === "UNIT" ? item.quantity : 1), 0)})
+                    </span>
+                    <span className="text-base font-black">{formatCurrency(total)}</span>
+                  </Button>
+                </div>
               </CardBody>
             </Card>
 
-            {/* Columna Derecha (Carrito) - Scroll Vertical Global */}
-            <Card className="flex h-full flex-col overflow-y-auto shadow-2xl ring-1 ring-black/5 dark:ring-white/5 lg:w-[420px] lg:shrink-0">
-              <CardHeader title="Carrito de Compra" description={`${cart.length} producto(s)`} />
+            {/* Columna Derecha (Carrito) */}
+            <Card className={cn(
+              "h-full flex-col overflow-y-auto shadow-2xl ring-1 ring-black/5 dark:ring-white/5 lg:w-[420px] lg:shrink-0",
+              isMobileCartOpen ? "flex w-full" : "hidden lg:flex"
+            )}>
+              {/* Header con botón de regreso en Mobile */}
+              <div className="flex items-center justify-between border-b border-neutral-200 px-4 py-3 dark:border-neutral-800 lg:hidden shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setIsMobileCartOpen(false)}
+                  className="flex items-center gap-2 text-sm font-bold text-primary-600 hover:text-primary-500 dark:text-primary-400"
+                >
+                  <ArrowLeft className="h-4 w-4" /> Volver a Productos
+                </button>
+                <span className="text-xs font-bold text-neutral-500">{cart.length} producto(s)</span>
+              </div>
+              <CardHeader className="hidden lg:block shrink-0" title="Carrito de Compra" description={`${cart.length} producto(s)`} />
               <CardBody className="flex flex-col gap-4 p-4">
                 {cart.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-12">
@@ -369,46 +429,48 @@ export default function Ventas() {
                 ) : (
                   <div className="flex flex-col gap-3">
                     {cart.map((line) => (
-                      <div key={line.productId} className="flex items-center gap-3 rounded-xl border border-neutral-200/80 bg-neutral-50/50 p-3 dark:border-neutral-700/50 dark:bg-neutral-800/20">
+                      <div key={line.productId} className="flex items-start justify-between gap-2.5 rounded-xl border border-neutral-200/80 bg-neutral-50/50 p-3 dark:border-neutral-700/50 dark:bg-neutral-800/20">
                         <div className="min-w-0 flex-1">
-                          <div className="truncate text-sm font-bold text-neutral-900 dark:text-neutral-100">{line.name}</div>
-                          {line.saleType === "UNIT" && <div className="text-xs font-medium text-neutral-500 dark:text-neutral-400">{formatCurrency(line.unitPrice)} c/u</div>}
-                          {line.saleType === "WEIGHT" && <div className="text-xs font-medium text-neutral-500 dark:text-neutral-400">{formatCurrency(line.unitPrice)} /kg</div>}
-                          {line.saleType === "AMOUNT" && <div className="text-xs font-medium text-neutral-500 dark:text-neutral-400">Venta por importe</div>}
+                          <div className="text-sm font-bold leading-tight text-neutral-900 dark:text-neutral-100 whitespace-normal break-words">{line.name}</div>
+                          {line.saleType === "UNIT" && <div className="mt-0.5 text-xs font-medium text-neutral-500 dark:text-neutral-400">{formatCurrency(line.unitPrice)} c/u</div>}
+                          {line.saleType === "WEIGHT" && <div className="mt-0.5 text-xs font-medium text-neutral-500 dark:text-neutral-400">{formatCurrency(line.unitPrice)} /kg</div>}
+                          {line.saleType === "AMOUNT" && <div className="mt-0.5 text-xs font-medium text-neutral-500 dark:text-neutral-400">Venta por importe</div>}
                         </div>
                         
-                        {line.saleType === "UNIT" && (
-                          <div className="flex items-center gap-2">
-                            <button
-                              type="button"
-                              onClick={() => changeQuantity(line.productId, -1)}
-                              className="flex h-8 w-8 items-center justify-center rounded-full bg-white border border-neutral-200 text-neutral-500 shadow-sm transition-colors hover:bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-700"
-                            >
-                              <Minus className="h-4 w-4" />
-                            </button>
-                            <span className="w-6 text-center font-bold">{line.quantity}</span>
-                            <button
-                              type="button"
-                              disabled={line.quantity >= line.availableStock}
-                              onClick={() => changeQuantity(line.productId, 1)}
-                              className="flex h-8 w-8 items-center justify-center rounded-full bg-white border border-neutral-200 text-neutral-500 shadow-sm transition-colors hover:bg-neutral-100 disabled:opacity-40 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-700"
-                            >
-                              <Plus className="h-4 w-4" />
-                            </button>
-                          </div>
-                        )}
-                        {line.saleType === "WEIGHT" && (
-                          <div className="flex items-center gap-2">
-                            <span className="text-center font-bold">{line.quantity} g</span>
-                          </div>
-                        )}
-                        
-                        <span className="w-20 text-right font-black text-primary-600 dark:text-primary-400">
-                          {formatCurrency(line.saleType === 'UNIT' ? line.unitPrice * line.quantity : line.saleType === 'WEIGHT' ? (line.unitPrice / 1000) * line.quantity : line.amount || 0)}
-                        </span>
-                        <button type="button" onClick={() => removeLine(line.productId)} className="rounded-full p-2 text-neutral-400 hover:bg-danger-50 hover:text-danger-500 dark:hover:bg-danger-500/10">
-                          <Trash2 className="h-4 w-4" />
-                        </button>
+                        <div className="flex items-center gap-2 shrink-0 pt-0.5">
+                          {line.saleType === "UNIT" && (
+                            <div className="flex items-center gap-1.5">
+                              <button
+                                type="button"
+                                onClick={() => changeQuantity(line.productId, -1)}
+                                className="flex h-7 w-7 items-center justify-center rounded-full bg-white border border-neutral-200 text-neutral-500 shadow-sm transition-colors hover:bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-700"
+                              >
+                                <Minus className="h-3.5 w-3.5" />
+                              </button>
+                              <span className="w-5 text-center text-xs font-bold">{line.quantity}</span>
+                              <button
+                                type="button"
+                                disabled={line.quantity >= line.availableStock}
+                                onClick={() => changeQuantity(line.productId, 1)}
+                                className="flex h-7 w-7 items-center justify-center rounded-full bg-white border border-neutral-200 text-neutral-500 shadow-sm transition-colors hover:bg-neutral-100 disabled:opacity-40 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-700"
+                              >
+                                <Plus className="h-3.5 w-3.5" />
+                              </button>
+                            </div>
+                          )}
+                          {line.saleType === "WEIGHT" && (
+                            <div className="flex items-center gap-1">
+                              <span className="text-center text-xs font-bold">{line.quantity} g</span>
+                            </div>
+                          )}
+                          
+                          <span className="w-16 text-right text-sm font-black text-primary-600 dark:text-primary-400">
+                            {formatCurrency(line.saleType === 'UNIT' ? line.unitPrice * line.quantity : line.saleType === 'WEIGHT' ? (line.unitPrice / 1000) * line.quantity : line.amount || 0)}
+                          </span>
+                          <button type="button" onClick={() => removeLine(line.productId)} className="rounded-full p-1.5 text-neutral-400 hover:bg-danger-50 hover:text-danger-500 dark:hover:bg-danger-500/10">
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
                       </div>
                     ))}
                   </div>
