@@ -14,7 +14,7 @@
   --color-primary-800: #1e40af;
   --color-primary-900: #1e3a8a;
   --color-primary-950: #172554;
-  
+
   --color-secondary-50: #f0f9ff;
   --color-secondary-100: #e0f2fe;
   --color-secondary-200: #bae6fd;
@@ -22,7 +22,7 @@
   --color-secondary-400: #38bdf8;
   --color-secondary-500: #0ea5e9;
   --color-secondary-600: #0284c7;
-  
+
   --color-success-50: #f0fdf4;
   --color-success-100: #dcfce7;
   --color-success-200: #bbf7d0;
@@ -60,13 +60,14 @@
   --color-danger-950: #450a0a;
 
   --shadow-soft: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
-  --shadow-card: 0 8px 30px rgba(0,0,0,0.04);
-  --shadow-float: 0 14px 40px rgba(0,0,0,0.08);
+  --shadow-card: 0 8px 30px rgba(0, 0, 0, 0.04);
+  --shadow-float: 0 14px 40px rgba(0, 0, 0, 0.08);
 }
 
 :root {
   color-scheme: light dark;
 }
+
 :root.dark {
   color-scheme: dark;
 }
@@ -99,13 +100,16 @@ body {
   width: 6px;
   height: 6px;
 }
+
 ::-webkit-scrollbar-track {
   background: transparent;
 }
+
 ::-webkit-scrollbar-thumb {
   @apply bg-neutral-200 dark:bg-neutral-800;
   border-radius: 999px;
 }
+
 ::-webkit-scrollbar-thumb:hover {
   @apply bg-neutral-300 dark:bg-neutral-700;
 }
@@ -115,3 +119,41 @@ body {
   @apply bg-white/70 backdrop-blur-lg border border-white/20 dark:bg-neutral-950/70 dark:border-white/10;
 }
 
+@keyframes float-slow {
+
+  0%,
+  100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+
+  50% {
+    transform: translateY(-8px) rotate(0.5deg);
+  }
+}
+
+@keyframes pulse-glow {
+
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.7;
+    transform: scale(1.08);
+  }
+}
+
+.animate-float-slow {
+  animation: float-slow 5s ease-in-out infinite;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 4s ease-in-out infinite;
+}
+
+.bg-grid-pattern {
+  background-size: 32px 32px;
+  background-image: radial-gradient(rgba(100, 116, 139, 0.15) 1px, transparent 1px);
+}
