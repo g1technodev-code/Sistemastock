@@ -29,6 +29,7 @@ const Catalog = lazy(() => import("./pages/Catalog"));
 
 
 const SuperAdminDashboard = lazy(() => import("./features/admin/components/SuperAdminDashboard"));
+const SuperAdminLocalesUsuarios = lazy(() => import("./pages/superadmin/LocalesUsuarios"));
 const SuperAdminPagos = lazy(() => import("./pages/superadmin/Pagos"));
 const SuperAdminAnuncios = lazy(() => import("./pages/superadmin/Anuncios"));
 const SuperAdminPlanes = lazy(() => import("./pages/superadmin/Planes"));
@@ -84,6 +85,7 @@ export default function App() {
           <Route path="/" element={<RootRedirect />} />
           
           <Route path="/superadmin" element={<ProtectedRoute allowedRoles={["SUPERADMIN"]}><SuperAdminDashboard /></ProtectedRoute>} />
+          <Route path="/superadmin/locales" element={<ProtectedRoute allowedRoles={["SUPERADMIN"]}><SuperAdminLocalesUsuarios /></ProtectedRoute>} />
           <Route path="/superadmin/pagos" element={<ProtectedRoute allowedRoles={["SUPERADMIN"]}><SuperAdminPagos /></ProtectedRoute>} />
           <Route path="/superadmin/anuncios" element={<ProtectedRoute allowedRoles={["SUPERADMIN"]}><SuperAdminAnuncios /></ProtectedRoute>} />
           <Route path="/superadmin/planes" element={<ProtectedRoute allowedRoles={["SUPERADMIN"]}><SuperAdminPlanes /></ProtectedRoute>} />

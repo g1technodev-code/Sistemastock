@@ -1,5 +1,5 @@
 import { api } from "../../../api/client";
-import type { Announcement, ConversionAlert, LocalItem, Paginated, SuperAdminMetrics } from "../../../lib/types";
+import type { Announcement, ConversionAlert, LocalItem, Paginated, SuperAdminMetrics, SuperAdminUser } from "../../../lib/types";
 
 
 export type ListLocalesParams = {
@@ -49,6 +49,34 @@ export async function updateLocalRubro(id: string, rubroId: string | null): Prom
 
 export async function deleteLocal(id: string): Promise<void> {
   await api.delete(`/superadmin/locales/${id}`);
+}
+
+export type ListUsersParams = {
+  page?: number;
+  limit?: number;
+  q?: string;
+  localId?: string;
+  role?: string;
+  isActive?: "true" | "false";
+};
+
+export async function listAllUsers(params: ListUsersParams): Promise<Paginated<SuperAdminUser>> {
+  const { data } = await api.get("/superadmin/users", { params });
+  return data;
+}
+
+export async function updateUserStatus(id: string, isActive: boolean): Promise<{ user: SuperAdminUser }> {
+  const { data } = await api.patch(`/superadmin/users/${id}/status`, { isActive });
+  return data;
+}
+
+export async function resetUserPassword(id: string): Promise<{ temporaryPassword: string }> {
+  const { data } = await api.post(`/superadmin/users/${id}/reset-password`);
+  return data;
+}
+
+export async function revokeUserSessions(id: string): Promise<void> {
+  await api.post(`/superadmin/users/${id}/revoke-sessions`);
 }
 
 export async function listAnnouncements(): Promise<{ items: Announcement[] }> {

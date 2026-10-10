@@ -15,6 +15,7 @@ import {
   Users,
   Settings,
   Boxes,
+  Building2,
   X,
   PanelLeftClose,
   PanelLeftOpen,
@@ -55,6 +56,7 @@ type NavItem = {
 
 const SUPERADMIN_NAV_ITEMS: NavItem[] = [
   { to: "/superadmin", label: "Panel Global", icon: ShieldCheck, show: () => true },
+  { to: "/superadmin/locales", label: "Locales y Usuarios", icon: Building2, show: () => true },
   { to: "/superadmin/pagos", label: "Pagos e Ingresos", icon: DollarSign, show: () => true },
   { to: "/superadmin/anuncios", label: "Anuncios Globales", icon: Megaphone, show: () => true },
   { to: "/superadmin/planes", label: "Configuración de Planes", icon: Sliders, show: () => true },
