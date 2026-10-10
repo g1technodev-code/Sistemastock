@@ -149,7 +149,7 @@ export async function listLocales(query: { page?: number; limit?: number; q?: st
   const [items, total] = await Promise.all([
     prisma.local.findMany({
       where,
-      include: { plan: true, rubro: true, _count: { select: { users: true } } },
+      include: { plan: true, rubro: true, _count: { select: { users: true } }, users: { select: { role: true } } },
       orderBy: { createdAt: "desc" },
       skip: pagination.skip,
       take: pagination.limit,
