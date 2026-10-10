@@ -149,6 +149,14 @@ export function LocalesPanel({ onViewUsers }: { onViewUsers: (local: LocalItem) 
     setChangeRubroId(item.rubroId ?? "");
   };
 
+  const selectedNewPlan = activePlans.find((p) => p.id === changePlanId);
+  // Mirrors enforceLocalPlanQuota on the server: ADMIN and MANAGER share the admin quota
+  const targetAdmins = changePlanTarget?.users?.filter((u) => u.role !== "EMPLOYEE").length ?? 0;
+  const targetEmployees = changePlanTarget?.users?.filter((u) => u.role === "EMPLOYEE").length ?? 0;
+  const excessAdmins = selectedNewPlan ? Math.max(0, targetAdmins - selectedNewPlan.maxAdmins) : 0;
+  const excessEmployees = selectedNewPlan ? Math.max(0, targetEmployees - selectedNewPlan.maxEmployees) : 0;
+  const downgradeExceedsQuota = excessAdmins + excessEmployees > 0;
+
   const handleDeleteSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!deleteTarget) return;
@@ -234,6 +242,9 @@ export function LocalesPanel({ onViewUsers }: { onViewUsers: (local: LocalItem) 
       align: "right",
       render: (item) => (
         <div className="flex items-center justify-end gap-2">
+          <Button size="sm" variant="outline" onClick={() => openChangePlan(item)}>
+            <RefreshCw className="h-3.5 w-3.5 mr-1" /> Cambiar plan
+          </Button>
           {item.status === "ACTIVE" ? (
             <Button
               size="sm"
@@ -395,6 +406,19 @@ export function LocalesPanel({ onViewUsers }: { onViewUsers: (local: LocalItem) 
               </option>
             ))}
           </Select>
+          {selectedNewPlan && (
+            <p className="text-xs text-neutral-600 dark:text-neutral-400">
+              Permite {selectedNewPlan.maxAdmins} administrador(es) y {selectedNewPlan.maxEmployees} empleado(s).
+              {changePlanTarget && changePlanTarget.plan.id !== selectedNewPlan.id && " El vencimiento actual no cambia."}
+            </p>
+          )}
+          {downgradeExceedsQuota && (
+            <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-700 dark:text-amber-400">
+              Con este plan se desactivarán {excessAdmins > 0 && `${excessAdmins} administrador(es)`}
+              {excessAdmins > 0 && excessEmployees > 0 && " y "}
+              {excessEmployees > 0 && `${excessEmployees} empleado(s)`} (los más recientes) y se les cerrará la sesión.
+            </div>
+          )}
           <div className="flex justify-end gap-3 pt-2">
             <Button type="button" variant="outline" onClick={() => setChangePlanTarget(null)}>
               Cancelar
@@ -402,6 +426,7 @@ export function LocalesPanel({ onViewUsers }: { onViewUsers: (local: LocalItem) 
             <Button
               type="button"
               isLoading={changePlanMutation.isPending}
+              disabled={changePlanTarget?.plan.id === changePlanId}
               onClick={() => changePlanTarget && changePlanMutation.mutate({ id: changePlanTarget.id, planId: changePlanId })}
             >
               <RefreshCw className="h-4 w-4 mr-1.5" /> Cambiar Plan

@@ -102,6 +102,7 @@ export type LocalItem = {
   createdAt: string;
   updatedAt: string;
   _count?: { users: number };
+  users?: { role: Role }[];
 };
 
 export type SuperAdminUser = {
