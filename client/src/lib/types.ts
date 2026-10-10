@@ -101,6 +101,17 @@ export type LocalItem = {
   monthlyPrice: number;
   createdAt: string;
   updatedAt: string;
+  _count?: { users: number };
+};
+
+export type SuperAdminUser = {
+  id: string;
+  name: string;
+  email: string;
+  role: Exclude<Role, "SUPERADMIN">;
+  isActive: boolean;
+  createdAt: string;
+  local: { id: string; name: string; status: LocalStatus } | null;
 };
 
 export type ConversionAlert = {

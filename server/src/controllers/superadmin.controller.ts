@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 import { catchAsync } from "../utils/catchAsync";
+import { ApiError } from "../utils/apiError";
 import * as superadminAction from "../features/admin/actions/superadmin.action";
 
 
@@ -40,6 +41,28 @@ export const updateRubro = catchAsync(async (req: Request, res: Response) => {
 export const removeLocal = catchAsync(async (req: Request, res: Response) => {
   const result = await superadminAction.deleteLocal(req.params.id);
   res.json({ message: "Local eliminado correctamente", local: result });
+});
+
+export const listUsers = catchAsync(async (req: Request, res: Response) => {
+  const result = await superadminAction.listAllUsers(req.query as any);
+  res.json(result);
+});
+
+export const updateUserStatus = catchAsync(async (req: Request, res: Response) => {
+  const { isActive } = req.body as { isActive: unknown };
+  if (typeof isActive !== "boolean") throw ApiError.badRequest("isActive debe ser booleano");
+  const user = await superadminAction.setUserActive(req.params.id, isActive, req.user!.id);
+  res.json({ user });
+});
+
+export const resetUserPassword = catchAsync(async (req: Request, res: Response) => {
+  const result = await superadminAction.resetManagedUserPassword(req.params.id);
+  res.json(result);
+});
+
+export const revokeUserSessions = catchAsync(async (req: Request, res: Response) => {
+  await superadminAction.revokeManagedUserSessions(req.params.id);
+  res.json({ message: "Sesiones cerradas correctamente" });
 });
 
 export const createAnnouncement = catchAsync(async (req: Request, res: Response) => {

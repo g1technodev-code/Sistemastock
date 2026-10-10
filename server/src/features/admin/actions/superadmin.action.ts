@@ -4,6 +4,7 @@ import { parsePagination, paginatedResponse } from "../../../utils/pagination";
 import { hashPassword } from "../../../utils/password";
 import { Role } from "@prisma/client";
 import { revokeAllSessionsForUser } from "../../../services/auth.service";
+import * as userService from "../../../services/user.service";
 
 
 
@@ -148,7 +149,7 @@ export async function listLocales(query: { page?: number; limit?: number; q?: st
   const [items, total] = await Promise.all([
     prisma.local.findMany({
       where,
-      include: { plan: true, rubro: true },
+      include: { plan: true, rubro: true, _count: { select: { users: true } } },
       orderBy: { createdAt: "desc" },
       skip: pagination.skip,
       take: pagination.limit,
@@ -157,6 +158,75 @@ export async function listLocales(query: { page?: number; limit?: number; q?: st
   ]);
 
   return paginatedResponse(items, total, pagination);
+}
+
+const SUPERADMIN_USER_SELECT = {
+  id: true,
+  name: true,
+  email: true,
+  role: true,
+  isActive: true,
+  createdAt: true,
+  local: { select: { id: true, name: true, status: true } },
+};
+
+export async function listAllUsers(query: {
+  page?: number;
+  limit?: number;
+  q?: string;
+  localId?: string;
+  role?: string;
+  isActive?: string;
+}) {
+  const pagination = parsePagination(query);
+  const where: any = { role: { not: Role.SUPERADMIN } };
+
+  if (query.q) {
+    where.OR = [
+      { name: { contains: query.q, mode: "insensitive" } },
+      { email: { contains: query.q, mode: "insensitive" } },
+      { local: { name: { contains: query.q, mode: "insensitive" } } },
+    ];
+  }
+  if (query.localId) where.localId = query.localId;
+  if (query.role && query.role !== "SUPERADMIN" && query.role in Role) where.role = query.role;
+  if (query.isActive === "true" || query.isActive === "false") where.isActive = query.isActive === "true";
+
+  const [items, total] = await Promise.all([
+    prisma.user.findMany({
+      where,
+      select: SUPERADMIN_USER_SELECT,
+      orderBy: { createdAt: "desc" },
+      skip: pagination.skip,
+      take: pagination.limit,
+    }),
+    prisma.user.count({ where }),
+  ]);
+
+  return paginatedResponse(items, total, pagination);
+}
+
+async function findManagedUser(id: string) {
+  const user = await prisma.user.findUnique({ where: { id } });
+  if (!user || user.role === Role.SUPERADMIN) throw ApiError.notFound("Usuario no encontrado");
+  return user;
+}
+
+export async function setUserActive(id: string, isActive: boolean, actingUserId: string) {
+  const user = await findManagedUser(id);
+  // Reactivation goes through the tenant user service so plan quotas still apply
+  await userService.updateUser(user.localId, id, { isActive }, actingUserId, Role.SUPERADMIN);
+  return prisma.user.findUnique({ where: { id }, select: SUPERADMIN_USER_SELECT });
+}
+
+export async function resetManagedUserPassword(id: string) {
+  await findManagedUser(id);
+  return userService.resetUserPassword(null, id, undefined, Role.SUPERADMIN);
+}
+
+export async function revokeManagedUserSessions(id: string) {
+  await findManagedUser(id);
+  await revokeAllSessionsForUser(id);
 }
 
 export async function enforceLocalPlanQuota(localId: string) {

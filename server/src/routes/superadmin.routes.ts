@@ -8,6 +8,10 @@ import {
   updatePlan,
   updateRubro,
   removeLocal,
+  listUsers,
+  updateUserStatus,
+  resetUserPassword,
+  revokeUserSessions,
   createAnnouncement,
   listAnnouncements,
   removeAnnouncement,
@@ -31,6 +35,11 @@ router.patch("/locales/:id/status", updateStatus);
 router.patch("/locales/:id/plan", updatePlan);
 router.patch("/locales/:id/rubro", updateRubro);
 router.delete("/locales/:id", removeLocal);
+
+router.get("/users", listUsers);
+router.patch("/users/:id/status", updateUserStatus);
+router.post("/users/:id/reset-password", resetUserPassword);
+router.post("/users/:id/revoke-sessions", revokeUserSessions);
 
 router.get("/plans", planController.list);
 router.post("/plans", planController.create);
