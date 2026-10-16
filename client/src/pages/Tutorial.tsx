@@ -143,7 +143,7 @@ export default function Tutorial() {
                   {isOpen ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
                 </div>
               </button>
-              
+
               <div
                 className={cn(
                   "overflow-hidden transition-all duration-300 ease-in-out",
@@ -160,11 +160,11 @@ export default function Tutorial() {
           );
         })}
       </div>
-      
+
       <div className="mt-10 p-6 bg-gradient-to-br from-primary-50 to-indigo-50 border border-primary-100 rounded-2xl dark:from-primary-900/20 dark:to-indigo-900/20 dark:border-primary-900/30">
         <h3 className="text-lg font-bold text-primary-900 dark:text-primary-300 mb-2">¿Necesitas ayuda adicional?</h3>
         <p className="text-primary-700 dark:text-primary-400 text-sm">
-          Este manual cubre las funciones principales del día a día. Si ocurre algún error técnico en el sistema o tienes una duda muy específica sobre el funcionamiento de los reportes, contacta al administrador principal (SuperAdmin).
+          Este manual cubre las funciones principales del día a día. Si ocurre algún error técnico en el sistema o tienes una duda muy específica sobre el funcionamiento de los reportes, contacta al administrador principal (SuperAdmin) o al whatsapp +54 264 4191633.
         </p>
       </div>
     </div>

@@ -351,6 +351,17 @@ export type CashShift = {
   closingDiscrepancy: number | null;
   status: CashShiftStatus;
   note: string | null;
+  shiftTotals?: ShiftTotals;
+  transferTotal?: number;
+  cardTotal?: number;
+  cashTotal?: number;
+};
+
+export type ShiftTotals = {
+  cash: number;
+  transfer: number;
+  card: number;
+  total: number;
 };
 
 export type CashMovement = {
@@ -369,12 +380,18 @@ export type CashMovement = {
 export type CashRegisterStatus = {
   currentBalance: number;
   myOpenShift: CashShift | null;
+  shiftTotals?: ShiftTotals;
+  transferTotal?: number;
+  cardTotal?: number;
+  cashTotal?: number;
 };
 
 export type CashSummary = {
   currentBalance: number;
   salesInToday: number;
   withdrawalsToday: number;
+  transferSalesToday?: number;
+  ventasTransferenciaHoy?: number;
 };
 
 export type BusinessSettings = {
