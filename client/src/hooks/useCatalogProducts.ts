@@ -2,10 +2,10 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import * as catalogProductsApi from "../api/superadminCatalogProducts";
 import type { CatalogProductInput } from "../api/superadminCatalogProducts";
 
-export function useCatalogProducts(rubroId?: string) {
+export function useCatalogProducts() {
   return useQuery({
-    queryKey: ["catalog-products", rubroId],
-    queryFn: () => catalogProductsApi.listCatalogProducts(rubroId),
+    queryKey: ["catalog-products"],
+    queryFn: () => catalogProductsApi.listCatalogProducts(),
   });
 }
 

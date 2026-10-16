@@ -6,7 +6,7 @@ import { z } from "zod";
 import { Plus, PackageSearch, Pencil, Trash2, Upload } from "lucide-react";
 import { Card, CardHeader, CardBody } from "../../components/ui/Card";
 import { Button } from "../../components/ui/Button";
-import { Input, Textarea, Select } from "../../components/ui/Field";
+import { Input, Textarea } from "../../components/ui/Field";
 import { Badge } from "../../components/ui/Badge";
 import { Table, THead, TBody, TR, TH, TD } from "../../components/ui/Table";
 import { Modal } from "../../components/ui/Modal";
@@ -14,7 +14,6 @@ import { EmptyState } from "../../components/ui/EmptyState";
 import { ConfirmDialog } from "../../components/ui/ConfirmDialog";
 import { FullPageSpinner } from "../../components/ui/Spinner";
 import { BulkUploadModal } from "../../components/common/BulkUploadModal";
-import { useRubros } from "../../hooks/useRubros";
 import { useCatalogProducts, useCatalogProductMutations } from "../../hooks/useCatalogProducts";
 import { useToast } from "../../context/ToastContext";
 import { extractErrorMessage } from "../../api/client";
@@ -22,7 +21,6 @@ import { downloadCatalogProductTemplate, bulkUploadCatalogProducts } from "../..
 import type { CatalogProduct } from "../../lib/types";
 
 const schema = z.object({
-  rubroId: z.string().min(1, "Elegí un rubro"),
   name: z.string().min(2, "El nombre es muy corto"),
   description: z.string().optional(),
   unit: z.string().min(1),
@@ -31,8 +29,7 @@ const schema = z.object({
 type FormInput = z.input<typeof schema>;
 type FormValues = z.output<typeof schema>;
 
-const emptyValues = (rubroId: string): FormInput => ({
-  rubroId,
+const emptyValues = (): FormInput => ({
   name: "",
   description: "",
   unit: "unidad",
@@ -42,9 +39,7 @@ const emptyValues = (rubroId: string): FormInput => ({
 export default function SuperAdminCatalogoProductos() {
   const { showSuccess, showError } = useToast();
   const queryClient = useQueryClient();
-  const { data: rubros } = useRubros(false);
-  const [rubroFilter, setRubroFilter] = useState("");
-  const { data, isLoading } = useCatalogProducts(rubroFilter || undefined);
+  const { data, isLoading } = useCatalogProducts();
   const { create, update, remove } = useCatalogProductMutations();
 
   const [formOpen, setFormOpen] = useState(false);
@@ -57,18 +52,17 @@ export default function SuperAdminCatalogoProductos() {
     handleSubmit,
     reset,
     formState: { errors },
-  } = useForm<FormInput, unknown, FormValues>({ resolver: zodResolver(schema), defaultValues: emptyValues(rubroFilter) });
+  } = useForm<FormInput, unknown, FormValues>({ resolver: zodResolver(schema), defaultValues: emptyValues() });
 
   const openCreate = () => {
     setEditing(null);
-    reset(emptyValues(rubroFilter));
+    reset(emptyValues());
     setFormOpen(true);
   };
 
   const openEdit = (item: CatalogProduct) => {
     setEditing(item);
     reset({
-      rubroId: item.rubroId,
       name: item.name,
       description: item.description ?? "",
       unit: item.unit,
@@ -79,7 +73,6 @@ export default function SuperAdminCatalogoProductos() {
 
   const onSubmit = async (values: FormValues) => {
     const input = {
-      rubroId: values.rubroId,
       name: values.name,
       description: values.description || null,
       unit: values.unit,
@@ -119,7 +112,7 @@ export default function SuperAdminCatalogoProductos() {
           <div>
             <h1 className="text-2xl font-black text-neutral-900 dark:text-white tracking-tight">Catálogo de Productos</h1>
             <p className="text-sm text-neutral-600 dark:text-neutral-400">
-              Productos sugeridos por rubro que cada Local puede importar a su inventario. El precio lo define cada Local.
+              Productos de kiosco sugeridos que cada Local puede importar a su inventario. El precio lo define cada Local.
             </p>
           </div>
         </div>
@@ -133,33 +126,19 @@ export default function SuperAdminCatalogoProductos() {
         </div>
       </div>
 
-      <Card className="p-2">
-        <div className="flex items-center gap-3 p-2">
-          <Select className="w-64 h-10" value={rubroFilter} onChange={(e) => setRubroFilter(e.target.value)}>
-            <option value="">Todos los rubros</option>
-            {rubros?.map((r) => (
-              <option key={r.id} value={r.id}>
-                {r.name}
-              </option>
-            ))}
-          </Select>
-        </div>
-      </Card>
-
       <Card>
         <CardHeader title="Productos de catálogo" description="No afectan stock ni ventas hasta que un Local los importa" />
         <CardBody>
           {isLoading ? (
             <FullPageSpinner />
           ) : !data || data.length === 0 ? (
-            <EmptyState icon={PackageSearch} title="Sin productos" description="Agregá el primer producto de catálogo para este rubro." />
+            <EmptyState icon={PackageSearch} title="Sin productos" description="Agregá el primer producto de catálogo." />
           ) : (
             <Table>
               <THead>
                 <tr>
                   <TH>Producto</TH>
                   <TH>Código de barras</TH>
-                  <TH>Rubro</TH>
                   <TH>Estado</TH>
                   <TH className="text-right">Acciones</TH>
                 </tr>
@@ -174,9 +153,6 @@ export default function SuperAdminCatalogoProductos() {
                       )}
                     </TD>
                     <TD className="font-mono text-xs text-neutral-500 dark:text-neutral-400">{item.barcode ?? "-"}</TD>
-                    <TD>
-                      <Badge tone="info">{item.rubro?.name ?? "-"}</Badge>
-                    </TD>
                     <TD>
                       <Badge tone={item.isActive ? "success" : "neutral"}>{item.isActive ? "Activo" : "Inactivo"}</Badge>
                     </TD>
@@ -200,14 +176,6 @@ export default function SuperAdminCatalogoProductos() {
 
       <Modal open={formOpen} onClose={() => setFormOpen(false)} title={editing ? "Editar producto de catálogo" : "Nuevo producto de catálogo"} size="md">
         <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
-          <Select label="Rubro" required error={errors.rubroId?.message} {...register("rubroId")}>
-            <option value="">Seleccionar rubro...</option>
-            {rubros?.map((r) => (
-              <option key={r.id} value={r.id}>
-                {r.name}
-              </option>
-            ))}
-          </Select>
           <Input label="Nombre" required error={errors.name?.message} {...register("name")} />
           <Textarea label="Descripción" rows={2} {...register("description")} />
           <div className="grid grid-cols-2 gap-4">
@@ -241,7 +209,7 @@ export default function SuperAdminCatalogoProductos() {
         open={bulkOpen}
         onClose={() => setBulkOpen(false)}
         title="Carga masiva de productos de catálogo"
-        columnsHint="nombre, descripcion, codigo_barras, rubro"
+        columnsHint="nombre, descripcion, codigo_barras"
         onDownloadTemplate={downloadCatalogProductTemplate}
         onUpload={bulkUploadCatalogProducts}
         onDone={() => {

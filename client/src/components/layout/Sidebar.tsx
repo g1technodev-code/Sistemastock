@@ -25,7 +25,6 @@ import {
   DollarSign,
   Megaphone,
   Sliders,
-  Store,
   PackageSearch,
   HelpCircle,
 } from "lucide-react";
@@ -60,7 +59,6 @@ const SUPERADMIN_NAV_ITEMS: NavItem[] = [
   { to: "/superadmin/pagos", label: "Pagos e Ingresos", icon: DollarSign, show: () => true },
   { to: "/superadmin/anuncios", label: "Anuncios Globales", icon: Megaphone, show: () => true },
   { to: "/superadmin/planes", label: "Configuración de Planes", icon: Sliders, show: () => true },
-  { to: "/superadmin/rubros", label: "Rubros", icon: Store, show: () => true },
   { to: "/superadmin/catalogo", label: "Catálogo de Productos", icon: PackageSearch, show: () => true },
 ];
 

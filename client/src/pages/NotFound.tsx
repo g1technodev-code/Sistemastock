@@ -113,14 +113,14 @@ const SEARCH_DIRECTORY: SearchRouteItem[] = [
     keywords: ["clientes", "cuenta corriente", "deudores", "contacto", "personas"],
   },
   {
-    name: "Categorías y Rubros",
+    name: "Categorías",
     path: "/categories",
     description: "Organiza tus productos por familias y categorías.",
     category: "Inventario",
     icon: Boxes,
     color: "sky",
     shortcut: "Categorías",
-    keywords: ["categorias", "rubros", "familias", "grupos", "clasificacion"],
+    keywords: ["categorias", "familias", "grupos", "clasificacion"],
   },
   {
     name: "Reportes y Análisis",

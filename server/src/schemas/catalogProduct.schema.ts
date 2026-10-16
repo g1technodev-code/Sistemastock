@@ -1,7 +1,6 @@
 import { z } from "zod";
 
 export const upsertCatalogProductSchema = z.object({
-  rubroId: z.string().min(1, "El rubro es obligatorio"),
   name: z.string().min(2, "El nombre es muy corto"),
   description: z.string().optional().nullable(),
   unit: z.string().default("unidad"),
@@ -11,7 +10,6 @@ export const upsertCatalogProductSchema = z.object({
 });
 
 export const listCatalogProductsQuerySchema = z.object({
-  rubroId: z.string().optional(),
   includeInactive: z
     .string()
     .optional()
@@ -26,7 +24,6 @@ export const bulkCatalogProductRowSchema = z.object({
   name: z.string().min(2, "El nombre es muy corto"),
   description: z.string().optional().nullable(),
   barcode: z.string().optional().nullable(),
-  rubro: z.string().min(1, "El rubro es obligatorio"),
 });
 
 export type UpsertCatalogProductInput = z.infer<typeof upsertCatalogProductSchema>;

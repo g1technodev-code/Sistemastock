@@ -217,7 +217,7 @@ export default function Products() {
               : "border-transparent text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200"
           }`}
         >
-          Catálogo del Rubro
+          Catálogo
         </button>
       </div>
 
