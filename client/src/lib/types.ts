@@ -60,6 +60,7 @@ export type Announcement = {
 export type BulkRowResult = {
   row: number;
   success: boolean;
+  action?: "created" | "updated";
   error?: string;
 };
 

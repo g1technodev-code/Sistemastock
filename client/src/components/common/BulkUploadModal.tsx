@@ -60,6 +60,8 @@ export function BulkUploadModal({
   };
 
   const successCount = results?.filter((r) => r.success).length ?? 0;
+  const updatedCount = results?.filter((r) => r.success && r.action === "updated").length ?? 0;
+  const createdCount = successCount - updatedCount;
   const errorCount = results ? results.length - successCount : 0;
 
   return (
@@ -90,7 +92,14 @@ export function BulkUploadModal({
         {results && (
           <div className="flex flex-col gap-2">
             <div className="flex gap-2">
-              <Badge tone="success">{successCount} cargados</Badge>
+              {updatedCount > 0 ? (
+                <>
+                  {createdCount > 0 && <Badge tone="success">{createdCount} nuevos</Badge>}
+                  <Badge tone="info">{updatedCount} actualizados</Badge>
+                </>
+              ) : (
+                <Badge tone="success">{successCount} cargados</Badge>
+              )}
               {errorCount > 0 && <Badge tone="danger">{errorCount} con error</Badge>}
             </div>
             <div className="max-h-64 overflow-y-auto rounded-xl border border-neutral-200 dark:border-neutral-800">
@@ -105,6 +114,7 @@ export function BulkUploadModal({
                     <XCircle className="h-4 w-4 shrink-0 text-red-500" />
                   )}
                   <span className="font-medium text-neutral-500">Fila {r.row + 2}</span>
+                  {r.success && r.action === "updated" && <span className="text-neutral-500 dark:text-neutral-400">Actualizado</span>}
                   {!r.success && <span className="text-red-600 dark:text-red-400">{r.error}</span>}
                 </div>
               ))}

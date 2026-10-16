@@ -49,11 +49,11 @@ export function CustomerModal({ open, onClose, onSubmit, isLoading }: CustomerMo
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className="block text-xs font-semibold uppercase text-neutral-600 dark:text-neutral-400 mb-1">
-              RUT / DNI / Tax ID
+              CUIT / DNI
             </label>
             <input
               name="taxId"
-              placeholder="Ej: 12.345.678-9"
+              placeholder="Ej: 20-12345678-9"
               className="w-full rounded-xl border border-neutral-300 px-3.5 py-2 text-sm dark:border-neutral-800 dark:bg-neutral-900"
             />
           </div>

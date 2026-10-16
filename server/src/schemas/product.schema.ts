@@ -38,7 +38,8 @@ export const bulkProductRowSchema = z.object({
   description: z.string().optional().nullable(),
   barcode: z.string().optional().nullable(),
   cantidad: z.coerce.number().int().min(0).default(0),
-  precio: z.coerce.number().min(0).default(0),
+  // Celda vacía = undefined, para que al actualizar un producto existente no se pise su precio con 0
+  precio: z.preprocess((v) => (v === "" || v === null || v === undefined ? undefined : v), z.coerce.number().min(0).optional()),
 });
 
 export const priceUpdateSchema = z
