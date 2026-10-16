@@ -40,14 +40,99 @@ export async function getOrCreateRegister(tx: Prisma.TransactionClient, localId:
 }
 
 export async function getStatus(localId: string | null | undefined, userId: string) {
-  if (!localId) return { currentBalance: 0, myOpenShift: null };
+  if (!localId) {
+    return {
+      currentBalance: 0,
+      myOpenShift: null,
+      shiftTotals: { cash: 0, transfer: 0, card: 0, total: 0 },
+      transferTotal: 0,
+      cardTotal: 0,
+      cashTotal: 0,
+    };
+  }
   const register = await getOrCreateRegister(prisma, localId);
   const myOpenShift = await prisma.cashShift.findFirst({
     where: { localId, openedById: userId, status: CashShiftStatus.OPEN },
     orderBy: { openedAt: "desc" },
     include: SHIFT_INCLUDE,
   });
-  return { currentBalance: register.currentBalance, myOpenShift };
+
+  if (!myOpenShift) {
+    return {
+      currentBalance: register.currentBalance,
+      myOpenShift: null,
+      shiftTotals: { cash: 0, transfer: 0, card: 0, total: 0 },
+      transferTotal: 0,
+      cardTotal: 0,
+      cashTotal: 0,
+    };
+  }
+
+  const sales = await prisma.sale.findMany({
+    where: {
+      localId,
+      userId,
+      status: SaleStatus.COMPLETED,
+      createdAt: { gte: myOpenShift.openedAt },
+    },
+    select: {
+      id: true,
+      total: true,
+      paymentMethod: true,
+      payments: {
+        select: {
+          paymentMethod: true,
+          amount: true,
+        },
+      },
+    },
+  });
+
+  let cash = 0;
+  let transfer = 0;
+  let card = 0;
+
+  for (const sale of sales) {
+    if (sale.paymentMethod === PaymentMethod.EFECTIVO) {
+      cash += Number(sale.total);
+    } else if (sale.paymentMethod === PaymentMethod.TRANSFERENCIA) {
+      transfer += Number(sale.total);
+    } else if (sale.paymentMethod === PaymentMethod.TARJETA) {
+      card += Number(sale.total);
+    } else if (sale.paymentMethod === PaymentMethod.MIXTO) {
+      for (const p of sale.payments) {
+        if (p.paymentMethod === PaymentMethod.EFECTIVO) {
+          cash += Number(p.amount);
+        } else if (p.paymentMethod === PaymentMethod.TRANSFERENCIA) {
+          transfer += Number(p.amount);
+        } else if (p.paymentMethod === PaymentMethod.TARJETA) {
+          card += Number(p.amount);
+        }
+      }
+    }
+  }
+
+  const shiftTotals = {
+    cash,
+    transfer,
+    card,
+    total: cash + transfer + card,
+  };
+
+  return {
+    currentBalance: register.currentBalance,
+    myOpenShift: {
+      ...myOpenShift,
+      shiftTotals,
+      transferTotal: transfer,
+      cardTotal: card,
+      cashTotal: cash,
+    },
+    shiftTotals,
+    transferTotal: transfer,
+    cardTotal: card,
+    cashTotal: cash,
+  };
 }
 
 export async function openShift(localId: string | null | undefined, input: OpenShiftInput, userId: string) {
@@ -234,26 +319,61 @@ export async function listWithdrawals(localId: string | null | undefined, query:
 }
 
 export async function getSummary(localId: string | null | undefined, query: CashSummaryQuery) {
-  if (!localId) return { currentBalance: 0, salesInToday: 0, withdrawalsToday: 0 };
+  if (!localId) return { currentBalance: 0, salesInToday: 0, withdrawalsToday: 0, transferSalesToday: 0, ventasTransferenciaHoy: 0 };
   const targetDate = query.date ? new Date(query.date) : new Date();
   const from = startOfDay(targetDate);
   const to = new Date(from);
   to.setHours(23, 59, 59, 999);
 
-  const grouped = await prisma.cashMovement.groupBy({
-    by: ["type"],
-    where: { localId, createdAt: { gte: from, lte: to } },
-    _sum: { amount: true },
-  });
+  const [grouped, transferSales] = await Promise.all([
+    prisma.cashMovement.groupBy({
+      by: ["type"],
+      where: { localId, createdAt: { gte: from, lte: to } },
+      _sum: { amount: true },
+    }),
+    prisma.sale.findMany({
+      where: {
+        localId,
+        status: SaleStatus.COMPLETED,
+        createdAt: { gte: from, lte: to },
+        OR: [
+          { paymentMethod: PaymentMethod.TRANSFERENCIA },
+          { paymentMethod: PaymentMethod.MIXTO },
+        ],
+      },
+      select: {
+        total: true,
+        paymentMethod: true,
+        payments: {
+          where: { paymentMethod: PaymentMethod.TRANSFERENCIA },
+          select: { amount: true },
+        },
+      },
+    }),
+  ]);
 
   const salesInToday = Number(grouped.find((g) => g.type === CashMovementType.SALE_IN)?._sum.amount ?? 0);
   const withdrawalsToday = Number(grouped.find((g) => g.type === CashMovementType.WITHDRAWAL)?._sum.amount ?? 0);
+
+  let transferSalesToday = 0;
+  for (const s of transferSales) {
+    if (s.paymentMethod === PaymentMethod.TRANSFERENCIA) {
+      transferSalesToday += Number(s.total);
+    } else if (s.paymentMethod === PaymentMethod.MIXTO) {
+      for (const p of s.payments) {
+        transferSalesToday += Number(p.amount);
+      }
+    }
+  }
+
   const register = await getOrCreateRegister(prisma, localId);
 
   return {
     currentBalance: Number(register.currentBalance),
     salesInToday,
     withdrawalsToday,
+    transferSalesToday,
+    ventasTransferenciaHoy: transferSalesToday,
   };
 }
 

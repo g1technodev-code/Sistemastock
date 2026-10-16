@@ -176,9 +176,14 @@ export default function Caja() {
         <p className="text-sm text-neutral-500 dark:text-neutral-400">Abre tu turno, registra retiros y consulta el historial.</p>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
         <StatCard label="Saldo en caja" value={formatCurrency(status?.currentBalance ?? 0)} icon={Wallet} />
         <StatCard label="Ventas en efectivo hoy" value={formatCurrency(summary?.salesInToday ?? 0)} icon={Banknote} />
+        <StatCard
+          label="Ventas por transferencia hoy"
+          value={formatCurrency(summary?.ventasTransferenciaHoy ?? summary?.transferSalesToday ?? 0)}
+          icon={Landmark}
+        />
         <StatCard label="Retiros hoy" value={formatCurrency(summary?.withdrawalsToday ?? 0)} icon={WalletCards} tone="warning" />
       </div>
 
@@ -199,6 +204,12 @@ export default function Caja() {
                     Esperado: <span className="text-neutral-900 dark:text-neutral-100">{formatCurrency(status.myOpenShift.openingExpected)}</span>
                   </span>
                   <DiscrepancyBadge value={status.myOpenShift.openingDiscrepancy} />
+                  <span className="text-neutral-500 dark:text-neutral-400">
+                    Transferencias: <span className="font-semibold text-neutral-900 dark:text-neutral-100">{formatCurrency(status.shiftTotals?.transfer ?? status.transferTotal ?? 0)}</span>
+                  </span>
+                  <span className="text-neutral-500 dark:text-neutral-400">
+                    Tarjetas: <span className="font-semibold text-neutral-900 dark:text-neutral-100">{formatCurrency(status.shiftTotals?.card ?? status.cardTotal ?? 0)}</span>
+                  </span>
                 </div>
 
                 {!closing ? (
@@ -207,6 +218,23 @@ export default function Caja() {
                   </Button>
                 ) : (
                   <form onSubmit={closeForm.handleSubmit(onCloseShift)} className="flex flex-col gap-3 border-t border-neutral-200 pt-3 dark:border-neutral-800">
+                    <div className="flex flex-wrap items-center gap-4 rounded-xl border border-neutral-200 bg-neutral-50/70 p-3 text-sm dark:border-neutral-800 dark:bg-neutral-800/40">
+                      <div>
+                        <span className="text-neutral-500 dark:text-neutral-400">Efectivo esperado: </span>
+                        <span className="font-bold text-neutral-900 dark:text-neutral-100">{formatCurrency(status.currentBalance)}</span>
+                      </div>
+                      <div className="hidden h-4 w-px bg-neutral-200 dark:bg-neutral-700 sm:block" />
+                      <div>
+                        <span className="text-neutral-500 dark:text-neutral-400">Transferencias: </span>
+                        <span className="font-bold text-primary-600 dark:text-primary-400">{formatCurrency(status.shiftTotals?.transfer ?? status.transferTotal ?? 0)}</span>
+                      </div>
+                      <div className="hidden h-4 w-px bg-neutral-200 dark:bg-neutral-700 sm:block" />
+                      <div>
+                        <span className="text-neutral-500 dark:text-neutral-400">Tarjetas: </span>
+                        <span className="font-bold text-warning-600 dark:text-warning-400">{formatCurrency(status.shiftTotals?.card ?? status.cardTotal ?? 0)}</span>
+                      </div>
+                    </div>
+
                     <Input
                       label="Efectivo contado al cerrar"
                       type="number"
@@ -215,6 +243,8 @@ export default function Caja() {
                       required
                       error={closeForm.formState.errors.countedAmount?.message}
                       {...closeForm.register("countedAmount")}
+                      onFocus={(e) => e.target.select()}
+                      onClick={(e) => (e.target as HTMLInputElement).select()}
                     />
                     <Input label="Nota (opcional)" {...closeForm.register("note")} />
                     <div className="flex gap-2">
@@ -248,6 +278,8 @@ export default function Caja() {
                     hint="Cuenta el efectivo físico disponible antes de empezar a vender"
                     error={openForm.formState.errors.countedAmount?.message}
                     {...openForm.register("countedAmount")}
+                    onFocus={(e) => e.target.select()}
+                    onClick={(e) => (e.target as HTMLInputElement).select()}
                   />
                   <Input label="Nota (opcional)" {...openForm.register("note")} />
                   <Button type="submit" isLoading={openShift.isPending}>
@@ -275,6 +307,8 @@ export default function Caja() {
                   required
                   error={withdrawalForm.formState.errors.amount?.message}
                   {...withdrawalForm.register("amount")}
+                  onFocus={(e) => e.target.select()}
+                  onClick={(e) => (e.target as HTMLInputElement).select()}
                 />
                 <Input
                   label="Motivo"
