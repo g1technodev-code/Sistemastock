@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ChevronDown, ChevronUp, BookOpen, ShoppingCart, Package, Tags, ArrowLeftRight, Keyboard, Info } from "lucide-react";
+import { ChevronDown, ChevronUp, BookOpen, ShoppingCart, Package, Tags, ArrowLeftRight, Keyboard, Info, MessageCircle } from "lucide-react";
 import { cn } from "../lib/utils";
 
 type TutorialItem = {
@@ -164,8 +164,17 @@ export default function Tutorial() {
       <div className="mt-10 p-6 bg-gradient-to-br from-primary-50 to-indigo-50 border border-primary-100 rounded-2xl dark:from-primary-900/20 dark:to-indigo-900/20 dark:border-primary-900/30">
         <h3 className="text-lg font-bold text-primary-900 dark:text-primary-300 mb-2">¿Necesitas ayuda adicional?</h3>
         <p className="text-primary-700 dark:text-primary-400 text-sm">
-          Este manual cubre las funciones principales del día a día. Si ocurre algún error técnico en el sistema o tienes una duda muy específica sobre el funcionamiento de los reportes, contacta al administrador principal (SuperAdmin) o al whatsapp +54 264 4191633.
+          Este manual cubre las operaciones del día a día. Si requieres asistencia técnica o tienes consultas sobre el sistema, puedes contactar al soporte directamente.
         </p>
+        <a
+          href="https://wa.me/542644191633?text=Hola,%20necesito%20soporte%20con%20el%20sistema%20Kipo."
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-2 mt-4 bg-green-600 hover:bg-green-500 text-white px-4 py-2.5 rounded-lg font-medium transition-colors w-fit shadow-sm text-sm"
+        >
+          <MessageCircle className="h-4 w-4" />
+          <span>Contactar por WhatsApp</span>
+        </a>
       </div>
     </div>
   );
