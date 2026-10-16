@@ -4,6 +4,7 @@ import type {
   CloseShiftInput,
   CreateWithdrawalInput,
   ListCashMovementsParams,
+  ListIncomeParams,
   ListShiftsParams,
   OpenShiftInput,
   CashSummaryParams,
@@ -44,6 +45,15 @@ export function useCashMovements(params: ListCashMovementsParams) {
     queryKey: ["cash-movements", params],
     queryFn: () => cashApi.listCashMovements(params),
     placeholderData: (prev) => prev,
+  });
+}
+
+export function useCashIncome(params: ListIncomeParams, enabled = true) {
+  return useQuery({
+    queryKey: ["cash-income", params],
+    queryFn: () => cashApi.listIncome(params),
+    placeholderData: (prev) => prev,
+    enabled,
   });
 }
 

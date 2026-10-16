@@ -45,4 +45,10 @@ export type CloseShiftInput = z.infer<typeof closeShiftSchema>;
 export type CreateWithdrawalInput = z.infer<typeof createWithdrawalSchema>;
 export type ListShiftsQuery = z.infer<typeof listShiftsQuerySchema>;
 export type ListCashMovementsQuery = z.infer<typeof listCashMovementsQuerySchema>;
+export const listIncomeQuerySchema = z.object({
+  from: z.string().min(1, "Falta la fecha desde"),
+  to: z.string().min(1, "Falta la fecha hasta"),
+});
+
+export type ListIncomeQuery = z.infer<typeof listIncomeQuerySchema>;
 export type CashSummaryQuery = z.infer<typeof cashSummaryQuerySchema>;

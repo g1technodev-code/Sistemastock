@@ -1,5 +1,5 @@
 import { api } from "./client";
-import type { CashMovement, CashMovementType, CashRegisterStatus, CashShift, CashShiftStatus, CashSummary, Paginated } from "../lib/types";
+import type { CashMovement, CashMovementType, CashRegisterStatus, CashShift, CashShiftStatus, CashSummary, IncomeReport, Paginated } from "../lib/types";
 
 export type OpenShiftInput = { countedAmount: number; note?: string | null };
 export type CloseShiftInput = { countedAmount: number; note?: string | null };
@@ -61,5 +61,12 @@ export async function listWithdrawals(params: ListCashMovementsParams): Promise<
 
 export async function listCashMovements(params: ListCashMovementsParams): Promise<Paginated<CashMovement>> {
   const { data } = await api.get("/cash/movements", { params });
+  return data;
+}
+
+export type ListIncomeParams = { from: string; to: string };
+
+export async function listIncome(params: ListIncomeParams): Promise<IncomeReport> {
+  const { data } = await api.get("/cash/income", { params });
   return data;
 }

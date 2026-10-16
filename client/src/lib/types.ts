@@ -428,3 +428,22 @@ export type DashboardSummary = {
   };
   recentActivity: StockMovement[];
 };
+
+export type IncomeMethod = "EFECTIVO" | "TRANSFERENCIA" | "TARJETA";
+
+export type IncomeItem = {
+  id: string;
+  createdAt: string;
+  method: IncomeMethod;
+  amount: number;
+  source: "SALE" | "CUSTOMER_PAYMENT";
+  description: string;
+  userName: string;
+  saleId: string | null;
+};
+
+export type IncomeReport = {
+  items: IncomeItem[];
+  totals: Record<IncomeMethod, number>;
+  total: number;
+};

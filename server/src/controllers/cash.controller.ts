@@ -8,6 +8,7 @@ import {
   listShiftsQuerySchema,
   listCashMovementsQuerySchema,
   cashSummaryQuerySchema,
+  listIncomeQuerySchema,
 } from "../schemas/cash.schema";
 import { serializeDecimals } from "../utils/serialize";
 
@@ -61,3 +62,8 @@ export const listMovements = catchAsync(async (req: Request, res: Response) => {
   res.json(serializeDecimals(result));
 });
 
+export const listIncome = catchAsync(async (req: Request, res: Response) => {
+  const query = listIncomeQuerySchema.parse(req.query);
+  const result = await cashService.listIncome(req.user?.localId, query);
+  res.json(result);
+});
