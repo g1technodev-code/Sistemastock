@@ -6,9 +6,15 @@ import { createRateLimiter } from "../middlewares/rateLimit.middleware";
 const router = Router();
 
 const loginLimiter = createRateLimiter({
-  windowMs: 15 * 60 * 1000,
+  windowMs: 5 * 60 * 1000,
   max: 10,
-  message: "Demasiados intentos de inicio de sesión. Por favor espera 15 minutos.",
+  message: "Demasiados intentos fallidos para este email. Por favor espera 5 minutos.",
+  // El bloqueo aplica solo al email que se esta probando, no a toda la IP
+  keyGenerator: (req) => {
+    const email = typeof req.body?.email === "string" ? req.body.email.trim().toLowerCase() : "";
+    return email ? `email:${email}` : `ip:${req.ip}`;
+  },
+  skipSuccessfulRequests: true,
 });
 
 const refreshLimiter = createRateLimiter({

@@ -7,6 +7,10 @@ import { errorHandler, notFoundHandler } from "./middlewares/error.middleware";
 
 const app = express();
 
+// Railway sirve la API detras de un proxy: sin esto req.ip es la IP del proxy
+// (la misma para todos los clientes) en lugar de la IP real del usuario.
+app.set("trust proxy", 1);
+
 const LOCALHOST_ORIGIN = /^http:\/\/(localhost|127\.0\.0\.1):\d+$/;
 
 app.use(
