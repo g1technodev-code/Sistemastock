@@ -6,7 +6,6 @@ import {
   createLocal,
   updateStatus,
   updatePlan,
-  updateRubro,
   removeLocal,
   listUsers,
   updateUserStatus,
@@ -20,7 +19,6 @@ import {
 } from "../controllers/superadmin.controller";
 
 import * as planController from "../controllers/plan.controller";
-import * as rubroController from "../controllers/rubro.controller";
 import * as catalogProductController from "../controllers/catalogProduct.controller";
 import { uploadExcel } from "../middlewares/upload.middleware";
 
@@ -33,7 +31,6 @@ router.get("/locales", listLocales);
 router.post("/locales", createLocal);
 router.patch("/locales/:id/status", updateStatus);
 router.patch("/locales/:id/plan", updatePlan);
-router.patch("/locales/:id/rubro", updateRubro);
 router.delete("/locales/:id", removeLocal);
 
 router.get("/users", listUsers);
@@ -45,11 +42,6 @@ router.get("/plans", planController.list);
 router.post("/plans", planController.create);
 router.patch("/plans/:id", planController.update);
 router.delete("/plans/:id", planController.remove);
-
-router.get("/rubros", rubroController.list);
-router.post("/rubros", rubroController.create);
-router.patch("/rubros/:id", rubroController.update);
-router.delete("/rubros/:id", rubroController.remove);
 
 router.get("/catalog-products", catalogProductController.list);
 router.post("/catalog-products", catalogProductController.create);

@@ -35,7 +35,7 @@ export function CatalogBrowseTab({ canManage }: { canManage: boolean }) {
         <EmptyState
           icon={PackageSearch}
           title="No hay productos de catálogo disponibles"
-          description="Esto puede ser porque tu negocio todavía no tiene un rubro asignado, o porque el rubro asignado aún no tiene productos precargados. Contactá a soporte si creés que esto es un error."
+          description="Todavía no hay productos precargados en el catálogo. Contactá a soporte si creés que esto es un error."
         />
       </Card>
     );

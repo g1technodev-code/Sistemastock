@@ -9,12 +9,11 @@ const BULK_COLUMNS: ExcelColumn[] = [
   { key: "name", header: "nombre" },
   { key: "description", header: "descripcion" },
   { key: "barcode", header: "codigo_barras" },
-  { key: "rubro", header: "rubro" },
 ];
 
 export const list = catchAsync(async (req: Request, res: Response) => {
   const query = listCatalogProductsQuerySchema.parse(req.query);
-  const items = await catalogProductService.listCatalogProducts(query.rubroId, query.includeInactive);
+  const items = await catalogProductService.listCatalogProducts(query.includeInactive);
   res.json({ items: serializeDecimals(items) });
 });
 
@@ -40,7 +39,6 @@ export const downloadTemplate = catchAsync(async (_req: Request, res: Response) 
     name: "Coca-Cola 500ml",
     description: "Gaseosa línea Coca-Cola",
     barcode: "7790895000782",
-    rubro: "Kiosco",
   });
   res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
   res.setHeader("Content-Disposition", "attachment; filename=plantilla-catalogo.xlsx");

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Search, Power, CheckCircle, Plus, RefreshCw, Trash2, Store, Users } from "lucide-react";
-import { listLocales, updateLocalStatus, createLocal, updateLocalPlan, updateLocalRubro, deleteLocal } from "../actions/superadmin.api";
+import { Search, Power, CheckCircle, Plus, RefreshCw, Trash2, Users } from "lucide-react";
+import { listLocales, updateLocalStatus, createLocal, updateLocalPlan, deleteLocal } from "../actions/superadmin.api";
 
 import { Card, CardHeader, CardBody } from "../../../components/ui/Card";
 import { Badge } from "../../../components/ui/Badge";
@@ -11,7 +11,6 @@ import { Modal } from "../../../components/ui/Modal";
 import { DataTable, type DataTableColumn } from "../../../components/ui/DataTable";
 import { useToast } from "../../../context/ToastContext";
 import { usePlans } from "../../../hooks/usePlans";
-import { useRubros } from "../../../hooks/useRubros";
 import { formatCurrency, formatDate } from "../../../lib/formatters";
 import type { LocalItem, LocalStatus } from "../../../lib/types";
 
@@ -39,19 +38,14 @@ export function LocalesPanel({ onViewUsers }: { onViewUsers: (local: LocalItem) 
   const [ownerEmail, setOwnerEmail] = useState("");
   const [adminPassword, setAdminPassword] = useState("");
   const [planId, setPlanId] = useState("");
-  const [rubroId, setRubroId] = useState("");
   const [changePlanTarget, setChangePlanTarget] = useState<LocalItem | null>(null);
   const [changePlanId, setChangePlanId] = useState("");
-  const [changeRubroTarget, setChangeRubroTarget] = useState<LocalItem | null>(null);
-  const [changeRubroId, setChangeRubroId] = useState("");
 
   const { showSuccess, showError } = useToast();
   const queryClient = useQueryClient();
 
   const { data: plansData } = usePlans(false);
   const activePlans = plansData ?? [];
-  const { data: rubrosData } = useRubros(false);
-  const activeRubros = rubrosData ?? [];
 
   const { data: localesData, isLoading: localesLoading } = useQuery({
     queryKey: ["superadmin-locales", page, search, statusFilter],
@@ -73,7 +67,6 @@ export function LocalesPanel({ onViewUsers }: { onViewUsers: (local: LocalItem) 
       setOwnerEmail("");
       setAdminPassword("");
       setPlanId("");
-      setRubroId("");
       invalidate();
     },
     onError: (err: any) => {
@@ -104,18 +97,6 @@ export function LocalesPanel({ onViewUsers }: { onViewUsers: (local: LocalItem) 
     },
   });
 
-  const changeRubroMutation = useMutation({
-    mutationFn: ({ id, rubroId }: { id: string; rubroId: string | null }) => updateLocalRubro(id, rubroId),
-    onSuccess: () => {
-      showSuccess("Rubro del local actualizado correctamente");
-      setChangeRubroTarget(null);
-      invalidate();
-    },
-    onError: (err: any) => {
-      showError(err?.response?.data?.message || "No se pudo cambiar el rubro del local");
-    },
-  });
-
   const deleteMutation = useMutation({
     mutationFn: (id: string) => deleteLocal(id),
     onSuccess: () => {
@@ -136,17 +117,12 @@ export function LocalesPanel({ onViewUsers }: { onViewUsers: (local: LocalItem) 
       showError("Completa todos los campos obligatorios");
       return;
     }
-    createMutation.mutate({ name, ownerEmail, adminPassword, planId: selectedPlanId, rubroId: rubroId || undefined });
+    createMutation.mutate({ name, ownerEmail, adminPassword, planId: selectedPlanId });
   };
 
   const openChangePlan = (item: LocalItem) => {
     setChangePlanTarget(item);
     setChangePlanId(item.plan.id);
-  };
-
-  const openChangeRubro = (item: LocalItem) => {
-    setChangeRubroTarget(item);
-    setChangeRubroId(item.rubroId ?? "");
   };
 
   const selectedNewPlan = activePlans.find((p) => p.id === changePlanId);
@@ -186,17 +162,6 @@ export function LocalesPanel({ onViewUsers }: { onViewUsers: (local: LocalItem) 
         <button onClick={() => openChangePlan(item)} className="text-left">
           <Badge tone={item.isTrial ? "warning" : "success"} className="font-semibold">
             {item.isTrial ? `Prueba (${item.plan.trialDays ?? "-"} días)` : item.plan.name}
-          </Badge>
-        </button>
-      ),
-    },
-    {
-      key: "rubro",
-      header: "Rubro",
-      render: (item) => (
-        <button onClick={() => openChangeRubro(item)} className="text-left">
-          <Badge tone={item.rubro ? "info" : "neutral"} className="font-semibold">
-            {item.rubro?.name ?? "Sin asignar"}
           </Badge>
         </button>
       ),
@@ -371,14 +336,6 @@ export function LocalesPanel({ onViewUsers }: { onViewUsers: (local: LocalItem) 
               </option>
             ))}
           </Select>
-          <Select label="Rubro (opcional)" value={rubroId} onChange={(e) => setRubroId(e.target.value)}>
-            <option value="">Sin rubro asignado</option>
-            {activeRubros.map((r) => (
-              <option key={r.id} value={r.id}>
-                {r.name}
-              </option>
-            ))}
-          </Select>
 
           <div className="flex justify-end gap-3 pt-4">
             <Button type="button" variant="outline" onClick={() => setCreateModalOpen(false)}>
@@ -430,39 +387,6 @@ export function LocalesPanel({ onViewUsers }: { onViewUsers: (local: LocalItem) 
               onClick={() => changePlanTarget && changePlanMutation.mutate({ id: changePlanTarget.id, planId: changePlanId })}
             >
               <RefreshCw className="h-4 w-4 mr-1.5" /> Cambiar Plan
-            </Button>
-          </div>
-        </div>
-      </Modal>
-
-      {/* Modal Cambiar Rubro */}
-      <Modal
-        open={!!changeRubroTarget}
-        onClose={() => setChangeRubroTarget(null)}
-        title={`Cambiar rubro de ${changeRubroTarget?.name ?? ""}`}
-        size="sm"
-      >
-        <div className="space-y-4">
-          <Select label="Rubro" value={changeRubroId} onChange={(e) => setChangeRubroId(e.target.value)}>
-            <option value="">Sin rubro asignado</option>
-            {activeRubros.map((r) => (
-              <option key={r.id} value={r.id}>
-                {r.name}
-              </option>
-            ))}
-          </Select>
-          <div className="flex justify-end gap-3 pt-2">
-            <Button type="button" variant="outline" onClick={() => setChangeRubroTarget(null)}>
-              Cancelar
-            </Button>
-            <Button
-              type="button"
-              isLoading={changeRubroMutation.isPending}
-              onClick={() =>
-                changeRubroTarget && changeRubroMutation.mutate({ id: changeRubroTarget.id, rubroId: changeRubroId || null })
-              }
-            >
-              <Store className="h-4 w-4 mr-1.5" /> Cambiar Rubro
             </Button>
           </div>
         </div>

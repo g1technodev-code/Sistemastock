@@ -63,21 +63,8 @@ export type BulkRowResult = {
   error?: string;
 };
 
-export type Rubro = {
-  id: string;
-  name: string;
-  description: string | null;
-  icon: string | null;
-  isActive: boolean;
-  sortOrder: number;
-  createdAt: string;
-  updatedAt: string;
-};
-
 export type CatalogProduct = {
   id: string;
-  rubroId: string;
-  rubro?: { id: string; name: string };
   name: string;
   description: string | null;
   unit: string;
@@ -93,8 +80,6 @@ export type LocalItem = {
   name: string;
   ownerEmail: string;
   plan: Plan;
-  rubroId?: string | null;
-  rubro?: Rubro | null;
   isTrial?: boolean;
   status: LocalStatus;
   dueDate: string;

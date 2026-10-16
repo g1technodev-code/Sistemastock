@@ -3,7 +3,6 @@ import { downloadBlob } from "../lib/download";
 import type { CatalogProduct, BulkRowResult } from "../lib/types";
 
 export type CatalogProductInput = {
-  rubroId: string;
   name: string;
   description?: string | null;
   unit: string;
@@ -12,8 +11,8 @@ export type CatalogProductInput = {
   isActive?: boolean;
 };
 
-export async function listCatalogProducts(rubroId?: string, includeInactive = true): Promise<CatalogProduct[]> {
-  const { data } = await api.get("/superadmin/catalog-products", { params: { rubroId, includeInactive } });
+export async function listCatalogProducts(includeInactive = true): Promise<CatalogProduct[]> {
+  const { data } = await api.get("/superadmin/catalog-products", { params: { includeInactive } });
   return data.items;
 }
 

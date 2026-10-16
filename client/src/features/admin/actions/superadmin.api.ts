@@ -14,7 +14,6 @@ export type CreateLocalParams = {
   ownerEmail: string;
   adminPassword: string;
   planId: string;
-  rubroId?: string;
 };
 
 export async function getSuperAdminMetrics(): Promise<{ metrics: SuperAdminMetrics; conversionAlerts: ConversionAlert[] }> {
@@ -39,11 +38,6 @@ export async function updateLocalStatus(id: string, status: "ACTIVE" | "SUSPENDE
 
 export async function updateLocalPlan(id: string, planId: string): Promise<LocalItem> {
   const { data } = await api.patch(`/superadmin/locales/${id}/plan`, { planId });
-  return data;
-}
-
-export async function updateLocalRubro(id: string, rubroId: string | null): Promise<LocalItem> {
-  const { data } = await api.patch(`/superadmin/locales/${id}/rubro`, { rubroId });
   return data;
 }
 
