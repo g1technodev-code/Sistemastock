@@ -120,7 +120,7 @@ export default function Customers() {
               setSearch(e.target.value);
               setPage(1);
             }}
-            placeholder="Buscar por nombre, CUIT/DNI, teléfono o email..."
+            placeholder="Buscar por nombre, DNI, teléfono o email..."
             className="w-full rounded-xl border border-neutral-300 bg-white py-2.5 pl-10 pr-4 text-sm text-neutral-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-white/10 dark:bg-neutral-900 dark:text-neutral-100"
           />
         </div>
@@ -163,7 +163,7 @@ export default function Customers() {
                   <tr key={c.id} className="hover:bg-neutral-50/50 transition-colors dark:hover:bg-neutral-900/50">
                     <td className="px-6 py-4">
                       <div className="font-semibold text-neutral-900 dark:text-neutral-100">{c.name}</div>
-                      {c.taxId && <div className="text-xs text-neutral-400 font-mono">CUIT/DNI: {c.taxId}</div>}
+                      {c.taxId && <div className="text-xs text-neutral-400 font-mono">DNI: {c.taxId}</div>}
                     </td>
                     <td className="px-6 py-4">
                       <div className="space-y-0.5 text-xs text-neutral-500 dark:text-neutral-400">
@@ -256,7 +256,7 @@ export default function Customers() {
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-semibold uppercase text-neutral-600 dark:text-neutral-400 mb-1">CUIT / DNI</label>
+                <label className="block text-xs font-semibold uppercase text-neutral-600 dark:text-neutral-400 mb-1">DNI</label>
                 <input name="taxId" defaultValue={editingCustomer.taxId || ""} className="w-full rounded-xl border border-neutral-300 px-3.5 py-2 text-sm dark:border-neutral-800 dark:bg-neutral-900" />
               </div>
               <div>
