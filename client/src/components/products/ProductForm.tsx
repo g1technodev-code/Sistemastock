@@ -42,6 +42,8 @@ const schema = z.object({
 type ProductFormInput = z.input<typeof schema>;
 export type ProductFormValues = z.output<typeof schema>;
 
+const round2 = (n: number) => Math.round(n * 100) / 100;
+
 export function ProductForm({
   initialValues,
   onSubmit,
@@ -59,6 +61,9 @@ export function ProductForm({
   const [isLookingUp, setIsLookingUp] = useState(false);
 
   const isEditing = Boolean(initialValues && initialValues.id);
+
+  // % de ganancia sobre el costo. No se guarda: se deriva de costo y precio de venta.
+  const [markup, setMarkup] = useState("");
 
   const {
     register,
@@ -101,7 +106,30 @@ export function ProductForm({
       saleType: initialValues?.saleType ?? "UNIT",
       isActive: initialValues?.isActive ?? true,
     });
+    const initialCost = Number(initialValues?.costPrice ?? 0);
+    const initialSell = Number(initialValues?.sellPrice ?? 0);
+    setMarkup(initialCost > 0 && initialSell > 0 ? round2(((initialSell - initialCost) / initialCost) * 100).toString() : "");
   }, [initialValues, reset]);
+
+  const applyMarkup = (cost: number, pct: string) => {
+    if (pct === "" || !(cost > 0)) return;
+    setValue("sellPrice", round2(cost * (1 + Number(pct) / 100)) as any, { shouldValidate: true, shouldDirty: true });
+  };
+
+  const handleCostChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    applyMarkup(Number(e.target.value), markup);
+  };
+
+  const handleMarkupChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setMarkup(e.target.value);
+    applyMarkup(Number(getValues("costPrice")), e.target.value);
+  };
+
+  const handleSellChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const cost = Number(getValues("costPrice"));
+    const sell = e.target.value;
+    setMarkup(cost > 0 && sell !== "" ? round2(((Number(sell) - cost) / cost) * 100).toString() : "");
+  };
 
   const triggerLookup = async (code: string) => {
     if (!code || code.trim().length < 4 || isLookingUp) return;
@@ -215,10 +243,11 @@ export function ProductForm({
       </div>
 
       {saleType !== "AMOUNT" ? (
-        <div className="grid grid-cols-2 gap-4">
-          <Input label="Costo ($) *" type="number" step="0.01" placeholder="0.00" required error={errors.costPrice?.message} {...register("costPrice")} />
+        <div className="grid grid-cols-3 gap-3">
+          <Input label="Costo ($) *" type="number" step="0.01" placeholder="0.00" required error={errors.costPrice?.message} {...register("costPrice", { onChange: handleCostChange })} />
+          <Input label="% Ganancia" type="number" step="0.01" placeholder="Ej: 40" value={markup} onChange={handleMarkupChange} />
           <div>
-            <Input label={saleType === "WEIGHT" ? "Precio por Kg ($) *" : "Precio venta ($) *"} type="number" step="0.01" placeholder="0.00" required error={errors.sellPrice?.message} {...register("sellPrice")} />
+            <Input label={saleType === "WEIGHT" ? "Precio por Kg ($) *" : "Precio venta ($) *"} type="number" step="0.01" placeholder="0.00" required error={errors.sellPrice?.message} {...register("sellPrice", { onChange: handleSellChange })} />
             {(Number(sellPrice) > 0 || Number(costPrice) > 0) && (
               <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
                 Ganancia: <span className={profit > 0 ? "text-green-600 dark:text-green-400" : profit < 0 ? "text-red-600 dark:text-red-400" : ""}>${profit.toFixed(2)}</span>
