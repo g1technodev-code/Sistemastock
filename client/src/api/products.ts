@@ -72,3 +72,33 @@ export async function bulkUploadProducts(file: File): Promise<BulkRowResult[]> {
   return data.results;
 }
 
+export type PriceUpdateInput = {
+  categoryId: string | null;
+  supplierId: string | null;
+  percentage: number;
+  applyTo: "SELL" | "COST_AND_SELL";
+  rounding: number;
+};
+
+export type PriceUpdatePreview = {
+  count: number;
+  items: {
+    id: string;
+    sku: string;
+    name: string;
+    costPrice: number;
+    sellPrice: number;
+    newCostPrice: number;
+    newSellPrice: number;
+  }[];
+};
+
+export async function previewPriceUpdate(input: PriceUpdateInput): Promise<PriceUpdatePreview> {
+  const { data } = await api.post("/products/price-update/preview", input);
+  return data;
+}
+
+export async function applyPriceUpdate(input: PriceUpdateInput): Promise<{ updated: number }> {
+  const { data } = await api.post("/products/price-update", input);
+  return data;
+}

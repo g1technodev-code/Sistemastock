@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Plus, Tags, Pencil, Trash2 } from "lucide-react";
+import { Plus, Tags, Pencil, Trash2, Percent } from "lucide-react";
 import { Card } from "../components/ui/Card";
 import { Button } from "../components/ui/Button";
 import { Input, Textarea } from "../components/ui/Field";
@@ -13,6 +13,7 @@ import { EmptyState } from "../components/ui/EmptyState";
 import { ConfirmDialog } from "../components/ui/ConfirmDialog";
 import { FullPageSpinner } from "../components/ui/Spinner";
 import { useCategories, useCategoryMutations } from "../hooks/useCategories";
+import { PriceUpdateModal } from "../components/products/PriceUpdateModal";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 import { permissions } from "../lib/permissions";
@@ -39,6 +40,7 @@ export default function Categories() {
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<Category | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Category | null>(null);
+  const [priceTarget, setPriceTarget] = useState<Category | null>(null);
 
   const {
     register,
@@ -147,6 +149,9 @@ export default function Categories() {
                   {canManage && (
                     <TD>
                       <div className="flex justify-end gap-1">
+                        <Button variant="ghost" size="sm" onClick={() => setPriceTarget(category)} title="Actualizar precios de esta categoría">
+                          <Percent className="h-4 w-4 text-primary-500" />
+                        </Button>
                         <Button variant="ghost" size="sm" onClick={() => openEdit(category)}>
                           <Pencil className="h-4 w-4" />
                         </Button>
@@ -202,6 +207,7 @@ export default function Categories() {
         onConfirm={handleDelete}
         onCancel={() => setDeleteTarget(null)}
       />
+      <PriceUpdateModal open={!!priceTarget} onClose={() => setPriceTarget(null)} initialCategoryId={priceTarget?.id} />
     </div>
   );
 }

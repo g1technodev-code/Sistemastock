@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Plus, Truck, Pencil, Trash2, FileText } from "lucide-react";
+import { Plus, Truck, Pencil, Trash2, FileText, Percent } from "lucide-react";
 import { Card } from "../ui/Card";
 import { Button } from "../ui/Button";
 import { Input, Textarea } from "../ui/Field";
@@ -18,6 +18,7 @@ import { extractErrorMessage } from "../../api/client";
 import { formatCurrency } from "../../lib/formatters";
 import type { Supplier } from "../../lib/types";
 import { SupplierAccountDrawer } from "./SupplierAccountDrawer";
+import { PriceUpdateModal } from "../products/PriceUpdateModal";
 
 const schema = z.object({
   name: z.string().min(2, "El nombre es muy corto"),
@@ -39,6 +40,7 @@ export function SuppliersTab({ canManage }: { canManage: boolean }) {
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<Supplier | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Supplier | null>(null);
+  const [priceTarget, setPriceTarget] = useState<Supplier | null>(null);
   
   const [accountDrawerOpen, setAccountDrawerOpen] = useState(false);
   const [selectedSupplierId, setSelectedSupplierId] = useState<string | null>(null);
@@ -162,6 +164,9 @@ export function SuppliersTab({ canManage }: { canManage: boolean }) {
                   {canManage && (
                     <TD>
                       <div className="flex justify-end gap-1">
+                        <Button variant="ghost" size="sm" onClick={() => setPriceTarget(supplier)} title="Actualizar precios de este proveedor">
+                          <Percent className="h-4 w-4 text-primary-500" />
+                        </Button>
                         <Button variant="ghost" size="sm" onClick={() => openAccount(supplier.id)} title="Ver cuenta corriente">
                           <FileText className="h-4 w-4 text-primary-500" />
                         </Button>
@@ -221,6 +226,7 @@ export function SuppliersTab({ canManage }: { canManage: boolean }) {
         open={accountDrawerOpen} 
         onClose={() => setAccountDrawerOpen(false)} 
       />
+      <PriceUpdateModal open={!!priceTarget} onClose={() => setPriceTarget(null)} initialSupplierId={priceTarget?.id} />
     </div>
   );
 }

@@ -41,6 +41,24 @@ export const bulkProductRowSchema = z.object({
   precio: z.coerce.number().min(0).default(0),
 });
 
+export const priceUpdateSchema = z
+  .object({
+    categoryId: z.string().optional().nullable(),
+    supplierId: z.string().optional().nullable(),
+    percentage: z.coerce
+      .number()
+      .min(-90, "La baja no puede superar el 90%")
+      .max(1000, "El aumento no puede superar el 1000%")
+      .refine((v) => v !== 0, "El porcentaje no puede ser 0"),
+    applyTo: z.enum(["SELL", "COST_AND_SELL"]).default("SELL"),
+    rounding: z.coerce
+      .number()
+      .refine((v) => [0, 10, 50, 100].includes(v), "Redondeo inválido")
+      .default(0),
+  })
+  .refine((v) => Boolean(v.categoryId || v.supplierId), "Elegí una categoría o un proveedor");
+
+export type PriceUpdateInput = z.infer<typeof priceUpdateSchema>;
 export type UpsertProductInput = z.infer<typeof upsertProductSchema>;
 export type ListProductsQuery = z.infer<typeof listProductsQuerySchema>;
 export type BulkProductRow = z.infer<typeof bulkProductRowSchema>;

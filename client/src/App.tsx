@@ -11,6 +11,7 @@ const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Products = lazy(() => import("./pages/Products"));
 const ProductDetail = lazy(() => import("./pages/ProductDetail"));
 const Categories = lazy(() => import("./pages/Categories"));
+const Suppliers = lazy(() => import("./pages/Suppliers"));
 
 const Stock = lazy(() => import("./pages/Stock"));
 const Ventas = lazy(() => import("./pages/Ventas"));
@@ -92,6 +93,7 @@ export default function App() {
           <Route path="/dashboard" element={<ProtectedRoute allowedRoles={["ADMIN"]}><Dashboard /></ProtectedRoute>} />
 
           <Route path="/categories" element={<ProtectedRoute allowedRoles={["ADMIN"]}><Categories /></ProtectedRoute>} />
+          <Route path="/suppliers" element={<ProtectedRoute allowedRoles={["ADMIN"]}><Suppliers /></ProtectedRoute>} />
 
           {/* Both Admin and Employee */}
           <Route path="/tutorial" element={<Tutorial />} />
