@@ -75,7 +75,7 @@ export default function Settings() {
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              <Input label="RUC / ID fiscal" {...register("taxId")} />
+              <Input label="CUIT" placeholder="Ej: 30-12345678-9" {...register("taxId")} />
               <Input label="Teléfono" {...register("phone")} />
             </div>
 

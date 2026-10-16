@@ -195,7 +195,7 @@ export function SuppliersTab({ canManage }: { canManage: boolean }) {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <Input label="Teléfono" {...register("phone")} />
-            <Input label="RUC / ID fiscal" {...register("taxId")} />
+            <Input label="CUIT" placeholder="Ej: 30-12345678-9" {...register("taxId")} />
           </div>
           <Input label="Dirección" {...register("address")} />
           <Textarea label="Notas" rows={2} {...register("notes")} />

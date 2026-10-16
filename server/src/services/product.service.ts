@@ -168,15 +168,37 @@ export async function deleteProduct(localId: string | null | undefined, id: stri
 export type BulkProductResult = {
   row: number;
   success: boolean;
+  action?: "created" | "updated";
   error?: string;
   product?: Awaited<ReturnType<typeof createProduct>>;
 };
 
 /**
- * Creates each row's Product via createProduct (same localId+sku uniqueness check,
- * no duplication), then routes any initial "cantidad" through createMovement so it
- * goes through the same atomic increment + audit-trail path as any other stock-in —
- * never a direct currentStock write.
+ * Finds the Local's existing product for a bulk row: by barcode when the row has one,
+ * otherwise by name (case-insensitive). Ambiguous matches are rejected instead of guessed.
+ */
+async function findExistingForBulkRow(localId: string, row: BulkProductRow) {
+  const barcode = row.barcode?.trim();
+  const where: Prisma.ProductWhereInput = barcode
+    ? { localId, barcode }
+    : { localId, name: { equals: row.name.trim(), mode: "insensitive" } };
+
+  const matches = await prisma.product.findMany({ where, select: { id: true }, take: 2 });
+  if (matches.length > 1) {
+    throw ApiError.badRequest(
+      barcode
+        ? `Hay más de un producto con el código ${barcode}`
+        : `Hay más de un producto llamado "${row.name.trim()}"; agregá el código de barras para identificarlo`,
+    );
+  }
+  return matches[0] ?? null;
+}
+
+/**
+ * Upserts each row: an existing product (see findExistingForBulkRow) gets its price and
+ * description updated and the "cantidad" added to its stock; otherwise a new Product is
+ * created via createProduct. Stock always goes through createMovement so it uses the same
+ * atomic increment + audit-trail path as any other stock-in — never a direct currentStock write.
  */
 export async function bulkCreateProducts(
   localId: string | null | undefined,
@@ -188,15 +210,28 @@ export async function bulkCreateProducts(
   for (let i = 0; i < items.length; i++) {
     const row = items[i];
     try {
-      let product = await createProduct(localId, {
-        name: row.name,
-        description: row.description || null,
-        barcode: row.barcode || null,
-        unit: "unidad",
-        costPrice: 0,
-        sellPrice: row.precio,
-        minStock: 0,
-      });
+      if (!localId) throw ApiError.badRequest("Debe estar asociado a un local para cargar productos");
+
+      const existing = await findExistingForBulkRow(localId, row);
+      let product;
+      if (existing) {
+        const data: Prisma.ProductUpdateInput = {};
+        if (row.precio !== undefined) data.sellPrice = row.precio;
+        if (row.description) data.description = row.description;
+        product = Object.keys(data).length
+          ? await prisma.product.update({ where: { id: existing.id }, data, include: PRODUCT_INCLUDE })
+          : await getProduct(localId, existing.id);
+      } else {
+        product = await createProduct(localId, {
+          name: row.name.trim(),
+          description: row.description || null,
+          barcode: row.barcode?.trim() || null,
+          unit: "unidad",
+          costPrice: 0,
+          sellPrice: row.precio ?? 0,
+          minStock: 0,
+        });
+      }
 
       if (row.cantidad > 0) {
         await createMovement(
@@ -207,7 +242,7 @@ export async function bulkCreateProducts(
         product = await getProduct(localId, product.id);
       }
 
-      results.push({ row: i, success: true, product });
+      results.push({ row: i, success: true, action: existing ? "updated" : "created", product });
     } catch (error) {
       results.push({ row: i, success: false, error: error instanceof ApiError ? error.message : "Error inesperado" });
     }

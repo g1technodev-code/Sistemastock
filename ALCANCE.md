@@ -60,7 +60,7 @@ Búsqueda global (`/search`).
 Gestión de usuarios del sistema: alta, edición, reseteo de contraseña. Solo ADMIN.
 
 ### Configuración del negocio
-Datos generales de la empresa (nombre, RUC/ID fiscal, dirección, teléfono, email, logo). Solo ADMIN puede editar.
+Datos generales de la empresa (nombre, CUIT, dirección, teléfono, email, logo). Solo ADMIN puede editar.
 
 ## Cortes explícitos de alcance (v1)
 
