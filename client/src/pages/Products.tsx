@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Plus, Search, Package, Pencil, Trash2, AlertTriangle, Camera, Upload } from "lucide-react";
+import { Plus, Search, Package, Pencil, Trash2, AlertTriangle, Camera, Upload, Percent } from "lucide-react";
 import { Card } from "../components/ui/Card";
 import { Button } from "../components/ui/Button";
 import { Input, Select } from "../components/ui/Field";
@@ -14,6 +14,7 @@ import { ProductForm, type ProductFormValues } from "../components/products/Prod
 import { CatalogBrowseTab } from "../components/products/CatalogBrowseTab";
 import { CameraScannerModal } from "../components/common/CameraScannerModal";
 import { BulkUploadModal } from "../components/common/BulkUploadModal";
+import { PriceUpdateModal } from "../components/products/PriceUpdateModal";
 import { useProducts, useProductMutations } from "../hooks/useProducts";
 import { useCategories } from "../hooks/useCategories";
 import { useAuth } from "../context/AuthContext";
@@ -39,6 +40,8 @@ export default function Products() {
   const [lowStockOnly, setLowStockOnly] = useState(false);
   const [cameraOpen, setCameraOpen] = useState(false);
   const [bulkOpen, setBulkOpen] = useState(false);
+  const [priceUpdateOpen, setPriceUpdateOpen] = useState(false);
+  const canUpdatePrices = user?.role === "ADMIN" || user?.role === "MANAGER";
   const [activeTab, setActiveTab] = useState<"products" | "catalog">("products");
   const location = useLocation();
 
@@ -184,6 +187,11 @@ export default function Products() {
           <Button onClick={() => setCameraOpen(true)} variant="outline" className="shadow-sm">
             <Camera className="h-4 w-4 text-primary-600 dark:text-primary-400" strokeWidth={2.5} /> Escanear
           </Button>
+          {canUpdatePrices && (
+            <Button onClick={() => setPriceUpdateOpen(true)} variant="outline" className="shadow-sm">
+              <Percent className="h-4 w-4" strokeWidth={2.5} /> Actualizar precios
+            </Button>
+          )}
           {canManage && (
             <>
               <Button onClick={() => setBulkOpen(true)} variant="outline" className="shadow-sm">
@@ -327,6 +335,8 @@ export default function Products() {
         onScan={handleGlobalScan}
         title="Escanear Código de Producto"
       />
+
+      <PriceUpdateModal open={priceUpdateOpen} onClose={() => setPriceUpdateOpen(false)} />
 
       <BulkUploadModal
         open={bulkOpen}

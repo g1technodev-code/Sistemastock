@@ -1,7 +1,8 @@
 import type { Request, Response } from "express";
 import { catchAsync } from "../utils/catchAsync";
 import * as productService from "../services/product.service";
-import { listProductsQuerySchema, upsertProductSchema, bulkProductRowSchema } from "../schemas/product.schema";
+import { listProductsQuerySchema, upsertProductSchema, bulkProductRowSchema, priceUpdateSchema } from "../schemas/product.schema";
+import * as priceUpdateService from "../services/priceUpdate.service";
 import { serializeDecimals } from "../utils/serialize";
 import { buildTemplateBuffer, parseWorkbookRows, type ExcelColumn } from "../utils/excelBulk";
 
@@ -77,6 +78,18 @@ export const bulkCreate = catchAsync(async (req: Request, res: Response) => {
 
   results.sort((a, b) => a.row - b.row);
   res.status(201).json({ results });
+});
+
+export const previewPriceUpdate = catchAsync(async (req: Request, res: Response) => {
+  const input = priceUpdateSchema.parse(req.body);
+  const result = await priceUpdateService.previewPriceUpdate(req.user?.localId, input);
+  res.json(result);
+});
+
+export const applyPriceUpdate = catchAsync(async (req: Request, res: Response) => {
+  const input = priceUpdateSchema.parse(req.body);
+  const result = await priceUpdateService.applyPriceUpdate(req.user?.localId, input);
+  res.json(result);
 });
 
 export const lookupBarcode = catchAsync(async (req: Request, res: Response) => {

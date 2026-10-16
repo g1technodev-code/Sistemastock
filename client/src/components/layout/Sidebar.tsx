@@ -67,6 +67,7 @@ const TENANT_NAV_ITEMS: NavItem[] = [
   { to: "/dashboard", label: "Panel", icon: LayoutDashboard, show: permissions.canViewDashboard },
   { to: "/products", label: "Productos", icon: Package, show: permissions.canViewProducts },
   { to: "/categories", label: "Categorías", icon: Tags, show: permissions.canViewCategories },
+  { to: "/suppliers", label: "Proveedores", icon: Truck, show: permissions.canViewSuppliers },
   { to: "/stock", label: "Movimientos de stock", icon: ArrowLeftRight, show: permissions.canViewStockMovements },
   { to: "/ventas", label: "Ventas", icon: ShoppingCart, show: permissions.canViewSales, shortcut: "⇧V" },
   { to: "/compras", label: "Compras", icon: ShoppingBag, show: permissions.canViewPurchases, shortcut: "⇧X", feature: "PURCHASES" },

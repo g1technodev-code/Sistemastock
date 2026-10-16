@@ -14,6 +14,8 @@ router.get("/catalog", localCatalogController.browse);
 router.post("/catalog/:id/import", authorize("ADMIN", "MANAGER"), localCatalogController.importOne);
 router.get("/bulk/template", productController.downloadBulkTemplate);
 router.post("/bulk", authorize("ADMIN", "MANAGER"), uploadExcel, productController.bulkCreate);
+router.post("/price-update/preview", authorize("ADMIN", "MANAGER"), productController.previewPriceUpdate);
+router.post("/price-update", authorize("ADMIN", "MANAGER"), productController.applyPriceUpdate);
 router.get("/:id", productController.getOne);
 router.post("/", authorize("ADMIN", "MANAGER"), productController.create);
 router.patch("/:id", authorize("ADMIN", "MANAGER"), productController.update);

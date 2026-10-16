@@ -18,7 +18,7 @@ export function useProduct(id: string | null) {
   });
 }
 
-function useInvalidateProducts() {
+export function useInvalidateProducts() {
   const qc = useQueryClient();
   return () => {
     qc.invalidateQueries({ queryKey: ["products"] });
