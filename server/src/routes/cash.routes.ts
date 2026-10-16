@@ -14,5 +14,6 @@ router.get("/shifts", cashController.listShifts);
 router.post("/withdrawals", authorize("ADMIN"), cashController.createWithdrawal);
 router.get("/withdrawals", authorize("ADMIN", "MANAGER"), cashController.listWithdrawals);
 router.get("/movements", authorize("ADMIN", "MANAGER"), cashController.listMovements);
+router.get("/income", authorize("ADMIN", "MANAGER"), cashController.listIncome);
 
 export default router;

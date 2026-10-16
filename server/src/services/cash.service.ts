@@ -1,4 +1,4 @@
-import { Prisma, CashMovementType, CashShiftStatus, Role, NotificationType } from "@prisma/client";
+import { Prisma, CashMovementType, CashShiftStatus, Role, NotificationType, PaymentMethod, SaleStatus, CustomerMovementType } from "@prisma/client";
 import { prisma } from "../config/prisma";
 import { ApiError } from "../utils/apiError";
 import { parsePagination, paginatedResponse } from "../utils/pagination";
@@ -10,6 +10,7 @@ import type {
   ListShiftsQuery,
   ListCashMovementsQuery,
   CashSummaryQuery,
+  ListIncomeQuery,
 } from "../schemas/cash.schema";
 
 export const CASH_REGISTER_ID = "singleton";
@@ -254,4 +255,102 @@ export async function getSummary(localId: string | null | undefined, query: Cash
     salesInToday,
     withdrawalsToday,
   };
+}
+
+export type IncomeMethod = "EFECTIVO" | "TRANSFERENCIA" | "TARJETA";
+
+export type IncomeItem = {
+  id: string;
+  createdAt: Date;
+  method: IncomeMethod;
+  amount: number;
+  source: "SALE" | "CUSTOMER_PAYMENT";
+  description: string;
+  userName: string;
+  saleId: string | null;
+};
+
+/**
+ * Money actually received in the range, one row per payment method: completed sales
+ * (MIXTO split into its parts) plus cuenta corriente collections. The CUENTA_CORRIENTE
+ * part of a sale is credit, not income, so it is left out.
+ */
+export async function listIncome(localId: string | null | undefined, query: ListIncomeQuery) {
+  const totals: Record<IncomeMethod, number> = { EFECTIVO: 0, TRANSFERENCIA: 0, TARJETA: 0 };
+  if (!localId) return { items: [] as IncomeItem[], totals, total: 0 };
+
+  const createdAt = { gte: new Date(query.from), lte: new Date(query.to) };
+
+  const [sales, collections] = await Promise.all([
+    prisma.sale.findMany({
+      where: { localId, status: SaleStatus.COMPLETED, createdAt },
+      select: {
+        id: true,
+        createdAt: true,
+        total: true,
+        paymentMethod: true,
+        receiptNumber: true,
+        customer: { select: { name: true } },
+        user: { select: { name: true } },
+        payments: { select: { id: true, paymentMethod: true, amount: true } },
+      },
+    }),
+    prisma.customerMovement.findMany({
+      where: { type: CustomerMovementType.PAYMENT, customer: { localId }, createdAt },
+      select: {
+        id: true,
+        createdAt: true,
+        amount: true,
+        customer: { select: { name: true } },
+        user: { select: { name: true } },
+      },
+    }),
+  ]);
+
+  const items: IncomeItem[] = [];
+  const isIncome = (m: PaymentMethod): m is IncomeMethod =>
+    m === PaymentMethod.EFECTIVO || m === PaymentMethod.TRANSFERENCIA || m === PaymentMethod.TARJETA;
+
+  for (const sale of sales) {
+    const label = sale.receiptNumber ? `Venta #${sale.receiptNumber}` : "Venta";
+    const description = sale.customer ? `${label} - ${sale.customer.name}` : label;
+    const parts =
+      sale.paymentMethod === PaymentMethod.MIXTO
+        ? sale.payments.map((p) => ({ id: p.id, method: p.paymentMethod, amount: Number(p.amount) }))
+        : [{ id: sale.id, method: sale.paymentMethod, amount: Number(sale.total) }];
+
+    for (const part of parts) {
+      if (!isIncome(part.method) || part.amount <= 0) continue;
+      items.push({
+        id: part.id,
+        createdAt: sale.createdAt,
+        method: part.method,
+        amount: part.amount,
+        source: "SALE",
+        description: sale.paymentMethod === PaymentMethod.MIXTO ? `${description} (pago mixto)` : description,
+        userName: sale.user.name,
+        saleId: sale.id,
+      });
+    }
+  }
+
+  // registerPayment ingresa el abono a la caja como efectivo
+  for (const c of collections) {
+    items.push({
+      id: c.id,
+      createdAt: c.createdAt,
+      method: "EFECTIVO",
+      amount: Number(c.amount),
+      source: "CUSTOMER_PAYMENT",
+      description: `Cobro cuenta corriente - ${c.customer.name}`,
+      userName: c.user.name,
+      saleId: null,
+    });
+  }
+
+  items.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  for (const item of items) totals[item.method] += item.amount;
+  const total = totals.EFECTIVO + totals.TRANSFERENCIA + totals.TARJETA;
+
+  return { items, totals, total };
 }

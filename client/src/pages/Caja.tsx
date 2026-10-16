@@ -2,10 +2,10 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Banknote, ListChecks, LogIn, LogOut, Wallet, WalletCards } from "lucide-react";
+import { Banknote, CreditCard, Landmark, ListChecks, LogIn, LogOut, TrendingUp, Wallet, WalletCards } from "lucide-react";
 import { Card, CardHeader, CardBody } from "../components/ui/Card";
 import { Button } from "../components/ui/Button";
-import { Input } from "../components/ui/Field";
+import { Input, Select } from "../components/ui/Field";
 import { Badge } from "../components/ui/Badge";
 import { Table, THead, TBody, TR, TH, TD } from "../components/ui/Table";
 import { EmptyState } from "../components/ui/EmptyState";
@@ -27,8 +27,9 @@ import {
   useOpenShift,
   useShifts,
   useCashMovements,
+  useCashIncome,
 } from "../hooks/useCash";
-import type { CashMovementType, CashShift } from "../lib/types";
+import type { CashMovementType, CashShift, IncomeMethod } from "../lib/types";
 
 const openShiftSchema = z.object({
   countedAmount: z.coerce.number().min(0, "El monto no puede ser negativo"),
@@ -60,6 +61,32 @@ const MOVEMENT_TYPE_TONE: Record<CashMovementType, "success" | "danger" | "warni
   SUPPLIER_PAYMENT: "warning",
 };
 
+const INCOME_METHOD_LABEL: Record<IncomeMethod, string> = {
+  EFECTIVO: "Efectivo",
+  TRANSFERENCIA: "Transferencia",
+  TARJETA: "Tarjeta",
+};
+const INCOME_METHOD_TONE: Record<IncomeMethod, "success" | "info" | "warning"> = {
+  EFECTIVO: "success",
+  TRANSFERENCIA: "info",
+  TARJETA: "warning",
+};
+
+/** YYYY-MM-DD of today in the browser's local time zone (value for <input type="date">). */
+function todayInputValue() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+/** Local-time start/end of the given YYYY-MM-DD day, as ISO strings for the API. */
+function dayRange(day: string) {
+  const [y, m, d] = day.split("-").map(Number);
+  return {
+    from: new Date(y, m - 1, d, 0, 0, 0, 0).toISOString(),
+    to: new Date(y, m - 1, d, 23, 59, 59, 999).toISOString(),
+  };
+}
+
 function DiscrepancyBadge({ value }: { value: number }) {
   if (Math.round(value * 100) === 0) return <Badge tone="success">Sin diferencia</Badge>;
   return (
@@ -72,7 +99,7 @@ function DiscrepancyBadge({ value }: { value: number }) {
 export default function Caja() {
   const { user } = useAuth();
   const { showSuccess, showError } = useToast();
-  const [tab, setTab] = useState<"shifts" | "ledger">("shifts");
+  const [tab, setTab] = useState<"shifts" | "income" | "ledger">("shifts");
 
   const { data: status } = useCashStatus();
   const { data: summary } = useCashSummary();
@@ -134,6 +161,11 @@ export default function Caja() {
   const [ledgerPage, setLedgerPage] = useState(1);
   const canViewLedger = permissions.canViewCashLedger(user?.role ?? "EMPLOYEE");
   const { data: movements, isLoading: loadingLedger } = useCashMovements({ page: ledgerPage, limit: 10 });
+
+  const [incomeDay, setIncomeDay] = useState(todayInputValue);
+  const [incomeMethod, setIncomeMethod] = useState<IncomeMethod | "">("");
+  const { data: income, isLoading: loadingIncome } = useCashIncome(dayRange(incomeDay || todayInputValue()), canViewLedger && tab === "income");
+  const incomeItems = income?.items.filter((i) => !incomeMethod || i.method === incomeMethod) ?? [];
 
   const canWithdraw = permissions.canManageCash(user?.role ?? "EMPLOYEE");
 
@@ -264,7 +296,12 @@ export default function Caja() {
         onChange={setTab}
         tabs={[
           { value: "shifts", label: `Turnos${user?.role === "EMPLOYEE" ? " (míos)" : ""}`, icon: ListChecks },
-          ...(canViewLedger ? [{ value: "ledger" as const, label: "Movimientos de caja", icon: WalletCards }] : []),
+          ...(canViewLedger
+            ? [
+                { value: "income" as const, label: "Ingresos", icon: TrendingUp },
+                { value: "ledger" as const, label: "Movimientos de caja", icon: WalletCards },
+              ]
+            : []),
         ]}
       />
 
@@ -310,6 +347,62 @@ export default function Caja() {
             </>
           )}
         </Card>
+      ) : tab === "income" ? (
+        <div className="flex flex-col gap-4">
+          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+            <StatCard label="Total ingresos" value={formatCurrency(income?.total ?? 0)} icon={TrendingUp} />
+            <StatCard label="Efectivo" value={formatCurrency(income?.totals.EFECTIVO ?? 0)} icon={Banknote} />
+            <StatCard label="Transferencia" value={formatCurrency(income?.totals.TRANSFERENCIA ?? 0)} icon={Landmark} />
+            <StatCard label="Tarjeta" value={formatCurrency(income?.totals.TARJETA ?? 0)} icon={CreditCard} />
+          </div>
+          <Card>
+            <div className="flex flex-wrap items-end gap-3 border-b border-neutral-200 p-4 dark:border-neutral-800">
+              <div className="w-44">
+                <Input label="Fecha" type="date" value={incomeDay} max={todayInputValue()} onChange={(e) => setIncomeDay(e.target.value)} />
+              </div>
+              <div className="w-44">
+                <Select label="Medio de pago" value={incomeMethod} onChange={(e) => setIncomeMethod(e.target.value as IncomeMethod | "")}>
+                  <option value="">Todos</option>
+                  {(Object.keys(INCOME_METHOD_LABEL) as IncomeMethod[]).map((m) => (
+                    <option key={m} value={m}>
+                      {INCOME_METHOD_LABEL[m]}
+                    </option>
+                  ))}
+                </Select>
+              </div>
+            </div>
+            {loadingIncome && !income ? (
+              <TableSkeleton columns={5} />
+            ) : incomeItems.length === 0 ? (
+              <EmptyState icon={TrendingUp} title="Sin ingresos" description="No hay ingresos registrados para este día." />
+            ) : (
+              <Table>
+                <THead>
+                  <tr>
+                    <TH>Fecha y hora</TH>
+                    <TH>Medio de pago</TH>
+                    <TH>Monto</TH>
+                    <TH>Detalle</TH>
+                    <TH>Usuario</TH>
+                  </tr>
+                </THead>
+                <TBody>
+                  {incomeItems.map((i) => (
+                    <TR key={i.id}>
+                      <TD className="text-xs text-neutral-500 dark:text-neutral-400">{formatDateTime(i.createdAt)}</TD>
+                      <TD>
+                        <Badge tone={INCOME_METHOD_TONE[i.method]}>{INCOME_METHOD_LABEL[i.method]}</Badge>
+                      </TD>
+                      <TD className="font-semibold text-neutral-900 dark:text-neutral-100">{formatCurrency(i.amount)}</TD>
+                      <TD className="text-sm">{i.description}</TD>
+                      <TD>{i.userName}</TD>
+                    </TR>
+                  ))}
+                </TBody>
+              </Table>
+            )}
+          </Card>
+        </div>
       ) : (
         <Card>
           {loadingLedger && !movements ? (
