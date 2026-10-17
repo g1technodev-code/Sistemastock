@@ -184,7 +184,7 @@ export default function SuperAdminPagos() {
     <div className="mx-auto max-w-[1400px] space-y-6 animate-in fade-in duration-500">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-neutral-200 dark:border-neutral-800 pb-6">
         <div className="flex items-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary-100 text-primary-600 dark:bg-primary-500/10 dark:text-primary-400">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary-100 text-primary-600 dark:bg-primary-500/10 dark:text-primary-400">
             <DollarSign className="h-6 w-6" />
           </div>
           <div>
@@ -192,7 +192,7 @@ export default function SuperAdminPagos() {
             <p className="text-sm text-neutral-600 dark:text-neutral-400">Historial de suscripciones e ingresos (Mercado Pago, Efectivo y Transferencias)</p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Button onClick={() => setModalOpen(true)}>
             <Plus className="h-4 w-4" /> Registrar Pago Manual
           </Button>

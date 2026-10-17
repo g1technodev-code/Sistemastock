@@ -74,7 +74,7 @@ export default function Settings() {
               <Input className="flex-1" label="Nombre del negocio" required error={errors.businessName?.message} {...register("businessName")} />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <Input label="CUIT" placeholder="Ej: 30-12345678-9" {...register("taxId")} />
               <Input label="Teléfono" {...register("phone")} />
             </div>

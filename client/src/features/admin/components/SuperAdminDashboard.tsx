@@ -28,7 +28,7 @@ export default function SuperAdminDashboard() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-neutral-200 dark:border-neutral-800 pb-6">
         <div>
           <div className="flex items-center gap-2">
-            <Sparkles className="h-6 w-6 text-primary-500" />
+            <Sparkles className="h-6 w-6 shrink-0 text-primary-500" />
             <h1 className="text-2xl font-black text-neutral-900 dark:text-white tracking-tight">
               Control Global SaaS — SuperAdmin
             </h1>
@@ -37,7 +37,7 @@ export default function SuperAdminDashboard() {
             Administración centralizada de todos los locales registrados en Kipo.
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <Link to="/superadmin/locales">
             <Button>
               <Building2 className="h-4 w-4 mr-1.5" /> Gestionar Locales y Usuarios

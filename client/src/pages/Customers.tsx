@@ -93,7 +93,7 @@ export default function Customers() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100 flex items-center gap-2">
-            <Users className="h-7 w-7 text-primary-600 dark:text-primary-400" />
+            <Users className="h-7 w-7 shrink-0 text-primary-600 dark:text-primary-400" />
             Clientes y Cuentas Corrientes
           </h1>
           <p className="text-sm text-neutral-500 dark:text-neutral-400">
@@ -128,64 +128,57 @@ export default function Customers() {
 
       {/* Tabla de Clientes */}
       <div className="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm dark:border-white/10 dark:bg-neutral-950">
+        {isLoading && (
+          <p className="px-6 py-12 text-center text-sm text-neutral-400">Cargando lista de clientes...</p>
+        )}
+
+        {!isLoading && data?.items.length === 0 && (
+          <p className="px-6 py-12 text-center text-sm text-neutral-400">No se encontraron clientes registrados.</p>
+        )}
+
+        {!isLoading && !!data?.items.length && (
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm text-neutral-600 dark:text-neutral-300">
             <thead className="bg-neutral-50 text-xs uppercase tracking-wider text-neutral-500 dark:bg-neutral-900/50 dark:text-neutral-400">
               <tr>
-                <th className="px-6 py-4 font-semibold">Cliente</th>
-                <th className="px-6 py-4 font-semibold">Contacto</th>
-                <th className="px-6 py-4 font-semibold">Saldo Deudor</th>
-                <th className="px-6 py-4 font-semibold">Límite de Crédito</th>
-                <th className="px-6 py-4 font-semibold">Estado</th>
-                <th className="px-6 py-4 text-right font-semibold">Acciones</th>
+                <th className="whitespace-nowrap px-4 py-3 font-semibold sm:px-6 sm:py-4">Cliente</th>
+                <th className="whitespace-nowrap px-4 py-3 font-semibold sm:px-6 sm:py-4">Contacto</th>
+                <th className="whitespace-nowrap px-4 py-3 font-semibold sm:px-6 sm:py-4">Saldo Deudor</th>
+                <th className="whitespace-nowrap px-4 py-3 font-semibold sm:px-6 sm:py-4">Límite de Crédito</th>
+                <th className="whitespace-nowrap px-4 py-3 font-semibold sm:px-6 sm:py-4">Estado</th>
+                <th className="whitespace-nowrap px-4 py-3 text-right font-semibold sm:px-6 sm:py-4">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-neutral-200 dark:divide-neutral-800/60">
-              {isLoading && (
-                <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-neutral-400">
-                    Cargando lista de clientes...
-                  </td>
-                </tr>
-              )}
-
-              {!isLoading && data?.items.length === 0 && (
-                <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-neutral-400">
-                    No se encontraron clientes registrados.
-                  </td>
-                </tr>
-              )}
-
               {data?.items.map((c: Customer) => {
                 const hasDebt = c.currentBalance > 0;
                 return (
                   <tr key={c.id} className="hover:bg-neutral-50/50 transition-colors dark:hover:bg-neutral-900/50">
-                    <td className="px-6 py-4">
+                    <td className="px-4 py-3 sm:px-6 sm:py-4">
                       <div className="font-semibold text-neutral-900 dark:text-neutral-100">{c.name}</div>
                       {c.taxId && <div className="text-xs text-neutral-400 font-mono">DNI: {c.taxId}</div>}
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-4 py-3 sm:px-6 sm:py-4">
                       <div className="space-y-0.5 text-xs text-neutral-500 dark:text-neutral-400">
                         {c.phone && <div className="flex items-center gap-1.5"><Phone className="h-3 w-3" /> {c.phone}</div>}
                         {c.email && <div className="flex items-center gap-1.5"><Mail className="h-3 w-3" /> {c.email}</div>}
                         {!c.phone && !c.email && <span className="italic text-neutral-400">Sin datos</span>}
                       </div>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-4 py-3 sm:px-6 sm:py-4">
                       <span className={`font-bold font-mono text-base ${hasDebt ? "text-danger-600 dark:text-danger-400" : "text-success-600 dark:text-success-400"}`}>
                         {formatCurrency(c.currentBalance)}
                       </span>
                     </td>
-                    <td className="px-6 py-4 font-mono text-xs">
+                    <td className="px-4 py-3 sm:px-6 sm:py-4 font-mono text-xs">
                       {c.creditLimit !== null ? formatCurrency(c.creditLimit) : <span className="text-neutral-400">Sin límite</span>}
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-4 py-3 sm:px-6 sm:py-4">
                       <Badge tone={c.isActive ? "success" : "neutral"}>
                         {c.isActive ? "Activo" : "Inactivo"}
                       </Badge>
                     </td>
-                    <td className="px-6 py-4 text-right">
+                    <td className="px-4 py-3 sm:px-6 sm:py-4 text-right">
                       <div className="flex items-center justify-end gap-2">
                         {hasDebt && (
                           <button
@@ -218,6 +211,7 @@ export default function Customers() {
             </tbody>
           </table>
         </div>
+        )}
       </div>
 
       {/* Modal Nuevo Cliente */}

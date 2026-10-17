@@ -38,7 +38,7 @@ export function Modal({
   const sizeClass = size === "sm" ? "max-w-md" : size === "lg" ? "max-w-3xl" : "max-w-xl";
 
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-4">
       <div className="absolute inset-0 bg-neutral-950/40 backdrop-blur-sm" onClick={onClose} />
       <div
         ref={panelRef}
@@ -46,9 +46,9 @@ export function Modal({
         aria-modal="true"
         aria-labelledby={titleId}
         tabIndex={-1}
-        className={`relative w-full ${sizeClass} max-h-[90vh] overflow-y-auto rounded-2xl border border-neutral-200/60 bg-white/95 backdrop-blur-xl shadow-float focus:outline-none dark:border-white/10 dark:bg-neutral-900/95 animate-in zoom-in-95 duration-200`}
+        className={`relative w-full ${sizeClass} max-h-[92dvh] overflow-y-auto rounded-t-2xl sm:max-h-[90dvh] sm:rounded-2xl border border-neutral-200/60 bg-white/95 backdrop-blur-xl shadow-float focus:outline-none dark:border-white/10 dark:bg-neutral-900/95 animate-in zoom-in-95 duration-200`}
       >
-        <div className="flex items-center justify-between border-b border-neutral-100 px-6 py-5 dark:border-neutral-800/60">
+        <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-neutral-100 bg-inherit px-4 py-4 sm:px-6 sm:py-5 dark:border-neutral-800/60">
           <h2 id={titleId} className="text-lg font-bold tracking-tight text-neutral-900 dark:text-neutral-100">
             {title}
           </h2>
@@ -60,7 +60,7 @@ export function Modal({
             <X className="h-5 w-5" />
           </button>
         </div>
-        <div className="p-6">{children}</div>
+        <div className="p-4 sm:p-6">{children}</div>
       </div>
     </div>,
     document.body,

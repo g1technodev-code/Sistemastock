@@ -243,7 +243,7 @@ export function ProductForm({
       </div>
 
       {saleType !== "AMOUNT" ? (
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           <Input label="Costo ($) *" type="number" step="0.01" placeholder="0.00" required error={errors.costPrice?.message} {...register("costPrice", { onChange: handleCostChange })} />
           <Input label="% Ganancia" type="number" step="0.01" placeholder="Ej: 40" value={markup} onChange={handleMarkupChange} />
           <div>

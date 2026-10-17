@@ -104,13 +104,13 @@ export default function Tutorial() {
   ];
 
   return (
-    <div className="p-6 md:p-10 max-w-5xl mx-auto h-full flex flex-col">
-      <div className="flex items-center gap-4 mb-8">
-        <div className="p-3 bg-primary-100 text-primary-600 rounded-xl dark:bg-primary-900/30 dark:text-primary-400">
-          <BookOpen className="h-8 w-8" />
+    <div className="p-0 sm:p-4 md:p-10 max-w-5xl mx-auto h-full flex flex-col">
+      <div className="flex items-center gap-3 sm:gap-4 mb-6 sm:mb-8">
+        <div className="shrink-0 p-2.5 sm:p-3 bg-primary-100 text-primary-600 rounded-xl dark:bg-primary-900/30 dark:text-primary-400">
+          <BookOpen className="h-6 w-6 sm:h-8 sm:w-8" />
         </div>
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100">
             Centro de Ayuda y Tutorial
           </h1>
           <p className="text-neutral-500 mt-1 dark:text-neutral-400">
@@ -129,17 +129,17 @@ export default function Tutorial() {
             >
               <button
                 onClick={() => toggleItem(index)}
-                className="w-full flex items-center justify-between p-5 text-left focus:outline-none hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors"
+                className="w-full flex items-center justify-between gap-3 p-4 sm:p-5 text-left focus:outline-none hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors"
               >
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-neutral-100 rounded-lg text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400">
+                <div className="flex min-w-0 items-center gap-3">
+                  <div className="shrink-0 p-2 bg-neutral-100 rounded-lg text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400">
                     <item.icon className="h-5 w-5" />
                   </div>
-                  <span className="font-semibold text-neutral-900 text-lg dark:text-neutral-100">
+                  <span className="font-semibold text-neutral-900 text-base sm:text-lg dark:text-neutral-100">
                     {item.title}
                   </span>
                 </div>
-                <div className="text-neutral-400 bg-neutral-100 p-1 rounded-full dark:bg-neutral-800">
+                <div className="shrink-0 text-neutral-400 bg-neutral-100 p-1 rounded-full dark:bg-neutral-800">
                   {isOpen ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
                 </div>
               </button>
@@ -147,10 +147,10 @@ export default function Tutorial() {
               <div
                 className={cn(
                   "overflow-hidden transition-all duration-300 ease-in-out",
-                  isOpen ? "max-h-[800px] opacity-100" : "max-h-0 opacity-0"
+                  isOpen ? "max-h-[2000px] opacity-100" : "max-h-0 opacity-0"
                 )}
               >
-                <div className="p-5 pt-0 border-t border-neutral-100 dark:border-neutral-800 mt-2">
+                <div className="p-4 sm:p-5 pt-0 sm:pt-0 border-t border-neutral-100 dark:border-neutral-800 mt-2">
                   <div className="pt-4">
                     {item.content}
                   </div>
@@ -161,7 +161,7 @@ export default function Tutorial() {
         })}
       </div>
 
-      <div className="mt-10 p-6 bg-gradient-to-br from-primary-50 to-indigo-50 border border-primary-100 rounded-2xl dark:from-primary-900/20 dark:to-indigo-900/20 dark:border-primary-900/30">
+      <div className="mt-8 sm:mt-10 p-4 sm:p-6 bg-gradient-to-br from-primary-50 to-indigo-50 border border-primary-100 rounded-2xl dark:from-primary-900/20 dark:to-indigo-900/20 dark:border-primary-900/30">
         <h3 className="text-lg font-bold text-primary-900 dark:text-primary-300 mb-2">¿Necesitas ayuda adicional?</h3>
         <p className="text-primary-700 dark:text-primary-400 text-sm">
           Este manual cubre las operaciones del día a día. Si requieres asistencia técnica o tienes consultas sobre el sistema, puedes contactar al soporte directamente.

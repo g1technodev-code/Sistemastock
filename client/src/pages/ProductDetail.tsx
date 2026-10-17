@@ -147,7 +147,7 @@ export default function ProductDetail() {
 
             <div className="rounded-lg border border-neutral-200 p-4 dark:border-neutral-800">
               <p className="mb-3 text-sm font-semibold text-neutral-900 dark:text-neutral-100">Ajuste rápido de stock</p>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
                 <Select value={type} onChange={(e) => setType(e.target.value as MovementType)}>
                   <option value="IN">Entrada</option>
                   <option value="OUT">Salida</option>

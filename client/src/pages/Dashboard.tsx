@@ -55,7 +55,7 @@ export default function Dashboard() {
           <div className="space-y-4">
             <div className="rounded-xl border border-indigo-100 bg-indigo-50/50 p-4 dark:border-indigo-900/40 dark:bg-indigo-950/20">
               <p className="text-xs font-semibold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">Facturación de hoy</p>
-              <p className="mt-1 text-3xl font-black text-neutral-900 dark:text-white">{formatCurrency(kpis.salesToday)}</p>
+              <p className="mt-1 break-words text-2xl font-black text-neutral-900 sm:text-3xl dark:text-white">{formatCurrency(kpis.salesToday)}</p>
               <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">Total acumulado de ventas cobradas o registradas durante la jornada actual.</p>
             </div>
             <div className="space-y-2 text-sm">
@@ -81,7 +81,7 @@ export default function Dashboard() {
           <div className="space-y-4">
             <div className="rounded-xl border border-emerald-100 bg-emerald-50/50 p-4 dark:border-emerald-900/40 dark:bg-emerald-950/20">
               <p className="text-xs font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Ganancia estimada de hoy</p>
-              <p className="mt-1 text-3xl font-black text-neutral-900 dark:text-white">{formatCurrency(kpis.profitToday)}</p>
+              <p className="mt-1 break-words text-2xl font-black text-neutral-900 sm:text-3xl dark:text-white">{formatCurrency(kpis.profitToday)}</p>
               <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">Calculada en base a la diferencia entre el precio de venta y el costo de los productos vendidos hoy.</p>
             </div>
             <div className="rounded-lg bg-neutral-50 p-3 text-xs text-neutral-600 dark:bg-neutral-800 dark:text-neutral-300">
@@ -101,7 +101,7 @@ export default function Dashboard() {
           <div className="space-y-4">
             <div className="rounded-xl border border-blue-100 bg-blue-50/50 p-4 dark:border-blue-900/40 dark:bg-blue-950/20">
               <p className="text-xs font-semibold uppercase tracking-wider text-blue-600 dark:text-blue-400">Valorización total del inventario</p>
-              <p className="mt-1 text-3xl font-black text-neutral-900 dark:text-white">{formatCurrency(kpis.totalStockValue)}</p>
+              <p className="mt-1 break-words text-2xl font-black text-neutral-900 sm:text-3xl dark:text-white">{formatCurrency(kpis.totalStockValue)}</p>
               <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">Capital total inmovilizado calculado según la cantidad actual de productos multiplicada por su precio/costo.</p>
             </div>
             <div className="flex justify-between py-2 border-b border-neutral-100 dark:border-neutral-800 text-sm">
@@ -121,7 +121,7 @@ export default function Dashboard() {
           <div className="space-y-4">
             <div className="rounded-xl border border-purple-100 bg-purple-50/50 p-4 dark:border-purple-900/40 dark:bg-purple-950/20">
               <p className="text-xs font-semibold uppercase tracking-wider text-purple-600 dark:text-purple-400">Unidades vendidas hoy</p>
-              <p className="mt-1 text-3xl font-black text-neutral-900 dark:text-white">{formatNumber(kpis.unitsSoldToday)} <span className="text-lg font-normal text-neutral-500">unidades</span></p>
+              <p className="mt-1 break-words text-2xl font-black text-neutral-900 sm:text-3xl dark:text-white">{formatNumber(kpis.unitsSoldToday)} <span className="text-lg font-normal text-neutral-500">unidades</span></p>
               <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">Suma total de ítems individuales despachados en las ventas de hoy.</p>
             </div>
             <div className="pt-2 flex justify-end">
@@ -137,7 +137,7 @@ export default function Dashboard() {
           <div className="space-y-4">
             <div className="rounded-xl border border-amber-100 bg-amber-50/50 p-4 dark:border-amber-900/40 dark:bg-amber-950/20">
               <p className="text-xs font-semibold uppercase tracking-wider text-amber-600 dark:text-amber-400">Ticket Promedio</p>
-              <p className="mt-1 text-3xl font-black text-neutral-900 dark:text-white">{formatCurrency(kpis.avgTicketToday)}</p>
+              <p className="mt-1 break-words text-2xl font-black text-neutral-900 sm:text-3xl dark:text-white">{formatCurrency(kpis.avgTicketToday)}</p>
               <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">Monto promedio gastado por cliente en cada compra efectuada hoy.</p>
             </div>
             <div className="pt-2 flex justify-end">
@@ -153,7 +153,7 @@ export default function Dashboard() {
           <div className="space-y-4">
             <div className="rounded-xl border border-teal-100 bg-teal-50/50 p-4 dark:border-teal-900/40 dark:bg-teal-950/20">
               <p className="text-xs font-semibold uppercase tracking-wider text-teal-600 dark:text-teal-400">Saldo actual en caja (Físico)</p>
-              <p className="mt-1 text-3xl font-black text-neutral-900 dark:text-white">{formatCurrency(kpis.cashBalance)}</p>
+              <p className="mt-1 break-words text-2xl font-black text-neutral-900 sm:text-3xl dark:text-white">{formatCurrency(kpis.cashBalance)}</p>
               <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">Dinero disponible actualmente registrado en el turno de caja activo o caja física.</p>
             </div>
             <div className="pt-2 flex justify-end">
@@ -169,7 +169,7 @@ export default function Dashboard() {
           <div className="space-y-4">
             <div className="rounded-xl border border-blue-100 bg-blue-50/50 p-4 dark:border-blue-900/40 dark:bg-blue-950/20">
               <p className="text-xs font-semibold uppercase tracking-wider text-blue-600 dark:text-blue-400">Total en Transferencias (Hoy)</p>
-              <p className="mt-1 text-3xl font-black text-neutral-900 dark:text-white">{formatCurrency(kpis.transferBalance || 0)}</p>
+              <p className="mt-1 break-words text-2xl font-black text-neutral-900 sm:text-3xl dark:text-white">{formatCurrency(kpis.transferBalance || 0)}</p>
               <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">Monto total facturado hoy mediante pagos por transferencia o medios electrónicos.</p>
             </div>
             <div className="pt-2 flex justify-end">
@@ -185,7 +185,7 @@ export default function Dashboard() {
           <div className="space-y-4">
             <div className="rounded-xl border border-rose-100 bg-rose-50/50 p-4 dark:border-rose-900/40 dark:bg-rose-950/20">
               <p className="text-xs font-semibold uppercase tracking-wider text-rose-600 dark:text-rose-400">Alertas de Stock Bajo</p>
-              <p className="mt-1 text-3xl font-black text-neutral-900 dark:text-white">{formatNumber(kpis.lowStockCount)} <span className="text-lg font-normal text-neutral-500">productos</span></p>
+              <p className="mt-1 break-words text-2xl font-black text-neutral-900 sm:text-3xl dark:text-white">{formatNumber(kpis.lowStockCount)} <span className="text-lg font-normal text-neutral-500">productos</span></p>
               <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">Productos con cantidad actual igual o inferior a su umbral mínimo de seguridad.</p>
             </div>
 
@@ -220,7 +220,7 @@ export default function Dashboard() {
           <div className="space-y-4">
             <div className="rounded-xl border border-slate-100 bg-slate-50/50 p-4 dark:border-slate-800 dark:bg-slate-900/40">
               <p className="text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">Productos sin movimiento</p>
-              <p className="mt-1 text-3xl font-black text-neutral-900 dark:text-white">{formatNumber(kpis.noMovementCount)} <span className="text-lg font-normal text-neutral-500">productos</span></p>
+              <p className="mt-1 break-words text-2xl font-black text-neutral-900 sm:text-3xl dark:text-white">{formatNumber(kpis.noMovementCount)} <span className="text-lg font-normal text-neutral-500">productos</span></p>
               <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">Productos inactivos que no registran ventas o movimientos recientes.</p>
             </div>
 
@@ -270,14 +270,14 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="mx-auto flex max-w-[1400px] flex-col gap-8">
+    <div className="mx-auto flex max-w-[1400px] flex-col gap-6 sm:gap-8">
       <GlobalAnnouncementBanner />
       <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
-        <h1 className="text-3xl font-black tracking-tight text-neutral-900 dark:text-white">Panel general</h1>
-        <p className="mt-1 text-base text-neutral-500 dark:text-neutral-400">Resumen de tu inventario en tiempo real. Haz clic en cualquier tarjeta para ver su detalle.</p>
+        <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-neutral-900 dark:text-white">Panel general</h1>
+        <p className="mt-1 text-sm sm:text-base text-neutral-500 dark:text-neutral-400">Resumen de tu inventario en tiempo real. Haz clic en cualquier tarjeta para ver su detalle.</p>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-3 xl:grid-cols-4 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      <div className="grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-3 xl:grid-cols-4 animate-in fade-in slide-in-from-bottom-4 duration-700">
 
         <StatCard
           label="Ventas de hoy"
@@ -345,7 +345,7 @@ export default function Dashboard() {
         {renderModalContent()}
       </Modal>
 
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-3 animate-in fade-in slide-in-from-bottom-8 duration-1000">
+      <div className="grid grid-cols-1 gap-6 sm:gap-8 lg:grid-cols-3 animate-in fade-in slide-in-from-bottom-8 duration-1000">
         <div className="lg:col-span-1">
           <Card className="h-full">
             <CardHeader title="Alertas inteligentes" description="Cosas que conviene revisar hoy" />
@@ -425,15 +425,15 @@ export default function Dashboard() {
                 <TBody>
                   {data.recentActivity.map((m) => (
                     <TR key={m.id}>
-                      <TD className="font-medium text-neutral-900 dark:text-neutral-100">{m.product.name}</TD>
+                      <TD className="min-w-[160px] font-medium text-neutral-900 dark:text-neutral-100">{m.product.name}</TD>
                       <TD>
                         <Badge tone={MOVEMENT_TYPE_TONE[m.type] || "neutral"}>
                           {MOVEMENT_TYPE_LABEL[m.type] || m.type}
                         </Badge>
                       </TD>
                       <TD>{formatNumber(m.quantity)}</TD>
-                      <TD>{m.user.name}</TD>
-                      <TD className="text-neutral-500 dark:text-neutral-400">{formatDateTime(m.createdAt)}</TD>
+                      <TD className="whitespace-nowrap">{m.user.name}</TD>
+                      <TD className="whitespace-nowrap text-neutral-500 dark:text-neutral-400">{formatDateTime(m.createdAt)}</TD>
                     </TR>
                   ))}
                 </TBody>

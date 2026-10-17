@@ -403,7 +403,7 @@ export default function Ventas() {
 
             {/* Columna Derecha (Carrito) */}
             <Card className={cn(
-              "h-full flex-col overflow-y-auto shadow-2xl ring-1 ring-black/5 dark:ring-white/5 lg:w-[420px] lg:shrink-0",
+              "h-full flex-col overflow-y-auto shadow-2xl ring-1 ring-black/5 dark:ring-white/5 lg:w-[340px] lg:shrink-0 xl:w-[420px]",
               isMobileCartOpen ? "flex w-full" : "hidden lg:flex"
             )}>
               {/* Header con botón de regreso en Mobile */}
@@ -464,7 +464,7 @@ export default function Ventas() {
                             </div>
                           )}
                           
-                          <span className="w-16 text-right text-sm font-black text-primary-600 dark:text-primary-400">
+                          <span className="min-w-16 whitespace-nowrap text-right text-sm font-black text-primary-600 dark:text-primary-400">
                             {formatCurrency(line.saleType === 'UNIT' ? line.unitPrice * line.quantity : line.saleType === 'WEIGHT' ? (line.unitPrice / 1000) * line.quantity : line.amount || 0)}
                           </span>
                           <button type="button" onClick={() => removeLine(line.productId)} className="rounded-full p-1.5 text-neutral-400 hover:bg-danger-50 hover:text-danger-500 dark:hover:bg-danger-500/10">
@@ -480,7 +480,7 @@ export default function Ventas() {
                 <div className="flex flex-col gap-3 pt-3 border-t border-neutral-200 dark:border-neutral-800">
                   <div className="flex flex-col gap-1.5">
                     <span className="text-xs font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">Medio de pago</span>
-                    <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-5">
+                    <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-5 lg:grid-cols-3 xl:grid-cols-5">
                       {(["EFECTIVO", "TRANSFERENCIA", "TARJETA", "CUENTA_CORRIENTE", "MIXTO"] as PaymentMethod[]).map((m) => {
                         const Icon = PAYMENT_METHOD_ICON[m];
                         return (

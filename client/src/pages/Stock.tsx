@@ -122,7 +122,7 @@ export default function Stock() {
                 ))}
               </Select>
 
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 gap-3 min-[400px]:grid-cols-3">
                 {(["IN", "OUT", "ADJUSTMENT"] as MovementType[]).map((t) => (
                   <label
                     key={t}

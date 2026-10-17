@@ -25,7 +25,7 @@ export function TH({ className, ...props }: ThHTMLAttributes<HTMLTableCellElemen
   return (
     <th
       className={cn(
-        "px-5 py-4 text-xs font-bold uppercase tracking-wider text-neutral-600 dark:text-neutral-400 border-b-2 border-neutral-200 dark:border-neutral-800",
+        "whitespace-nowrap px-3 py-3 sm:px-5 sm:py-4 text-xs font-bold uppercase tracking-wider text-neutral-600 dark:text-neutral-400 border-b-2 border-neutral-200 dark:border-neutral-800",
         className,
       )}
       {...props}
@@ -34,5 +34,5 @@ export function TH({ className, ...props }: ThHTMLAttributes<HTMLTableCellElemen
 }
 
 export function TD({ className, ...props }: TdHTMLAttributes<HTMLTableCellElement>) {
-  return <td className={cn("px-5 py-4 text-neutral-700 dark:text-neutral-300 align-middle", className)} {...props} />;
+  return <td className={cn("px-3 py-3 sm:px-5 sm:py-4 text-neutral-700 dark:text-neutral-300 align-middle", className)} {...props} />;
 }

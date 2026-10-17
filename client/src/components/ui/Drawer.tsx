@@ -44,7 +44,7 @@ export function Drawer({
         tabIndex={-1}
         className="relative flex h-full w-full max-w-lg flex-col border-l border-neutral-200/60 bg-white/95 backdrop-blur-xl shadow-2xl focus:outline-none dark:border-white/10 dark:bg-neutral-900/95 animate-in slide-in-from-right"
       >
-        <div className="flex items-center justify-between border-b border-neutral-100 px-6 py-5 dark:border-neutral-800/60">
+        <div className="flex items-center justify-between gap-3 border-b border-neutral-100 px-4 py-4 sm:px-6 sm:py-5 dark:border-neutral-800/60">
           <div id={titleId} className="text-lg font-bold tracking-tight text-neutral-900 dark:text-neutral-100">
             {title}
           </div>
@@ -56,7 +56,7 @@ export function Drawer({
             <X className="h-5 w-5" />
           </button>
         </div>
-        <div className="flex-1 overflow-y-auto p-6">{children}</div>
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6">{children}</div>
       </div>
     </div>,
     document.body,

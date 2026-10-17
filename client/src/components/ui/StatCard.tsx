@@ -29,14 +29,14 @@ export function StatCard({
     <Card
       onClick={onClick}
       className={cn(
-        "p-3.5 sm:px-6 sm:py-5 transition-all duration-300 group relative overflow-hidden flex flex-col justify-between",
+        "@container p-3.5 sm:px-6 sm:py-5 transition-all duration-300 group relative overflow-hidden flex flex-col justify-between",
         onClick
           ? "cursor-pointer hover:-translate-y-1 hover:shadow-lg dark:hover:shadow-indigo-900/20 active:scale-[0.99]"
           : ""
       )}
     >
-      <div className="relative z-10 flex items-center justify-between gap-1.5">
-        <span className="text-[10px] sm:text-xs md:text-sm font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400 truncate" title={label}>
+      <div className="relative z-10 flex items-start justify-between gap-1.5">
+        <span className="text-[10px] sm:text-xs xl:text-sm font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400 min-w-0 line-clamp-2 leading-tight sm:leading-snug" title={label}>
           {label}
         </span>
         <div
@@ -48,8 +48,8 @@ export function StatCard({
           <Icon className="h-3.5 w-3.5 sm:h-5 sm:w-5" strokeWidth={2.5} />
         </div>
       </div>
-      <div className="relative z-10 mt-2 sm:mt-4 flex items-end justify-between">
-        <span className="text-lg sm:text-2xl md:text-3xl lg:text-4xl font-black tracking-tight text-neutral-900 dark:text-white truncate">
+      <div className="relative z-10 mt-2 sm:mt-4 flex min-w-0 items-end justify-between">
+        <span className="min-w-0 truncate text-base @[9rem]:text-lg @[10.5rem]:text-xl @[13rem]:text-2xl @[17rem]:text-3xl @[22rem]:text-4xl font-black tracking-tight text-neutral-900 dark:text-white" title={value}>
           {value}
         </span>
       </div>

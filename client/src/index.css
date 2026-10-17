@@ -157,3 +157,10 @@ body {
   background-size: 32px 32px;
   background-image: radial-gradient(rgba(100, 116, 139, 0.15) 1px, transparent 1px);
 }
+/* Horizontal scrollers (tabs, chip rows) without a visible scrollbar */
+@utility no-scrollbar {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}

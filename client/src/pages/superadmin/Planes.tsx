@@ -159,7 +159,7 @@ export default function SuperAdminPlanes() {
     <div className="mx-auto max-w-[1400px] space-y-6 animate-in fade-in duration-500">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-neutral-200 dark:border-neutral-800 pb-6">
         <div className="flex items-center gap-3">
-          <Sliders className="h-7 w-7 text-primary-500" />
+          <Sliders className="h-7 w-7 shrink-0 text-primary-500" />
           <div>
             <h1 className="text-2xl font-black text-neutral-900 dark:text-white tracking-tight">Configuración de Planes</h1>
             <p className="text-sm text-neutral-600 dark:text-neutral-400">Precio, límites y beneficios de cada plan de suscripción</p>

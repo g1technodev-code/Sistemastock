@@ -183,13 +183,13 @@ export default function Products() {
           <h1 className="text-2xl font-black tracking-tight text-neutral-900 dark:text-white">Productos</h1>
           <p className="mt-1 text-sm font-medium text-neutral-500 dark:text-neutral-400">Catálogo completo de tu inventario.</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-wrap sm:items-center [&>*]:min-w-0 [&>*]:justify-center [&>*]:whitespace-nowrap">
           <Button onClick={() => setCameraOpen(true)} variant="outline" className="shadow-sm">
             <Camera className="h-4 w-4 text-primary-600 dark:text-primary-400" strokeWidth={2.5} /> Escanear
           </Button>
           {canUpdatePrices && (
             <Button onClick={() => setPriceUpdateOpen(true)} variant="outline" className="shadow-sm">
-              <Percent className="h-4 w-4" strokeWidth={2.5} /> Actualizar precios
+              <Percent className="h-4 w-4" strokeWidth={2.5} /> <span className="sm:hidden">Precios</span><span className="hidden sm:inline">Actualizar precios</span>
             </Button>
           )}
           {canManage && (
@@ -198,7 +198,7 @@ export default function Products() {
                 <Upload className="h-4 w-4" strokeWidth={2.5} /> Carga masiva
               </Button>
               <Button onClick={openCreate} className="shadow-sm">
-                <Plus className="h-4 w-4" strokeWidth={2.5} /> Nuevo producto
+                <Plus className="h-4 w-4" strokeWidth={2.5} /> <span className="sm:hidden">Nuevo</span><span className="hidden sm:inline">Nuevo producto</span>
               </Button>
             </>
           )}
@@ -233,7 +233,7 @@ export default function Products() {
         <>
           <Card className="p-2">
             <div className="flex flex-wrap items-center gap-3 p-2">
-              <div className="relative min-w-[280px] flex-1">
+              <div className="relative min-w-0 basis-full flex-1 sm:basis-[280px]">
                 <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
                 <Input
                   className="pl-9 h-10 border-transparent bg-neutral-100/80 hover:bg-neutral-200/50 focus:bg-white dark:bg-neutral-800/80 dark:hover:bg-neutral-800"
@@ -246,7 +246,7 @@ export default function Products() {
                 />
               </div>
               <Select
-                className="w-48 h-10"
+                className="h-10 w-full sm:w-48"
                 value={categoryId}
                 onChange={(e) => {
                   setCategoryId(e.target.value);

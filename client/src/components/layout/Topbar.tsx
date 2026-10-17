@@ -59,23 +59,23 @@ export function Topbar({ onOpenMenu, onOpenSearch }: { onOpenMenu: () => void; o
 
   return (
     <>
-    <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b border-neutral-200 bg-white/70 px-4 backdrop-blur-xl dark:border-white/10 dark:bg-neutral-950/70 sm:px-6">
+    <header className="sticky top-0 z-30 flex h-16 items-center gap-2 sm:gap-4 border-b border-neutral-200 bg-white/70 px-4 backdrop-blur-xl dark:border-white/10 dark:bg-neutral-950/70 sm:px-6">
       <button onClick={onOpenMenu} className="rounded-full p-2 text-neutral-500 transition-colors hover:bg-neutral-100 lg:hidden dark:hover:bg-neutral-800">
         <Menu className="h-5 w-5" />
       </button>
 
       <button
         onClick={onOpenSearch}
-        className="flex flex-1 items-center gap-3 rounded-full border border-neutral-300 bg-white px-4 py-2.5 text-sm text-neutral-400 shadow-sm transition-all duration-200 hover:border-neutral-400 hover:bg-white max-w-lg dark:border-white/10 dark:bg-neutral-900/50 dark:hover:border-white/20 dark:hover:bg-neutral-900"
+        className="flex min-w-0 flex-1 items-center gap-3 rounded-full border border-neutral-300 bg-white px-3 sm:px-4 py-2.5 text-sm text-neutral-400 shadow-sm transition-all duration-200 hover:border-neutral-400 hover:bg-white max-w-lg dark:border-white/10 dark:bg-neutral-900/50 dark:hover:border-white/20 dark:hover:bg-neutral-900"
       >
-        <Search className="h-4 w-4" />
-        <span className="flex-1 text-left font-medium">Buscar...</span>
+        <Search className="h-4 w-4 shrink-0" />
+        <span className="flex-1 truncate text-left font-medium">Buscar...</span>
         <kbd className="hidden rounded border border-neutral-300 bg-neutral-100 px-2 py-0.5 text-[10px] font-bold text-neutral-500 sm:inline dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-400">
           ⌘ K
         </kbd>
       </button>
 
-      <div className="ml-auto flex items-center gap-2 sm:gap-3">
+      <div className="ml-auto flex shrink-0 items-center gap-1 sm:gap-3">
         {user?.role === "ADMIN" && (
           <button
             onClick={() => setReferralOpen(true)}
@@ -95,6 +95,7 @@ export function Topbar({ onOpenMenu, onOpenSearch }: { onOpenMenu: () => void; o
         <div className="relative" ref={alertsRef}>
           <button
             onClick={() => setAlertsOpen((v) => !v)}
+            aria-label="Notificaciones"
             className="relative rounded-full p-2.5 text-neutral-500 transition-colors hover:bg-neutral-100 dark:text-neutral-400 dark:hover:bg-neutral-800"
           >
             <Bell className="h-[18px] w-[18px]" strokeWidth={2.5} />
@@ -105,7 +106,7 @@ export function Topbar({ onOpenMenu, onOpenSearch }: { onOpenMenu: () => void; o
             )}
           </button>
           {alertsOpen && (
-            <div className="absolute right-0 z-40 mt-3 w-80 sm:w-96 rounded-2xl border border-neutral-200 bg-white/95 p-2 shadow-float backdrop-blur-xl dark:border-white/10 dark:bg-neutral-900/95 animate-in zoom-in-95 duration-200">
+            <div className="fixed inset-x-3 top-16 z-40 mt-1 rounded-2xl sm:absolute sm:inset-x-auto sm:right-0 sm:top-auto sm:mt-3 sm:w-96 border border-neutral-200 bg-white/95 p-2 shadow-float backdrop-blur-xl dark:border-white/10 dark:bg-neutral-900/95 animate-in zoom-in-95 duration-200">
               <div className="flex items-center justify-between px-3 py-2 border-b border-neutral-100 dark:border-neutral-800/60">
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-bold tracking-tight text-neutral-900 dark:text-neutral-100">Notificaciones</span>
@@ -121,7 +122,7 @@ export function Topbar({ onOpenMenu, onOpenSearch }: { onOpenMenu: () => void; o
                   </button>
                 )}
               </div>
-              <div className="max-h-80 overflow-y-auto p-1 mt-1 space-y-1">
+              <div className="max-h-[min(20rem,calc(100dvh-10rem))] overflow-y-auto p-1 mt-1 space-y-1">
                 {notificationsData?.items.length === 0 && (
                   <div className="px-2 py-8 text-center">
                     <p className="text-sm font-medium text-neutral-500 dark:text-neutral-400">Sin notificaciones recientes.</p>

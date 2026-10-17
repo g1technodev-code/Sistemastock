@@ -178,7 +178,7 @@ export function DataTable<T>({
               ))}
               {rowActions && (
                 <TD onClick={(e) => e.stopPropagation()}>
-                  <div className="flex justify-end gap-1 opacity-0 transition-opacity focus-within:opacity-100 group-hover:opacity-100 md:opacity-100 md:group-hover:opacity-100 lg:opacity-0">
+                  <div className="flex justify-end gap-1 transition-opacity focus-within:opacity-100 lg:opacity-0 lg:group-hover:opacity-100">
                     {rowActions(row)}
                   </div>
                 </TD>
