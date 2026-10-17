@@ -17,16 +17,9 @@ export const createSaleSchema = z
         }),
       )
       .min(1, "Agrega al menos un producto al carrito"),
+    // Opcionales: el POS ya no pide comprobante ni pagador para transferencia/tarjeta.
     receiptNumber: z.string().optional().nullable(),
     payerName: z.string().optional().nullable(),
-  })
-  .refine((data) => data.paymentMethod === "EFECTIVO" || data.paymentMethod === "CUENTA_CORRIENTE" || data.paymentMethod === "MIXTO" || !!data.receiptNumber?.trim(), {
-    message: "Indica el número de comprobante",
-    path: ["receiptNumber"],
-  })
-  .refine((data) => data.paymentMethod === "EFECTIVO" || data.paymentMethod === "CUENTA_CORRIENTE" || data.paymentMethod === "MIXTO" || !!data.payerName?.trim(), {
-    message: "Indica el nombre de quien pagó",
-    path: ["payerName"],
   })
   .refine((data) => {
     if (data.paymentMethod === "CUENTA_CORRIENTE") return !!data.customerId?.trim();
