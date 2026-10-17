@@ -8,9 +8,12 @@ export async function createNotification(
   title: string,
   message: string,
   metadata?: Record<string, unknown>,
+  // Inside an interactive transaction pass its `tx`: using the global client there would
+  // wait for a second pool connection, which deadlocks on serverless (connection_limit=1).
+  client: Prisma.TransactionClient = prisma,
 ) {
   if (!localId) return null;
-  return prisma.notification.create({
+  return client.notification.create({
     data: {
       localId,
       type,

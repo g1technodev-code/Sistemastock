@@ -203,6 +203,7 @@ export async function createSale(localId: string | null | undefined, input: Crea
           "Alerta de Stock Bajo",
           `El producto "${movement.productName}" tiene un stock crítico de ${movement.quantityAfter} unidades (Mínimo: ${movement.minStock}).`,
           { productId: movement.productId, currentStock: movement.quantityAfter, minStock: movement.minStock },
+          tx,
         );
       }
 
